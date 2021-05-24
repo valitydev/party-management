@@ -42,9 +42,6 @@
 
 %%
 
--define(HELLGATE_HOST, "hellgate").
--define(HELLGATE_PORT, 8022).
-
 -type app_name() :: atom().
 
 -spec start_app(app_name()) -> {[app_name()], map()}.
@@ -79,92 +76,6 @@ start_app(dmt_client = AppName) ->
                 'RepositoryClient' => <<"http://dominant:8022/v1/domain/repository_client">>
             }}
         ]), #{}};
-start_app(hellgate = AppName) ->
-    {start_app(AppName, [
-            {host, ?HELLGATE_HOST},
-            {port, ?HELLGATE_PORT},
-            {default_woody_handling_timeout, 30000},
-            {transport_opts, #{
-                max_connections => 8096
-            }},
-            {scoper_event_handler_options, #{
-                event_handler_opts => #{
-                    formatter_opts => #{
-                        max_length => 1000
-                    }
-                }
-            }},
-            {services, #{
-                accounter => <<"http://shumway:8022/shumpune">>,
-                automaton => <<"http://machinegun:8022/v1/automaton">>,
-                customer_management => #{
-                    url => <<"http://hellgate:8022/v1/processing/customer_management">>,
-                    transport_opts => #{
-                        pool => customer_management,
-                        max_connections => 300
-                    }
-                },
-                eventsink => <<"http://machinegun:8022/v1/event_sink">>,
-                fault_detector => <<"http://127.0.0.1:20001/">>,
-                invoice_templating => #{
-                    url => <<"http://hellgate:8022/v1/processing/invoice_templating">>,
-                    transport_opts => #{
-                        pool => invoice_templating,
-                        max_connections => 300
-                    }
-                },
-                invoicing => #{
-                    url => <<"http://hellgate:8022/v1/processing/invoicing">>,
-                    transport_opts => #{
-                        pool => invoicing,
-                        max_connections => 300
-                    }
-                },
-                party_management => #{
-                    url => <<"http://hellgate:8022/v1/processing/partymgmt">>,
-                    transport_opts => #{
-                        pool => party_management,
-                        max_connections => 300
-                    }
-                },
-                recurrent_paytool => #{
-                    url => <<"http://hellgate:8022/v1/processing/recpaytool">>,
-                    transport_opts => #{
-                        pool => recurrent_paytool,
-                        max_connections => 300
-                    }
-                }
-            }},
-            {proxy_opts, #{
-                transport_opts => #{
-                    max_connections => 300
-                }
-            }},
-            {payment_retry_policy, #{
-                processed => {intervals, [1, 1, 1]},
-                captured => {intervals, [1, 1, 1]},
-                refunded => {intervals, [1, 1, 1]}
-            }},
-            {inspect_timeout, 1000},
-            {fault_detector, #{
-                % very low to speed up tests
-                timeout => 20,
-                availability => #{
-                    critical_fail_rate => 0.7,
-                    sliding_window => 60000,
-                    operation_time_limit => 10000,
-                    pre_aggregation_size => 2
-                },
-                conversion => #{
-                    critical_fail_rate => 0.7,
-                    sliding_window => 6000000,
-                    operation_time_limit => 1200000,
-                    pre_aggregation_size => 2
-                }
-            }}
-        ]), #{
-            hellgate_root_url => get_hellgate_url()
-        }};
 start_app(party_management = AppName) ->
     {start_app(AppName, [
             {scoper_event_handler_options, #{
@@ -189,28 +100,6 @@ start_app(party_management = AppName) ->
                     transport_opts => #{
                         pool => claim_committer,
                         max_connections => 300
-                    }
-                }
-            }}
-        ]), #{}};
-start_app(party_client = AppName) ->
-    {start_app(AppName, [
-            {services, #{
-                party_management => "http://hellgate:8022/v1/processing/partymgmt"
-            }},
-            {woody, #{
-                % disabled | safe | aggressive
-                cache_mode => safe,
-                options => #{
-                    woody_client => #{
-                        event_handler =>
-                            {scoper_woody_event_handler, #{
-                                event_handler_opts => #{
-                                    formatter_opts => #{
-                                        max_length => 1000
-                                    }
-                                }
-                            }}
                     }
                 }
             }}
@@ -506,7 +395,3 @@ make_meta_data(NS) ->
         {i, 42} => {str, <<"42">>},
         {str, <<"STRING!">>} => {arr, []}
     }}.
-
--spec get_hellgate_url() -> string().
-get_hellgate_url() ->
-    "http://" ++ ?HELLGATE_HOST ++ ":" ++ integer_to_list(?HELLGATE_PORT).

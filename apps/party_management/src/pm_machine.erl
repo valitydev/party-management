@@ -402,13 +402,13 @@ marshal_events(Events) when is_list(Events) ->
 marshal_event(#{format_version := Format, data := Data}) ->
     #mg_stateproc_Content{
         format_version = Format,
-        data = mg_msgpack_marshalling:marshal(Data)
+        data = pm_msgpack_marshalling:marshal(Data)
     }.
 
 marshal_aux_st_format(AuxSt) ->
     #mg_stateproc_Content{
         format_version = undefined,
-        data = mg_msgpack_marshalling:marshal(AuxSt)
+        data = pm_msgpack_marshalling:marshal(AuxSt)
     }.
 
 -spec marshal_thrift_args(service_name(), function_ref(), args()) -> binary().
@@ -489,10 +489,10 @@ unmarshal_events(Events) when is_list(Events) ->
 
 -spec unmarshal_event(mg_event()) -> event().
 unmarshal_event(#mg_stateproc_Event{id = ID, created_at = Dt, format_version = Format, data = Payload}) ->
-    {ID, Dt, #{format_version => Format, data => mg_msgpack_marshalling:unmarshal(Payload)}}.
+    {ID, Dt, #{format_version => Format, data => pm_msgpack_marshalling:unmarshal(Payload)}}.
 
 unmarshal_aux_st(Data) ->
-    mg_msgpack_marshalling:unmarshal(Data).
+    pm_msgpack_marshalling:unmarshal(Data).
 
 get_aux_state(#mg_stateproc_Machine{aux_state = #mg_stateproc_Content{format_version = undefined, data = Data}}) ->
     unmarshal_aux_st(Data).

@@ -49,7 +49,7 @@ upsert(Revision, NewObjects) ->
 
 -spec reset(revision()) -> revision() | no_return().
 reset(ToRevision) ->
-    upsert(hg_domain:head(), maps:values(pm_domain:all(ToRevision))).
+    upsert(pm_domain:head(), maps:values(pm_domain:all(ToRevision))).
 
 -spec commit(revision(), dmt_client:commit()) -> ok | no_return().
 commit(Revision, Commit) ->

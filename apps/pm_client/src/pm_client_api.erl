@@ -12,20 +12,16 @@
 
 -spec new(woody:url()) -> t().
 new(RootUrl) ->
-    new(RootUrl, construct_context()).
+    new(RootUrl, woody_context:new()).
 
 -spec new(woody:url(), woody_context:ctx()) -> t().
 new(RootUrl, Context) ->
     {RootUrl, Context}.
 
-construct_context() ->
-    woody_context:new().
-
 -spec call(Name :: atom(), woody:func(), [any()], t()) -> {{ok, _Response} | {exception, _} | {error, _}, t()}.
 call(ServiceName, Function, Args, {RootUrl, Context}) ->
     Service = pm_proto:get_service(ServiceName),
-    ArgsTuple = list_to_tuple(Args),
-    Request = {Service, Function, ArgsTuple},
+    Request = {Service, Function, list_to_tuple(Args)},
     Opts = get_opts(ServiceName),
     Result =
         try

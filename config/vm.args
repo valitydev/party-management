@@ -1,5 +1,5 @@
--sname hellgate
+-sname party_management
 
--setcookie hellgate_cookie
+-setcookie party_management_cookie
 
 +K true

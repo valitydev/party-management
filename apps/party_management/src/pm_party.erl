@@ -589,12 +589,12 @@ merge_chargeback_terms(
     }
 ) ->
     #domain_PaymentChargebackServiceTerms{
-        allow = hg_utils:select_defined(Allow1, Allow0),
-        fees = hg_utils:select_defined(Fee1, Fee0),
-        eligibility_time = hg_utils:select_defined(ElTime1, ElTime0)
+        allow = pm_utils:select_defined(Allow1, Allow0),
+        fees = pm_utils:select_defined(Fee1, Fee0),
+        eligibility_time = pm_utils:select_defined(ElTime1, ElTime0)
     };
 merge_chargeback_terms(Terms0, Terms1) ->
-    hg_utils:select_defined(Terms1, Terms0).
+    pm_utils:select_defined(Terms1, Terms0).
 
 merge_payouts_terms(
     #domain_PayoutsServiceTerms{
