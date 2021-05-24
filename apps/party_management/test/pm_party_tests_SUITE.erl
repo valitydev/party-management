@@ -274,10 +274,7 @@ groups() ->
 init_per_suite(C) ->
     {Apps, _Ret} = pm_ct_helper:start_apps([woody, scoper, dmt_client, party_management]),
     ok = pm_domain:insert(construct_domain_fixture()),
-    [
-        {root_url, undefined}, %%maps:get(hellgate_root_url, Ret)}, 
-        {apps, Apps}
-    ] ++ C.
+    [{apps, Apps}|C].
 
 -spec end_per_suite(config()) -> _.
 end_per_suite(C) ->
@@ -291,14 +288,13 @@ init_per_group(shop_blocking_suspension, C) ->
     C;
 init_per_group(Group, C) ->
     PartyID = list_to_binary(lists:concat([Group, ".", erlang:system_time()])),
-    ApiClient = pm_ct_helper:create_client(cfg(root_url, C), PartyID),
+    ApiClient = pm_ct_helper:create_client(PartyID),
     Client = pm_client_party:start(PartyID, ApiClient),
     [{party_id, PartyID}, {client, Client} | C].
 
 -spec end_per_group(group_name(), config()) -> _.
 end_per_group(_Group, C) ->
-    Client = cfg(client, C),
-    pm_client_party:stop(Client).
+    pm_client_party:stop(cfg(client, C)).
 
 -spec init_per_testcase(test_case_name(), config()) -> config().
 init_per_testcase(_Name, C) ->
@@ -555,12 +551,10 @@ party_creation(C) ->
     0 = maps:size(Contracts).
 
 party_already_exists(C) ->
-    Client = cfg(client, C),
-    ?party_exists() = pm_client_party:create(make_party_params(), Client).
+    ?party_exists() = pm_client_party:create(make_party_params(), cfg(client, C)).
 
 party_not_found_on_retrieval(C) ->
-    Client = cfg(client, C),
-    ?party_not_found() = pm_client_party:get(Client).
+    ?party_not_found() = pm_client_party:get(cfg(client, C)).
 
 party_retrieval(C) ->
     Client = cfg(client, C),
@@ -625,8 +619,7 @@ create_change_set(ID) ->
     ].
 
 contract_not_found(C) ->
-    Client = cfg(client, C),
-    ?contract_not_found() = pm_client_party:get_contract(<<"666">>, Client).
+    ?contract_not_found() = pm_client_party:get_contract(<<"666">>, cfg(client, C)).
 
 contract_creation(C) ->
     Client = cfg(client, C),
@@ -1591,7 +1584,7 @@ party_access_control(C) ->
     BadExternalClient0 = pm_client_party:start(
         #payproc_UserInfo{id = <<"FakE1D">>, type = {external_user, #payproc_ExternalUser{}}},
         PartyID,
-        pm_client_api:new(cfg(root_url, C))
+        pm_client_api:new()
     ),
     ?invalid_user() = pm_client_party:get(BadExternalClient0),
     pm_client_party:stop(BadExternalClient0),
@@ -1605,7 +1598,7 @@ party_access_control(C) ->
     UserIdentityClient1 = pm_client_party:start(
         #payproc_UserInfo{id = <<"FakE1D">>, type = {external_user, #payproc_ExternalUser{}}},
         PartyID,
-        pm_client_api:new(cfg(root_url, C), Context)
+        pm_client_api:new(Context)
     ),
     #domain_Party{id = PartyID} = pm_client_party:get(UserIdentityClient1),
     pm_client_party:stop(UserIdentityClient1),
@@ -1614,7 +1607,7 @@ party_access_control(C) ->
     GoodInternalClient = pm_client_party:start(
         #payproc_UserInfo{id = <<"F4KE1D">>, type = {internal_user, #payproc_InternalUser{}}},
         PartyID,
-        pm_client_api:new(cfg(root_url, C))
+        pm_client_api:new()
     ),
     #domain_Party{id = PartyID} = pm_client_party:get(GoodInternalClient),
     pm_client_party:stop(GoodInternalClient),
@@ -1623,7 +1616,7 @@ party_access_control(C) ->
     GoodServiceClient = pm_client_party:start(
         #payproc_UserInfo{id = <<"fAkE1D">>, type = {service_user, #payproc_ServiceUser{}}},
         PartyID,
-        pm_client_api:new(cfg(root_url, C))
+        pm_client_api:new()
     ),
     #domain_Party{id = PartyID} = pm_client_party:get(GoodServiceClient),
     pm_client_party:stop(GoodServiceClient),

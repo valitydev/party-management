@@ -327,15 +327,15 @@ init({UserInfo, PartyID, ApiClient}) ->
 -spec handle_call(term(), callref(), state()) -> {reply, term(), state()} | {noreply, state()}.
 handle_call({call, Function, Args0}, _From, St = #state{client = Client}) ->
     Args = [St#state.user_info, St#state.party_id | Args0],
-    {Result, ClientNext} = pm_client_api:call(party_management, Function, Args, Client),
-    {reply, Result, St#state{client = ClientNext}};
+    Result = pm_client_api:call(party_management, Function, Args, Client),
+    {reply, Result, St};
 handle_call({call_without_party, Function, Args0}, _From, St = #state{client = Client}) ->
     Args = [St#state.user_info | Args0],
-    {Result, ClientNext} = pm_client_api:call(party_management, Function, Args, Client),
-    {reply, Result, St#state{client = ClientNext}};
+    Result = pm_client_api:call(party_management, Function, Args, Client),
+    {reply, Result, St};
 handle_call({pull_event, Timeout}, _From, St = #state{poller = Poller, client = Client}) ->
-    {Result, ClientNext, PollerNext} = pm_client_event_poller:poll(1, Timeout, Client, Poller),
-    StNext = St#state{poller = PollerNext, client = ClientNext},
+    {Result, PollerNext} = pm_client_event_poller:poll(1, Timeout, Client, Poller),
+    StNext = St#state{poller = PollerNext},
     case Result of
         [] ->
             {reply, timeout, StNext};

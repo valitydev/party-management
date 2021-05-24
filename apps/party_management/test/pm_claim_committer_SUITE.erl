@@ -69,11 +69,10 @@ all() ->
 -spec init_per_suite(config()) -> config().
 init_per_suite(C) ->
     {Apps, _Ret} = pm_ct_helper:start_apps([woody, scoper, dmt_client, party_management]),
-    RootUrl = undefined,%%maps:get(hellgate_root_url, Ret),
     ok = pm_domain:insert(construct_domain_fixture()),
     PartyID = erlang:list_to_binary([?MODULE_STRING, ".", erlang:integer_to_list(erlang:system_time())]),
-    ApiClient = pm_ct_helper:create_client(RootUrl, PartyID),
-    [{root_url, RootUrl}, {apps, Apps}, {party_id, PartyID}, {api_client, ApiClient} | C].
+    ApiClient = pm_ct_helper:create_client(PartyID),
+    [{apps, Apps}, {party_id, PartyID}, {api_client, ApiClient} | C].
 
 -spec end_per_suite(config()) -> _.
 end_per_suite(C) ->
@@ -497,7 +496,7 @@ cfg(Key, C) ->
 call(Function, Args, C) ->
     ApiClient = cfg(api_client, C),
     PartyID = cfg(party_id, C),
-    {Result, _} = pm_client_api:call(claim_committer, Function, [PartyID | Args], ApiClient),
+    Result = pm_client_api:call(claim_committer, Function, [PartyID | Args], ApiClient),
     map_call_result(Result).
 
 accept_claim(Claim, C) ->
@@ -513,7 +512,7 @@ map_call_result(Other) ->
 
 call_pm(Fun, Args, C) ->
     ApiClient = cfg(api_client, C),
-    {Result, _} = pm_client_api:call(party_management, Fun, [undefined | Args], ApiClient),
+    Result = pm_client_api:call(party_management, Fun, [undefined | Args], ApiClient),
     map_call_result(Result).
 
 create_party(PartyID, ContactInfo, C) ->

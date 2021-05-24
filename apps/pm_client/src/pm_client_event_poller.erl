@@ -31,26 +31,25 @@ new(RPC, GetEventID) ->
     }.
 
 -spec poll(pos_integer(), non_neg_integer(), pm_client_api:t(), st(Event)) ->
-    {[Event] | {exception | error, _}, pm_client_api:t(), st(Event)}.
+    {[Event] | {exception | error, _}, st(Event)}.
 poll(N, Timeout, Client, St) ->
     poll(N, Timeout, [], Client, St).
 
-poll(_, Timeout, Acc, Client, St) when Timeout < 0 ->
-    {Acc, Client, St};
+poll(_, Timeout, Acc, _Client, St) when Timeout < 0 ->
+    {Acc, St};
 poll(N, Timeout, Acc, Client, St) ->
     StartTs = genlib_time:ticks(),
     Range = construct_range(St, N),
-    {Result, ClientNext} = call(Range, Client, St),
-    case Result of
+    case call(Range, Client, St) of
         {ok, Events} when length(Events) == N ->
             StNext = update_last_event_id(Events, St),
-            {Acc ++ Events, ClientNext, StNext};
+            {Acc ++ Events, StNext};
         {ok, Events} when is_list(Events) ->
             TimeoutLeft = wait_timeout(StartTs, Timeout),
             StNext = update_last_event_id(Events, St),
-            poll(N - length(Events), TimeoutLeft, Acc ++ Events, ClientNext, StNext);
-        _Error ->
-            {Result, ClientNext, St}
+            poll(N - length(Events), TimeoutLeft, Acc ++ Events, Client, StNext);
+        Error ->
+            {Error, St}
     end.
 
 construct_range(St, N) ->
