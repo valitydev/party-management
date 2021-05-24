@@ -12,8 +12,6 @@
 -export([create_party_and_shop/5]).
 -export([create_battle_ready_shop/5]).
 -export([create_contract/3]).
--export([get_account/1]).
--export([get_balance/1]).
 -export([get_first_contract_id/1]).
 -export([get_first_battle_ready_contract_id/1]).
 -export([get_first_payout_tool_id/2]).
@@ -166,9 +164,6 @@ make_user_identity(UserID) ->
 -include_lib("damsel/include/dmsl_payment_processing_thrift.hrl").
 -include_lib("party_management/include/party_events.hrl").
 
--type account_id() :: dmsl_domain_thrift:'AccountID'().
--type account() :: map().
--type balance() :: map().
 -type contract_id() :: dmsl_domain_thrift:'ContractID'().
 -type contract_tpl() :: dmsl_domain_thrift:'ContractTemplateRef'().
 -type shop_id() :: dmsl_domain_thrift:'ShopID'().
@@ -303,16 +298,6 @@ ensure_claim_accepted(#payproc_Claim{id = ClaimID, revision = ClaimRevision, sta
         _ ->
             ok = pm_client_party:accept_claim(ClaimID, ClaimRevision, Client)
     end.
-
--spec get_account(account_id()) -> account().
-get_account(AccountID) ->
-    % TODO we sure need to proxy this through the hellgate interfaces
-    pm_accounting:get_account(AccountID).
-
--spec get_balance(account_id()) -> balance().
-get_balance(AccountID) ->
-    % TODO we sure need to proxy this through the hellgate interfaces
-    pm_accounting:get_balance(AccountID).
 
 -spec get_first_payout_tool_id(contract_id(), Client :: pid()) -> dmsl_domain_thrift:'PayoutToolID'().
 get_first_payout_tool_id(ContractID, Client) ->
