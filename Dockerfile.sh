@@ -2,9 +2,9 @@
 cat <<EOF
 FROM $BASE_IMAGE
 MAINTAINER Andrey Mayorov <a.mayorov@rbkmoney.com>
-COPY ./_build/prod/rel/hellgate /opt/hellgate
-WORKDIR /opt/hellgate
-CMD /opt/hellgate/bin/hellgate foreground
+COPY ./_build/prod/rel/party_management /opt/party_management
+WORKDIR /opt/party_management
+CMD /opt/party_management/bin/party_management foreground
 EXPOSE 8022
 LABEL com.rbkmoney.$SERVICE_NAME.parent=$BASE_IMAGE_NAME \
       com.rbkmoney.$SERVICE_NAME.parent_tag=$BASE_IMAGE_TAG \

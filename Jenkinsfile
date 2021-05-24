@@ -7,7 +7,7 @@ def finalHook = {
   }
 }
 
-build('hellgate', 'docker-host', finalHook) {
+build('party_management', 'docker-host', finalHook) {
   checkoutRepo()
   loadBuildUtils()
 

@@ -6,7 +6,7 @@ UTILS_PATH := build_utils
 TEMPLATES_PATH := .
 
 # Name of the service
-SERVICE_NAME := hellgate
+SERVICE_NAME := party_management
 # Service image default tag
 SERVICE_IMAGE_TAG ?= $(shell git rev-parse HEAD)
 # The tag for service image to be pushed with
@@ -78,5 +78,5 @@ distclean:
 test: submodules
 	$(REBAR) do eunit, ct
 
-test.%: apps/hellgate/test/hg_%_tests_SUITE.erl
+test.%: apps/party_management/test/pm_%_tests_SUITE.erl
 	$(REBAR) ct --suite=$^
