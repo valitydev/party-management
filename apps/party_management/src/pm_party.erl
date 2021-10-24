@@ -278,7 +278,8 @@ is_terms({struct, struct, {dmsl_domain_thrift, Struct}}, Terms) when
     Struct =:= 'ServiceAcceptanceActsTerms';
     Struct =:= 'WalletServiceTerms';
     Struct =:= 'WithdrawalServiceTerms';
-    Struct =:= 'W2WServiceTerms'
+    Struct =:= 'W2WServiceTerms';
+    Struct =:= 'PaymentAllocationServiceTerms'
 ->
     is_record(Terms, dmsl_domain_thrift:record_name(Struct));
 is_terms(_, _) ->
