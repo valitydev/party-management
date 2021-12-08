@@ -49,7 +49,7 @@ compute_postings(CF, Context, AccountMap) ->
             compute_volume(Volume, Context),
             Details
         )
-     || ?posting(Source, Destination, Volume, Details) <- CF
+        || ?posting(Source, Destination, Volume, Details) <- CF
     ].
 
 construct_final_account(AccountType, AccountMap) ->
@@ -123,7 +123,9 @@ compute_product(Fun, CV, CVMin = #domain_Cash{amount = AmountMin, currency = Cur
 compute_product_fun(min_of, V1, V2) ->
     erlang:min(V1, V2);
 compute_product_fun(max_of, V1, V2) ->
-    erlang:max(V1, V2).
+    erlang:max(V1, V2);
+compute_product_fun(sum_of, V1, V2) ->
+    V1 + V2.
 
 resolve_constant(Constant, Context) ->
     case Context of
