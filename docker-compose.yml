@@ -1,0 +1,65 @@
+version: '3'
+services:
+
+  testrunner:
+    image: $DEV_IMAGE_TAG
+    build:
+      dockerfile: Dockerfile.dev
+      context: .
+      args:
+        OTP_VERSION: $OTP_VERSION
+        THRIFT_VERSION: $THRIFT_VERSION
+    volumes:
+      - .:$PWD
+    hostname: $SERVICE_NAME
+    working_dir: $PWD
+    depends_on:
+      - machinegun
+      - dominant
+      - shumway
+    ports:
+      - "8022:8022"
+    command: /sbin/init
+
+  dominant:
+    image: docker.io/rbkmoney/dominant:c39b52984cd205faba34dd4bfe5df7e3ef7fa482
+    depends_on:
+      - machinegun
+    ports:
+      - "8022"
+    command: /opt/dominant/bin/dominant foreground
+
+  machinegun:
+    image: docker.io/rbkmoney/machinegun:c05a8c18cd4f7966d70b6ad84cac9429cdfe37ae
+    ports:
+      - "8022"
+    command: /opt/machinegun/bin/machinegun foreground
+    volumes:
+      - ./test/machinegun/config.yaml:/opt/machinegun/etc/config.yaml
+      - ./test/machinegun/cookie:/opt/machinegun/etc/cookie
+
+  shumway:
+    image: docker.io/rbkmoney/shumway:44eb989065b27be619acd16b12ebdb2288b46c36
+    restart: unless-stopped
+    depends_on:
+      - shumway-db
+    ports:
+      - "8022"
+    entrypoint:
+      - java
+      - -Xmx512m
+      - -jar
+      - /opt/shumway/shumway.jar
+      - --spring.datasource.url=jdbc:postgresql://shumway-db:5432/shumway
+      - --spring.datasource.username=postgres
+      - --spring.datasource.password=postgres
+      - --management.metrics.export.statsd.enabled=false
+
+  shumway-db:
+    image: docker.io/library/postgres:9.6
+    ports:
+      - "5432"
+    environment:
+      - POSTGRES_DB=shumway
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
