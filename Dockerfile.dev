@@ -5,12 +5,6 @@ FROM docker.io/library/erlang:${OTP_VERSION}
 ARG THRIFT_VERSION
 ARG BUILDARCH
 
-RUN apt-get update && \
-    apt-get install -y netcat
-
-RUN wget -qP /usr/local/bin/ https://raw.githubusercontent.com/eficode/wait-for/v2.2.2/wait-for; \
-    chmod +x /usr/local/bin/wait-for
-
 RUN wget -q -O- "https://github.com/valitydev/thrift/releases/download/${THRIFT_VERSION}/thrift-${THRIFT_VERSION}-linux-${BUILDARCH}.tar.gz" \
     | tar -xvz -C /usr/local/bin/
 

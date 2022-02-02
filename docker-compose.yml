@@ -1,4 +1,3 @@
-version: '3'
 services:
 
   testrunner:
@@ -14,9 +13,12 @@ services:
     hostname: $SERVICE_NAME
     working_dir: $PWD
     depends_on:
-      - machinegun
-      - dominant
-      - shumway
+      machinegun:
+        condition: service_started
+      dominant:
+        condition: service_started
+      shumway:
+        condition: service_healthy
     ports:
       - "8022:8022"
     command: /sbin/init
@@ -54,6 +56,11 @@ services:
       - --spring.datasource.username=postgres
       - --spring.datasource.password=postgres
       - --management.metrics.export.statsd.enabled=false
+    healthcheck:
+      test: curl http://localhost:8022/
+      interval: 5s
+      timeout: 1s
+      retries: 20
 
   shumway-db:
     image: docker.io/library/postgres:9.6
