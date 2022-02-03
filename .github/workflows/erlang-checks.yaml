@@ -92,7 +92,7 @@ jobs:
           COMPOSE_DOCKER_CLI_BUILD: true
           DOCKER_BUILDKIT: true
         run: |
-          docker-compose run --use-aliases --rm testrunner docker ps
+          docker-compose run --use-aliases --rm testrunner docker container inspect $(docker container ls -lq)
       - name: Store CT Logs
         if: ${{ failure() && (steps.run-ct.outcome == 'failure' || steps.run-ct-w-compose.outcome == 'failure') }}
         uses: actions/upload-artifact@v2
