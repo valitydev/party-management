@@ -47,4 +47,4 @@ jobs:
           build-args: |
             OTP_VERSION=${{ env.OTP_VERSION }}
             THRIFT_VERSION=${{ env.THRIFT_VERSION }}
-            SERVICE=${{ env.SERVICE }}
+            SERVICE_NAME=${{ env.SERVICE_NAME }}
