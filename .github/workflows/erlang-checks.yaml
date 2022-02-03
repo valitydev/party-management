@@ -84,14 +84,14 @@ jobs:
         if: ${{ true == true }}
         env:
           # Pass workflow params to use in docker-compose.yml
-          DEV_IMAGE_TAG: ${{ "testrunner" }}-dev
+          DEV_IMAGE_TAG: testrunner-dev
           OTP_VERSION: ${{ needs.setup.outputs.otp-version }}
           THRIFT_VERSION: ${{ needs.setup.outputs.thrift-version }}
           # Enable buildkit extensions in docker compose
           COMPOSE_DOCKER_CLI_BUILD: true
           DOCKER_BUILDKIT: true
         run: |
-          docker-compose run --use-aliases --rm ${{ "testrunner" }} docker container inspect testrunner
+          docker-compose run --use-aliases --rm testrunner docker container inspect testrunner
       - name: Store CT Logs
         if: ${{ failure() && (steps.run-ct.outcome == 'failure' || steps.run-ct-w-compose.outcome == 'failure') }}
         uses: actions/upload-artifact@v2
