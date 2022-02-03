@@ -14,11 +14,11 @@ RUN rebar3 compile
 RUN rebar3 as prod release
 
 FROM erlang:${OTP_VERSION}-slim
-ARG SERVICE
+ARG SERVICE_NAME
 ENV CHARSET=UTF-8
 ENV LANG=C.UTF-8
-COPY --from=builder /build/_build/prod/rel/${SERVICE} /opt/${SERVICE}
-WORKDIR /opt/${SERVICE}
+COPY --from=builder /build/_build/prod/rel/${SERVICE_NAME} /opt/${SERVICE_NAME}
+WORKDIR /opt/${SERVICE_NAME}
 ENTRYPOINT []
-CMD /opt/${SERVICE}/bin/${SERVICE} foreground
+CMD /opt/${SERVICE_NAME}/bin/${SERVICE_NAME} foreground
 EXPOSE 8022
