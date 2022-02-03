@@ -14,9 +14,9 @@ services:
     working_dir: $PWD
     depends_on:
       machinegun:
-        condition: service_healthy
+        condition: service_started
       dominant:
-        condition: service_healthy
+        condition: service_started
       shumway:
         condition: service_healthy
     ports:
