@@ -14,9 +14,9 @@ services:
     working_dir: $PWD
     depends_on:
       machinegun:
-        condition: service_started
+        condition: service_healthy
       dominant:
-        condition: service_started
+        condition: service_healthy
       shumway:
         condition: service_healthy
     ports:
@@ -30,6 +30,11 @@ services:
     ports:
       - "8022"
     command: /opt/dominant/bin/dominant foreground
+    healthcheck:
+      test: curl http://localhost:8022/
+      interval: 5s
+      timeout: 1s
+      retries: 20
 
   machinegun:
     image: docker.io/rbkmoney/machinegun:c05a8c18cd4f7966d70b6ad84cac9429cdfe37ae
@@ -39,6 +44,11 @@ services:
     volumes:
       - ./test/machinegun/config.yaml:/opt/machinegun/etc/config.yaml
       - ./test/machinegun/cookie:/opt/machinegun/etc/cookie
+    healthcheck:
+      test: curl http://localhost:8022/
+      interval: 5s
+      timeout: 1s
+      retries: 20
 
   shumway:
     image: docker.io/rbkmoney/shumway:44eb989065b27be619acd16b12ebdb2288b46c36
