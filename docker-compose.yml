@@ -11,7 +11,7 @@ services:
     volumes:
       - .:$PWD
       - /var/run/docker.sock:/var/run/docker.sock
-    # hostname: $SERVICE_NAME
+    hostname: $SERVICE_NAME
     working_dir: $PWD
     depends_on:
       machinegun:
