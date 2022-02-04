@@ -80,7 +80,7 @@ jobs:
         if: ${{ true == false }}
         run: rebar3 ct --cover
 
-      - run: cat $GITHUB_ENV
+      - run: env
 
       - name: Run CommonTest (/w docker-compose)
         id: run-ct-w-compose
