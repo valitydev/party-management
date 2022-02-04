@@ -80,6 +80,8 @@ jobs:
         if: ${{ true == false }}
         run: rebar3 ct --cover
 
+      - run: cat $GITHUB_ENV
+
       - name: Run CommonTest (/w docker-compose)
         id: run-ct-w-compose
         if: ${{ true == true }}
@@ -92,7 +94,7 @@ jobs:
           COMPOSE_DOCKER_CLI_BUILD: true
           DOCKER_BUILDKIT: true
         run: |
-          docker container inspect $(docker-compose run -d --use-aliases --rm testrunner rebar3 ct --cover); echo $SERVICE_NAME
+          echo $SERVICE_NAME && docker container inspect $(docker-compose run -d --use-aliases --rm testrunner rebar3 ct --cover)
       - name: Store CT Logs
         if: ${{ failure() && (steps.run-ct.outcome == 'failure' || steps.run-ct-w-compose.outcome == 'failure') }}
         uses: actions/upload-artifact@v2
