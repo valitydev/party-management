@@ -5,9 +5,6 @@ FROM docker.io/library/erlang:${OTP_VERSION}
 ARG THRIFT_VERSION
 ARG BUILDARCH
 
-RUN wget "https://download.docker.com/linux/ubuntu/dists/focal/pool/stable/amd64/docker-ce-cli_20.10.9~3-0~ubuntu-focal_amd64.deb" \
-    && dpkg -i docker-ce-cli_20.10.9~3-0~ubuntu-focal_amd64.deb
-
 RUN wget -q -O- "https://github.com/valitydev/thrift/releases/download/${THRIFT_VERSION}/thrift-${THRIFT_VERSION}-linux-${BUILDARCH}.tar.gz" \
     | tar -xvz -C /usr/local/bin/
 
