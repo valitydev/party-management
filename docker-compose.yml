@@ -31,7 +31,7 @@ services:
       - "8022"
     command: /opt/dominant/bin/dominant foreground
     healthcheck:
-      test: curl http://localhost:8022/
+      test: curl http://localhost:8022/health
       interval: 5s
       timeout: 1s
       retries: 20
@@ -45,7 +45,7 @@ services:
       - ./test/machinegun/config.yaml:/opt/machinegun/etc/config.yaml
       - ./test/machinegun/cookie:/opt/machinegun/etc/cookie
     healthcheck:
-      test: curl http://localhost:8022/
+      test: curl http://localhost:8022/health
       interval: 5s
       timeout: 1s
       retries: 20
