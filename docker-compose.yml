@@ -16,7 +16,7 @@ services:
       machinegun:
         condition: service_healthy
       dominant:
-        condition: service_healthy
+        condition: service_started
       shumway:
         condition: service_healthy
     ports:
