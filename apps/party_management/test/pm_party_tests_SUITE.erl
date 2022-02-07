@@ -107,6 +107,7 @@
 -export([compute_pred_w_irreducible_criterion/1]).
 -export([compute_terms_w_criteria/1]).
 -export([check_all_payment_methods/1]).
+-export([check_all_withdrawal_methods/1]).
 
 %% tests descriptions
 
@@ -273,7 +274,8 @@ groups() ->
             party_creation,
             compute_pred_w_irreducible_criterion,
             compute_terms_w_criteria,
-            check_all_payment_methods
+            check_all_payment_methods,
+            check_all_withdrawal_methods
         ]}
     ].
 
@@ -978,6 +980,24 @@ contract_w2w_terms(C) ->
     {value, #domain_Fees{
         fees = #{surplus := {fixed, #domain_CashVolumeFixed{cash = ?cash(50, <<"RUB">>)}}}
     }} = Fees.
+
+-spec check_all_withdrawal_methods(config()) -> _.
+check_all_withdrawal_methods(C) ->
+    Client = cfg(client, C),
+    TermsFun = fun(Type, Object) ->
+        #domain_TermSet{} =
+            pm_client_party:compute_payment_institution_terms(
+                ?pinst(2),
+                #payproc_Varset{payment_method = ?pmt(Type, Object)},
+                Client
+            ),
+        ok
+    end,
+
+    TermsFun(bank_card, ?bank_card(<<"visa-ref">>)),
+    TermsFun(digital_wallet, ?pmt_srv(<<"qiwi-ref">>)),
+    TermsFun(mobile, ?mob(<<"mts-ref">>)),
+    TermsFun(crypto_currency, ?crypta(<<"bitcoin-ref">>)).
 
 shop_not_found_on_retrieval(C) ->
     Client = cfg(client, C),
@@ -2022,6 +2042,13 @@ construct_domain_fixture() ->
         }
     end,
 
+    PaymentMDFun = fun(PaymentTool, PaymentMethods) ->
+        #domain_PaymentMethodDecision{
+            if_ = {condition, {payment_tool, PaymentTool}},
+            then_ = {value, ordsets:from_list(PaymentMethods)}
+        }
+    end,
+
     TermSet = #domain_TermSet{
         payments = #domain_PaymentsServiceTerms{
             cash_limit =
@@ -2189,6 +2216,40 @@ construct_domain_fixture() ->
                                 )}
                     }
                 ]},
+            withdrawals = #domain_WithdrawalServiceTerms{
+                methods = {decisions, [
+                    PaymentMDFun(
+                        {bank_card, #domain_BankCardCondition{
+                            definition = {
+                                payment_system,
+                                #domain_PaymentSystemCondition{
+                                    payment_system_is = ?pmt_sys(<<"visa-ref">>)
+                                }
+                            }
+                        }},
+                        [?pmt(bank_card, ?bank_card(<<"visa-ref">>))]
+                    ),
+                    PaymentMDFun(
+                        {digital_wallet, #domain_DigitalWalletCondition{
+                            definition =
+                                {payment_service_is, ?pmt_srv(<<"qiwi-ref">>)}
+                        }},
+                        []
+                    ),
+                    PaymentMDFun(
+                        {mobile_commerce, #domain_MobileCommerceCondition{
+                            definition = {operator_is, ?mob(<<"mts-ref">>)}
+                        }},
+                        []
+                    ),
+                    PaymentMDFun(
+                        {crypto_currency, #domain_CryptoCurrencyCondition{
+                            definition = {crypto_currency_is, ?crypta(<<"bitcoin-ref">>)}
+                        }},
+                        []
+                    )
+                ]}
+            },
             w2w = #domain_W2WServiceTerms{
                 currencies = {value, ?ordset([?cur(<<"RUB">>)])},
                 cash_limit =
