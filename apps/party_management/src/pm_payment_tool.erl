@@ -109,6 +109,10 @@ create_from_method(#domain_PaymentMethodRef{id = {mobile_deprecated, Operator}})
             cc = <<"">>,
             ctn = <<"">>
         }
+    }};
+create_from_method(#domain_PaymentMethodRef{id = {generic, Generic}}) ->
+    {generic, #domain_GenericPaymentTool{
+        payment_service = Generic#domain_GenericPaymentMethod.payment_service
     }}.
 
 %%
@@ -116,16 +120,18 @@ create_from_method(#domain_PaymentMethodRef{id = {mobile_deprecated, Operator}})
 -spec test_condition(condition(), t(), pm_domain:revision()) -> boolean() | undefined.
 test_condition({bank_card, C}, {bank_card, V = #domain_BankCard{}}, Rev) ->
     test_bank_card_condition(C, V, Rev);
-test_condition({payment_terminal, C}, {payment_terminal, V = #domain_PaymentTerminal{}}, Rev) ->
-    test_payment_terminal_condition(C, V, Rev);
-test_condition({digital_wallet, C}, {digital_wallet, V = #domain_DigitalWallet{}}, Rev) ->
-    test_digital_wallet_condition(C, V, Rev);
-test_condition({crypto_currency, C}, {crypto_currency, V}, Rev) ->
-    test_crypto_currency_condition(C, {ref, V}, Rev);
-test_condition({crypto_currency, C}, {crypto_currency_deprecated, V}, Rev) ->
-    test_crypto_currency_condition(C, {legacy, V}, Rev);
-test_condition({mobile_commerce, C}, {mobile_commerce, V}, Rev) ->
-    test_mobile_commerce_condition(C, V, Rev);
+test_condition({payment_terminal, C}, {payment_terminal, V = #domain_PaymentTerminal{}}, _Rev) ->
+    test_payment_terminal_condition(C, V);
+test_condition({digital_wallet, C}, {digital_wallet, V = #domain_DigitalWallet{}}, _Rev) ->
+    test_digital_wallet_condition(C, V);
+test_condition({crypto_currency, C}, {crypto_currency, V}, _Rev) ->
+    test_crypto_currency_condition(C, {ref, V});
+test_condition({crypto_currency, C}, {crypto_currency_deprecated, V}, _Rev) ->
+    test_crypto_currency_condition(C, {legacy, V});
+test_condition({mobile_commerce, C}, {mobile_commerce, V}, _Rev) ->
+    test_mobile_commerce_condition(C, V);
+test_condition({generic, C}, {generic, V}, _Rev) ->
+    test_generic_condition(C, V);
 test_condition(_PaymentTool, _Condition, _Rev) ->
     false.
 
@@ -143,10 +149,10 @@ test_bank_card_condition_def(
     true;
 test_bank_card_condition_def({payment_system_is, _Ps}, #domain_BankCard{}, _Rev) ->
     false;
-test_bank_card_condition_def({payment_system, PaymentSystem}, V, Rev) ->
-    test_payment_system_condition(PaymentSystem, V, Rev);
-test_bank_card_condition_def({issuer_country_is, IssuerCountry}, V, Rev) ->
-    test_issuer_country_condition(IssuerCountry, V, Rev);
+test_bank_card_condition_def({payment_system, PaymentSystem}, V, _Rev) ->
+    test_payment_system_condition(PaymentSystem, V);
+test_bank_card_condition_def({issuer_country_is, IssuerCountry}, V, _Rev) ->
+    test_issuer_country_condition(IssuerCountry, V);
 test_bank_card_condition_def({issuer_bank_is, BankRef}, V, Rev) ->
     test_issuer_bank_condition(BankRef, V, Rev);
 test_bank_card_condition_def({category_is, CategoryRef}, V, Rev) ->
@@ -181,8 +187,7 @@ test_payment_system_condition(
         payment_system_deprecated = PsLegacy,
         token_provider_deprecated = TpLegacy,
         tokenization_method = Tm
-    },
-    _Rev
+    }
 ) ->
     ternary_and([
         some_defined([PsIs, TpIs, PsLegacyIs, TpLegacyIs, TmIs]),
@@ -193,7 +198,7 @@ test_payment_system_condition(
         TmIs == undefined orelse ternary_while([Tm, TmIs == Tm])
     ]).
 
-test_issuer_country_condition(Country, #domain_BankCard{issuer_country = TargetCountry}, _Rev) ->
+test_issuer_country_condition(Country, #domain_BankCard{issuer_country = TargetCountry}) ->
     ternary_while([TargetCountry, Country == TargetCountry]).
 
 test_issuer_bank_condition(BankRef, #domain_BankCard{bank_name = BankName, bin = BIN}, Rev) ->
@@ -220,66 +225,65 @@ test_bank_card_patterns(Patterns, BankName) ->
     Matches = ordsets:filter(fun(E) -> genlib_wildcard:match(BankName, E) end, Patterns),
     ordsets:size(Matches) > 0.
 
-test_payment_terminal_condition(#domain_PaymentTerminalCondition{definition = Def}, V, Rev) ->
-    Def =:= undefined orelse test_payment_terminal_condition_def(Def, V, Rev).
+test_payment_terminal_condition(#domain_PaymentTerminalCondition{definition = Def}, V) ->
+    Def =:= undefined orelse test_payment_terminal_condition_def(Def, V).
 
 test_payment_terminal_condition_def(
     {payment_service_is, Ps1},
-    #domain_PaymentTerminal{payment_service = Ps2},
-    _Rev
+    #domain_PaymentTerminal{payment_service = Ps2}
 ) ->
     Ps1 =:= Ps2;
 test_payment_terminal_condition_def(
     {provider_is_deprecated, V1},
-    #domain_PaymentTerminal{terminal_type_deprecated = V2},
-    _Rev
+    #domain_PaymentTerminal{terminal_type_deprecated = V2}
 ) ->
     V1 =:= V2;
-test_payment_terminal_condition_def(_Cond, _Data, _Rev) ->
+test_payment_terminal_condition_def(_Cond, _Data) ->
     false.
 
-test_digital_wallet_condition(#domain_DigitalWalletCondition{definition = Def}, V, Rev) ->
-    Def =:= undefined orelse test_digital_wallet_condition_def(Def, V, Rev).
+test_digital_wallet_condition(#domain_DigitalWalletCondition{definition = Def}, V) ->
+    Def =:= undefined orelse test_digital_wallet_condition_def(Def, V).
 
 test_digital_wallet_condition_def(
     {payment_service_is, Ps1},
-    #domain_DigitalWallet{payment_service = Ps2},
-    _Rev
+    #domain_DigitalWallet{payment_service = Ps2}
 ) ->
     Ps1 =:= Ps2;
 test_digital_wallet_condition_def(
     {provider_is_deprecated, V1},
-    #domain_DigitalWallet{provider_deprecated = V2},
-    _Rev
+    #domain_DigitalWallet{provider_deprecated = V2}
 ) ->
     V1 =:= V2;
-test_digital_wallet_condition_def(_Cond, _Data, _Rev) ->
+test_digital_wallet_condition_def(_Cond, _Data) ->
     false.
 
-test_crypto_currency_condition(#domain_CryptoCurrencyCondition{definition = Def}, V, Rev) ->
-    Def =:= undefined orelse test_crypto_currency_condition_def(Def, V, Rev).
+test_crypto_currency_condition(#domain_CryptoCurrencyCondition{definition = Def}, V) ->
+    Def =:= undefined orelse test_crypto_currency_condition_def(Def, V).
 
-test_crypto_currency_condition_def({crypto_currency_is, C1}, {ref, C2}, _Rev) ->
+test_crypto_currency_condition_def({crypto_currency_is, C1}, {ref, C2}) ->
     C1 =:= C2;
-test_crypto_currency_condition_def({crypto_currency_is_deprecated, C1}, {legacy, C2}, _Rev) ->
+test_crypto_currency_condition_def({crypto_currency_is_deprecated, C1}, {legacy, C2}) ->
     C1 =:= C2;
-test_crypto_currency_condition_def(_Cond, _Data, _Rev) ->
+test_crypto_currency_condition_def(_Cond, _Data) ->
     false.
 
-test_mobile_commerce_condition(#domain_MobileCommerceCondition{definition = Def}, V, Rev) ->
-    Def =:= undefined orelse test_mobile_commerce_condition_def(Def, V, Rev).
+test_mobile_commerce_condition(#domain_MobileCommerceCondition{definition = Def}, V) ->
+    Def =:= undefined orelse test_mobile_commerce_condition_def(Def, V).
 
 test_mobile_commerce_condition_def(
     {operator_is, C1},
-    #domain_MobileCommerce{operator = C2},
-    _Rev
+    #domain_MobileCommerce{operator = C2}
 ) ->
     C1 =:= C2;
 test_mobile_commerce_condition_def(
     {operator_is_deprecated, C1},
-    #domain_MobileCommerce{operator_deprecated = C2},
-    _Rev
+    #domain_MobileCommerce{operator_deprecated = C2}
 ) ->
     C1 =:= C2;
-test_mobile_commerce_condition_def(_Cond, _Data, _Rev) ->
+test_mobile_commerce_condition_def(_Cond, _Data) ->
+    false.
+
+test_generic_condition({payment_service_is, Ref1}, #domain_GenericPaymentTool{payment_service = Ref2}) ->
+    Ref1 =:= Ref2;
+test_generic_condition(_Cond, _Data) ->
     false.

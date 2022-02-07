@@ -930,7 +930,8 @@ check_all_payment_methods(C) ->
     TermsFun(tokenized_bank_card_deprecated, ?tkz_bank_card(visa, applepay)),
     TermsFun(empty_cvv_bank_card_deprecated, visa),
     TermsFun(crypto_currency_deprecated, litecoin),
-    TermsFun(mobile_deprecated, yota).
+    TermsFun(mobile_deprecated, yota),
+    TermsFun(generic, ?gnrc(?pmt_srv(<<"generic-ref">>))).
 
 compute_payout_cash_flow(C) ->
     Client = cfg(client, C),
@@ -2139,6 +2140,10 @@ construct_domain_fixture() ->
                         {mobile_commerce, #domain_MobileCommerceCondition{definition = {operator_is_deprecated, yota}}},
                         []
                     ),
+                    PayoutMDFun(
+                        {generic, {payment_service_is, ?gnrc(?pmt_srv(<<"generic-ref">>))}},
+                        []
+                    ),
                     #domain_PayoutMethodDecision{
                         if_ = {condition, {payment_tool, {bank_card, #domain_BankCardCondition{}}}},
                         then_ = {value, ordsets:from_list([?pomt(russian_bank_account)])}
@@ -2347,6 +2352,7 @@ construct_domain_fixture() ->
         pm_ct_fixture:construct_payment_method(?pmt(digital_wallet, ?pmt_srv(<<"qiwi-ref">>))),
         pm_ct_fixture:construct_payment_method(?pmt(mobile, ?mob(<<"mts-ref">>))),
         pm_ct_fixture:construct_payment_method(?pmt(crypto_currency, ?crypta(<<"bitcoin-ref">>))),
+        pm_ct_fixture:construct_payment_method(?pmt(generic, ?gnrc(?pmt_srv(<<"generic-ref">>)))),
 
         pm_ct_fixture:construct_payment_method(?pmt(bank_card_deprecated, visa)),
         pm_ct_fixture:construct_payment_method(?pmt(bank_card_deprecated, mastercard)),
