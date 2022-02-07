@@ -1,17 +1,24 @@
-FROM ghcr.io/rbkmoney/build-erlang:785d48cbfa7e7f355300c08ba9edc6f0e78810cb AS builder
+ARG OTP_VERSION
+
+FROM erlang:${OTP_VERSION} AS builder
+
+ARG THRIFT_VERSION
+ARG BUILDARCH
+RUN wget -q -O- "https://github.com/valitydev/thrift/releases/download/${THRIFT_VERSION}/thrift-${THRIFT_VERSION}-linux-${BUILDARCH}.tar.gz" \
+    | tar -xvz -C /usr/local/bin/
+
 RUN mkdir /build
 COPY . /build/
 WORKDIR /build
 RUN rebar3 compile
 RUN rebar3 as prod release
 
-# Keep in sync with Erlang/OTP version in build image
-FROM erlang:24.1.3.0-slim
-ENV SERVICE=party-management
+FROM erlang:${OTP_VERSION}-slim
+ARG SERVICE_NAME
 ENV CHARSET=UTF-8
 ENV LANG=C.UTF-8
-COPY --from=builder /build/_build/prod/rel/${SERVICE} /opt/${SERVICE}
-WORKDIR /opt/${SERVICE}
+COPY --from=builder /build/_build/prod/rel/${SERVICE_NAME} /opt/${SERVICE_NAME}
+WORKDIR /opt/${SERVICE_NAME}
 ENTRYPOINT []
-CMD /opt/${SERVICE}/bin/${SERVICE} foreground
+CMD /opt/${SERVICE_NAME}/bin/${SERVICE_NAME} foreground
 EXPOSE 8022

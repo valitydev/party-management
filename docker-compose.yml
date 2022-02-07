@@ -1,44 +1,62 @@
-#!/bin/bash
-cat <<EOF
-version: '2.1'
 services:
 
-  ${SERVICE_NAME}:
-    image: ${BUILD_IMAGE}
+  testrunner:
+    image: $DEV_IMAGE_TAG
+    build:
+      dockerfile: Dockerfile.dev
+      context: .
+      args:
+        OTP_VERSION: $OTP_VERSION
+        THRIFT_VERSION: $THRIFT_VERSION
     volumes:
       - .:$PWD
-      - $HOME/.cache:/home/$UNAME/.cache
+    hostname: $SERVICE_NAME
     working_dir: $PWD
-    command: /sbin/init
     depends_on:
       machinegun:
         condition: service_healthy
+      dominant:
+        condition: service_started
       shumway:
         condition: service_healthy
-    mem_limit: 512M
+    ports:
+      - "8022:8022"
+    command: /sbin/init
 
   dominant:
-    image: dr2.rbkmoney.com/rbkmoney/dominant:753f3e0711fc7fff91abcad6e279225a7e5b8b8c
-    command: /opt/dominant/bin/dominant foreground
+    image: ghcr.io/valitydev/dominant:sha-8bd7828
     depends_on:
-      machinegun:
-        condition: service_healthy
+      - machinegun
+    ports:
+      - "8022"
+    command: /opt/dominant/bin/dominant foreground
+    healthcheck:
+      test: curl http://localhost:8022/health
+      interval: 5s
+      timeout: 1s
+      retries: 20
 
   machinegun:
-    image: dr2.rbkmoney.com/rbkmoney/machinegun:9c3248a68fe530d23a8266057a40a1a339a161b8
+    image: docker.io/rbkmoney/machinegun:c05a8c18cd4f7966d70b6ad84cac9429cdfe37ae
+    ports:
+      - "8022"
     command: /opt/machinegun/bin/machinegun foreground
     volumes:
       - ./test/machinegun/config.yaml:/opt/machinegun/etc/config.yaml
       - ./test/machinegun/cookie:/opt/machinegun/etc/cookie
     healthcheck:
-      test: "curl http://localhost:8022/"
+      test: curl http://localhost:8022/health
       interval: 5s
       timeout: 1s
       retries: 20
 
   shumway:
-    image: dr2.rbkmoney.com/rbkmoney/shumway:44eb989065b27be619acd16b12ebdb2288b46c36
+    image: docker.io/rbkmoney/shumway:44eb989065b27be619acd16b12ebdb2288b46c36
     restart: unless-stopped
+    depends_on:
+      - shumway-db
+    ports:
+      - "8022"
     entrypoint:
       - java
       - -Xmx512m
@@ -48,19 +66,17 @@ services:
       - --spring.datasource.username=postgres
       - --spring.datasource.password=postgres
       - --management.metrics.export.statsd.enabled=false
-    depends_on:
-      - shumway-db
     healthcheck:
-      test: "curl http://localhost:8022/"
+      test: curl http://localhost:8022/
       interval: 5s
       timeout: 1s
       retries: 20
 
   shumway-db:
-    image: dr2.rbkmoney.com/rbkmoney/postgres:9.6
+    image: docker.io/library/postgres:9.6
+    ports:
+      - "5432"
     environment:
       - POSTGRES_DB=shumway
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=postgres
-      - SERVICE_NAME=shumway-db
-EOF
