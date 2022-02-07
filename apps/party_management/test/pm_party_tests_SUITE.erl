@@ -2217,38 +2217,39 @@ construct_domain_fixture() ->
                     }
                 ]},
             withdrawals = #domain_WithdrawalServiceTerms{
-                methods = {decisions, [
-                    PaymentMDFun(
-                        {bank_card, #domain_BankCardCondition{
-                            definition = {
-                                payment_system,
-                                #domain_PaymentSystemCondition{
-                                    payment_system_is = ?pmt_sys(<<"visa-ref">>)
+                methods =
+                    {decisions, [
+                        PaymentMDFun(
+                            {bank_card, #domain_BankCardCondition{
+                                definition = {
+                                    payment_system,
+                                    #domain_PaymentSystemCondition{
+                                        payment_system_is = ?pmt_sys(<<"visa-ref">>)
+                                    }
                                 }
-                            }
-                        }},
-                        [?pmt(bank_card, ?bank_card(<<"visa-ref">>))]
-                    ),
-                    PaymentMDFun(
-                        {digital_wallet, #domain_DigitalWalletCondition{
-                            definition =
-                                {payment_service_is, ?pmt_srv(<<"qiwi-ref">>)}
-                        }},
-                        []
-                    ),
-                    PaymentMDFun(
-                        {mobile_commerce, #domain_MobileCommerceCondition{
-                            definition = {operator_is, ?mob(<<"mts-ref">>)}
-                        }},
-                        []
-                    ),
-                    PaymentMDFun(
-                        {crypto_currency, #domain_CryptoCurrencyCondition{
-                            definition = {crypto_currency_is, ?crypta(<<"bitcoin-ref">>)}
-                        }},
-                        []
-                    )
-                ]}
+                            }},
+                            [?pmt(bank_card, ?bank_card(<<"visa-ref">>))]
+                        ),
+                        PaymentMDFun(
+                            {digital_wallet, #domain_DigitalWalletCondition{
+                                definition =
+                                    {payment_service_is, ?pmt_srv(<<"qiwi-ref">>)}
+                            }},
+                            []
+                        ),
+                        PaymentMDFun(
+                            {mobile_commerce, #domain_MobileCommerceCondition{
+                                definition = {operator_is, ?mob(<<"mts-ref">>)}
+                            }},
+                            []
+                        ),
+                        PaymentMDFun(
+                            {crypto_currency, #domain_CryptoCurrencyCondition{
+                                definition = {crypto_currency_is, ?crypta(<<"bitcoin-ref">>)}
+                            }},
+                            []
+                        )
+                    ]}
             },
             w2w = #domain_W2WServiceTerms{
                 currencies = {value, ?ordset([?cur(<<"RUB">>)])},
