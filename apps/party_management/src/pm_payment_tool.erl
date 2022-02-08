@@ -298,6 +298,7 @@ test_generic_condition(_Cond, _Data) ->
 -spec test_condition_test() -> _.
 test_condition_test() ->
     PaymentServiceRef = #domain_PaymentServiceRef{id = <<"id">>},
+    RevisionUnused = 1,
 
     %% PaymentTerminal
     ?assertEqual(
@@ -305,7 +306,7 @@ test_condition_test() ->
         test_condition(
             {payment_terminal, #domain_PaymentTerminalCondition{definition = {payment_service_is, PaymentServiceRef}}},
             {payment_terminal, #domain_PaymentTerminal{payment_service = PaymentServiceRef}},
-            1
+            RevisionUnused
         )
     ),
     ?assertEqual(
@@ -313,7 +314,7 @@ test_condition_test() ->
         test_condition(
             {payment_terminal, #domain_PaymentTerminalCondition{definition = {provider_is_deprecated, alipay}}},
             {payment_terminal, #domain_PaymentTerminal{terminal_type_deprecated = alipay}},
-            1
+            RevisionUnused
         )
     ),
     ?assertEqual(
@@ -321,7 +322,7 @@ test_condition_test() ->
         test_condition(
             {payment_terminal, #domain_PaymentTerminalCondition{definition = nonsense}},
             {payment_terminal, #domain_PaymentTerminal{}},
-            1
+            RevisionUnused
         )
     ),
 
@@ -331,7 +332,7 @@ test_condition_test() ->
         test_condition(
             {digital_wallet, #domain_DigitalWalletCondition{definition = {payment_service_is, PaymentServiceRef}}},
             {digital_wallet, #domain_DigitalWallet{payment_service = PaymentServiceRef}},
-            1
+            RevisionUnused
         )
     ),
     ?assertEqual(
@@ -339,7 +340,7 @@ test_condition_test() ->
         test_condition(
             {digital_wallet, #domain_DigitalWalletCondition{definition = {provider_is_deprecated, webmoney}}},
             {digital_wallet, #domain_DigitalWallet{provider_deprecated = webmoney}},
-            1
+            RevisionUnused
         )
     ),
     ?assertEqual(
@@ -347,7 +348,7 @@ test_condition_test() ->
         test_condition(
             {digital_wallet, #domain_DigitalWalletCondition{definition = nonsense}},
             {digital_wallet, #domain_DigitalWallet{}},
-            1
+            RevisionUnused
         )
     ),
 
@@ -358,7 +359,7 @@ test_condition_test() ->
         test_condition(
             {mobile_commerce, #domain_MobileCommerceCondition{definition = {operator_is, MobileOperatorRef}}},
             {mobile_commerce, #domain_MobileCommerce{operator = MobileOperatorRef}},
-            1
+            RevisionUnused
         )
     ),
     ?assertEqual(
@@ -366,7 +367,7 @@ test_condition_test() ->
         test_condition(
             {mobile_commerce, #domain_MobileCommerceCondition{definition = {operator_is_deprecated, mts}}},
             {mobile_commerce, #domain_MobileCommerce{operator_deprecated = mts}},
-            1
+            RevisionUnused
         )
     ),
     ?assertEqual(
@@ -374,7 +375,7 @@ test_condition_test() ->
         test_condition(
             {mobile_commerce, #domain_MobileCommerceCondition{definition = nonsense}},
             {mobile_commerce, #domain_MobileCommerce{}},
-            1
+            RevisionUnused
         )
     ),
 
@@ -384,7 +385,7 @@ test_condition_test() ->
         test_condition(
             {generic, {payment_service_is, PaymentServiceRef}},
             {generic, #domain_GenericPaymentTool{payment_service = PaymentServiceRef}},
-            1
+            RevisionUnused
         )
     ),
     ?assertEqual(
@@ -392,7 +393,7 @@ test_condition_test() ->
         test_condition(
             {generic, nonsense},
             {generic, #domain_GenericPaymentTool{}},
-            1
+            RevisionUnused
         )
     ).
 
