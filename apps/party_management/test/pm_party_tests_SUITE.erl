@@ -107,6 +107,7 @@
 -export([compute_pred_w_irreducible_criterion/1]).
 -export([compute_terms_w_criteria/1]).
 -export([check_all_payment_methods/1]).
+-export([check_all_payment_methods_no_match/1]).
 
 %% tests descriptions
 
@@ -273,7 +274,8 @@ groups() ->
             party_creation,
             compute_pred_w_irreducible_criterion,
             compute_terms_w_criteria,
-            check_all_payment_methods
+            check_all_payment_methods,
+            check_all_payment_methods_no_match
         ]}
     ].
 
@@ -932,6 +934,26 @@ check_all_payment_methods(C) ->
     TermsFun(crypto_currency_deprecated, litecoin),
     TermsFun(mobile_deprecated, yota),
     TermsFun(generic, ?gnrc(?pmt_srv(<<"generic-ref">>))).
+
+-spec check_all_payment_methods_no_match(config()) -> _.
+check_all_payment_methods_no_match(C) ->
+    Client = cfg(client, C),
+    TermsFun = fun(Type, Object) ->
+        #domain_TermSet{} =
+            pm_client_party:compute_payment_institution_terms(
+                ?pinst(2),
+                #payproc_Varset{payment_method = ?pmt(Type, Object)},
+                Client
+            ),
+        ok
+    end,
+
+    TermsFun(bank_card, ?bank_card(<<"not-visa-ref">>)),
+    TermsFun(payment_terminal, ?pmt_srv(<<"not-alipay-ref">>)),
+    TermsFun(digital_wallet, ?pmt_srv(<<"not-qiwi-ref">>)),
+    TermsFun(mobile, ?mob(<<"not-mts-ref">>)),
+    TermsFun(crypto_currency, ?crypta(<<"not-bitcoin-ref">>)),
+    TermsFun(generic, ?gnrc(?pmt_srv(<<"not-generic-ref">>))).
 
 compute_payout_cash_flow(C) ->
     Client = cfg(client, C),
