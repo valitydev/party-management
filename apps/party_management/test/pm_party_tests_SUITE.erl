@@ -2141,7 +2141,7 @@ construct_domain_fixture() ->
                         []
                     ),
                     PayoutMDFun(
-                        {generic, {payment_service_is, ?gnrc(?pmt_srv(<<"generic-ref">>))}},
+                        {generic, {payment_service_is, ?pmt_srv(<<"generic-ref">>)}},
                         []
                     ),
                     #domain_PayoutMethodDecision{
