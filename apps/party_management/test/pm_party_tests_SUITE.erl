@@ -2343,6 +2343,7 @@ construct_domain_fixture() ->
         pm_ct_fixture:construct_mobile_operator(?mob(<<"mts-ref">>), <<"MTS">>),
         pm_ct_fixture:construct_crypto_currency(?crypta(<<"bitcoin-ref">>), <<"Bitcoin">>),
         pm_ct_fixture:construct_tokenized_service(?token_srv(<<"applepay-ref">>), <<"Apple Pay">>),
+        pm_ct_fixture:construct_payment_service(?pmt_srv(<<"generic-ref">>), <<"Generic">>),
 
         pm_ct_fixture:construct_payment_method(?pmt(bank_card, ?bank_card(<<"visa-ref">>))),
         pm_ct_fixture:construct_payment_method(?pmt(bank_card, ?bank_card(<<"mastercard-ref">>))),
