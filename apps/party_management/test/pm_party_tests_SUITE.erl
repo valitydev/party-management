@@ -912,7 +912,7 @@ compute_payment_institution_terms(C) ->
 check_all_payment_methods(C) ->
     Client = cfg(client, C),
     TermsFun = fun(Type, Object) ->
-        logger:info(
+        io:format(
             "Test check_all_payment_methods type: ~p object:~n~p",
             [Type, Object]
         ),
@@ -1003,7 +1003,7 @@ contract_w2w_terms(C) ->
 check_all_withdrawal_methods(C) ->
     Client = cfg(client, C),
     TermsFun = fun(Type, Object) ->
-        logger:info(
+        io:format(
             "Test check_all_withdrawal_methods type: ~p object:~n~p",
             [Type, Object]
         ),
