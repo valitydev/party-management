@@ -912,17 +912,19 @@ compute_payment_institution_terms(C) ->
 check_all_payment_methods(C) ->
     Client = cfg(client, C),
     TermsFun = fun(Type, Object) ->
-        #domain_TermSet{
-            payouts = #domain_PayoutsServiceTerms{
-                payout_methods =
-                    {value, [?pomt(russian_bank_account)]}
-            }
-        } =
+        ?assertMatch(
+            #domain_TermSet{
+                payouts = #domain_PayoutsServiceTerms{
+                    payout_methods =
+                        {value, [?pomt(russian_bank_account)]}
+                }
+            },
             pm_client_party:compute_payment_institution_terms(
                 ?pinst(2),
                 #payproc_Varset{payment_method = ?pmt(Type, Object)},
                 Client
-            ),
+            )
+        ),
         ok
     end,
     #domain_TermSet{payouts = #domain_PayoutsServiceTerms{payout_methods = {value, []}}} =
@@ -997,18 +999,20 @@ contract_w2w_terms(C) ->
 check_all_withdrawal_methods(C) ->
     Client = cfg(client, C),
     TermsFun = fun(Type, Object) ->
-        #domain_TermSet{
-            wallets = #domain_WalletServiceTerms{
-                withdrawals = #domain_WithdrawalServiceTerms{
-                    methods = {value, [?pmt(bank_card, ?bank_card(<<"visa-ref">>))]}
+        ?assertMatch(
+            #domain_TermSet{
+                wallets = #domain_WalletServiceTerms{
+                    withdrawals = #domain_WithdrawalServiceTerms{
+                        methods = {value, [?pmt(bank_card, ?bank_card(<<"visa-ref">>))]}
+                    }
                 }
-            }
-        } =
+            },
             pm_client_party:compute_payment_institution_terms(
                 ?pinst(2),
                 #payproc_Varset{payment_method = ?pmt(Type, Object)},
                 Client
-            ),
+            )
+        ),
         ok
     end,
 
