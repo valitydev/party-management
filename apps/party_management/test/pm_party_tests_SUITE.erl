@@ -994,7 +994,7 @@ check_all_withdrawal_methods(C) ->
         ok
     end,
 
-    TermsFun(bank_card, ?bank_card(<<"visa-ref">>)),
+    TermsFun(bank_card, ?bank_card(<<"visa-re">>)),
     TermsFun(digital_wallet, ?pmt_srv(<<"qiwi-ref">>)),
     TermsFun(mobile, ?mob(<<"mts-ref">>)),
     TermsFun(crypto_currency, ?crypta(<<"bitcoin-ref">>)).
