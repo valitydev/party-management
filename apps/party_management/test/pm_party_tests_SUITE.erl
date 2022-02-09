@@ -2197,6 +2197,10 @@ construct_domain_fixture() ->
                         [?pomt(russian_bank_account)]
                     ),
                     PayoutMDFun(
+                        {bank_card, #domain_BankCardCondition{definition = {payment_system_is, visa}}},
+                        [?pomt(russian_bank_account)]
+                    ),
+                    PayoutMDFun(
                         {crypto_currency, #domain_CryptoCurrencyCondition{
                             definition = {crypto_currency_is_deprecated, litecoin}
                         }},
