@@ -2123,7 +2123,7 @@ construct_domain_fixture() ->
                     ),
                     PayoutMDFun(
                         {bank_card, #domain_BankCardCondition{definition = {empty_cvv_is, true}}},
-                        []
+                        [?pomt(russian_bank_account)]
                     ),
 
                     %% For check_all_payment_methods
@@ -2173,6 +2173,13 @@ construct_domain_fixture() ->
                     PayoutMDFun(
                         {payment_terminal, #domain_PaymentTerminalCondition{
                             definition = {provider_is_deprecated, wechat}
+                        }},
+                        [?pomt(russian_bank_account)]
+                    ),
+                    PayoutMDFun(
+                        {digital_wallet, #domain_DigitalWalletCondition{
+                            definition =
+                                {provider_is_deprecated, rbkmoney}
                         }},
                         [?pomt(russian_bank_account)]
                     ),
