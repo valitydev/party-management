@@ -985,9 +985,11 @@ contract_w2w_terms(C) ->
 check_all_withdrawal_methods(C) ->
     Client = cfg(client, C),
     TermsFun = fun(Type, Object) ->
-        #domain_TermSet{wallets = #domain_WalletServiceTerms{
-            withdrawals = #domain_WithdrawalServiceTerms{methods = {value, _}}
-        }} =
+        #domain_TermSet{
+            wallets = #domain_WalletServiceTerms{
+                withdrawals = #domain_WithdrawalServiceTerms{methods = {value, _}}
+            }
+        } =
             pm_client_party:compute_payment_institution_terms(
                 ?pinst(2),
                 #payproc_Varset{payment_method = ?pmt(Type, Object)},
