@@ -933,7 +933,8 @@ check_all_payment_methods(C) ->
     TermsFun(value, tokenized_bank_card_deprecated, ?tkz_bank_card(visa, applepay)),
     TermsFun(value, empty_cvv_bank_card_deprecated, visa),
     TermsFun(value, crypto_currency_deprecated, litecoin),
-    TermsFun(value, mobile_deprecated, yota).
+    TermsFun(value, mobile_deprecated, yota),
+    TermsFun(value, generic, ?gnrc(?pmt_srv(<<"generic-ref">>))).
 
 compute_payout_cash_flow(C) ->
     Client = cfg(client, C),
@@ -2172,6 +2173,10 @@ construct_domain_fixture() ->
                         {mobile_commerce, #domain_MobileCommerceCondition{definition = {operator_is_deprecated, yota}}},
                         []
                     ),
+                    PayoutMDFun(
+                        {generic, {payment_service_is, ?pmt_srv(<<"generic-ref">>)}},
+                        []
+                    ),
                     #domain_PayoutMethodDecision{
                         if_ = {condition, {payment_tool, {bank_card, #domain_BankCardCondition{}}}},
                         then_ = {value, ordsets:from_list([?pomt(russian_bank_account)])}
@@ -2406,6 +2411,7 @@ construct_domain_fixture() ->
         pm_ct_fixture:construct_mobile_operator(?mob(<<"mts-ref">>), <<"MTS">>),
         pm_ct_fixture:construct_crypto_currency(?crypta(<<"bitcoin-ref">>), <<"Bitcoin">>),
         pm_ct_fixture:construct_tokenized_service(?token_srv(<<"applepay-ref">>), <<"Apple Pay">>),
+        pm_ct_fixture:construct_payment_service(?pmt_srv(<<"generic-ref">>), <<"Generic">>),
 
         pm_ct_fixture:construct_payment_method(?pmt(bank_card, ?bank_card(<<"visa-ref">>))),
         pm_ct_fixture:construct_payment_method(?pmt(bank_card, ?bank_card(<<"mastercard-ref">>))),
@@ -2415,6 +2421,7 @@ construct_domain_fixture() ->
         pm_ct_fixture:construct_payment_method(?pmt(digital_wallet, ?pmt_srv(<<"qiwi-ref">>))),
         pm_ct_fixture:construct_payment_method(?pmt(mobile, ?mob(<<"mts-ref">>))),
         pm_ct_fixture:construct_payment_method(?pmt(crypto_currency, ?crypta(<<"bitcoin-ref">>))),
+        pm_ct_fixture:construct_payment_method(?pmt(generic, ?gnrc(?pmt_srv(<<"generic-ref">>)))),
 
         pm_ct_fixture:construct_payment_method(?pmt(bank_card_deprecated, visa)),
         pm_ct_fixture:construct_payment_method(?pmt(bank_card_deprecated, mastercard)),
