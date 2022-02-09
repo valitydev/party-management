@@ -1000,7 +1000,7 @@ check_all_withdrawal_methods(C) ->
         #domain_TermSet{
             wallets = #domain_WalletServiceTerms{
                 withdrawals = #domain_WithdrawalServiceTerms{
-                    methods = {value, [?pmt(bank_card, ?bank_card(<<"terms-ok-ref">>))]}
+                    methods = {value, [?pmt(bank_card, ?bank_card(<<"visa-ref">>))]}
                 }
             }
         } =
@@ -2261,26 +2261,26 @@ construct_domain_fixture() ->
                                     }
                                 }
                             }},
-                            [?pmt(bank_card, ?bank_card(<<"terms-ok-ref">>))]
+                            [?pmt(bank_card, ?bank_card(<<"visa-ref">>))]
                         ),
                         PaymentMDFun(
                             {digital_wallet, #domain_DigitalWalletCondition{
                                 definition =
                                     {payment_service_is, ?pmt_srv(<<"qiwi-ref">>)}
                             }},
-                            [?pmt(bank_card, ?bank_card(<<"terms-ok-ref">>))]
+                            [?pmt(bank_card, ?bank_card(<<"visa-ref">>))]
                         ),
                         PaymentMDFun(
                             {mobile_commerce, #domain_MobileCommerceCondition{
                                 definition = {operator_is, ?mob(<<"mts-ref">>)}
                             }},
-                            [?pmt(bank_card, ?bank_card(<<"terms-ok-ref">>))]
+                            [?pmt(bank_card, ?bank_card(<<"visa-ref">>))]
                         ),
                         PaymentMDFun(
                             {crypto_currency, #domain_CryptoCurrencyCondition{
                                 definition = {crypto_currency_is, ?crypta(<<"bitcoin-ref">>)}
                             }},
-                            [?pmt(bank_card, ?bank_card(<<"terms-ok-ref">>))]
+                            [?pmt(bank_card, ?bank_card(<<"visa-ref">>))]
                         ),
                         #domain_PaymentMethodDecision{
                             if_ = {constant, true},
