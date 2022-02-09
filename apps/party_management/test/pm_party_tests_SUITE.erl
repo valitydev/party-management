@@ -911,8 +911,8 @@ compute_payment_institution_terms(C) ->
 -spec check_all_payment_methods(config()) -> _.
 check_all_payment_methods(C) ->
     Client = cfg(client, C),
-    TermsFun = fun(Type, Object) ->
-        #domain_TermSet{payouts = #domain_PayoutsServiceTerms{payout_methods = {value, _}}} =
+    TermsFun = fun(ResultType, Type, Object) ->
+        #domain_TermSet{payouts = #domain_PayoutsServiceTerms{payout_methods = {ResultType, _}}} =
             pm_client_party:compute_payment_institution_terms(
                 ?pinst(2),
                 #payproc_Varset{payment_method = ?pmt(Type, Object)},
@@ -921,18 +921,19 @@ check_all_payment_methods(C) ->
         ok
     end,
 
-    TermsFun(bank_card, ?bank_card(<<"visa-ref">>)),
-    TermsFun(payment_terminal, ?pmt_srv(<<"alipay-ref">>)),
-    TermsFun(digital_wallet, ?pmt_srv(<<"qiwi-ref">>)),
-    TermsFun(mobile, ?mob(<<"mts-ref">>)),
-    TermsFun(crypto_currency, ?crypta(<<"bitcoin-ref">>)),
-    TermsFun(bank_card_deprecated, maestro),
-    TermsFun(payment_terminal_deprecated, wechat),
-    TermsFun(digital_wallet_deprecated, rbkmoney),
-    TermsFun(tokenized_bank_card_deprecated, ?tkz_bank_card(visa, applepay)),
-    TermsFun(empty_cvv_bank_card_deprecated, visa),
-    TermsFun(crypto_currency_deprecated, litecoin),
-    TermsFun(mobile_deprecated, yota).
+    TermsFun(value, bank_card, ?bank_card(<<"visa-ref">>)),
+    TermsFun(value, payment_terminal, ?pmt_srv(<<"alipay-ref">>)),
+    TermsFun(value, digital_wallet, ?pmt_srv(<<"qiwi-ref">>)),
+    TermsFun(decisions, digital_wallet, ?pmt_srv(<<"wrong-ref">>)),
+    TermsFun(value, mobile, ?mob(<<"mts-ref">>)),
+    TermsFun(value, crypto_currency, ?crypta(<<"bitcoin-ref">>)),
+    TermsFun(value, bank_card_deprecated, maestro),
+    TermsFun(value, payment_terminal_deprecated, wechat),
+    TermsFun(value, digital_wallet_deprecated, rbkmoney),
+    TermsFun(value, tokenized_bank_card_deprecated, ?tkz_bank_card(visa, applepay)),
+    TermsFun(value, empty_cvv_bank_card_deprecated, visa),
+    TermsFun(value, crypto_currency_deprecated, litecoin),
+    TermsFun(value, mobile_deprecated, yota).
 
 compute_payout_cash_flow(C) ->
     Client = cfg(client, C),
@@ -984,10 +985,10 @@ contract_w2w_terms(C) ->
 -spec check_all_withdrawal_methods(config()) -> _.
 check_all_withdrawal_methods(C) ->
     Client = cfg(client, C),
-    TermsFun = fun(Type, Object) ->
+    TermsFun = fun(ResultType, Type, Object) ->
         #domain_TermSet{
             wallets = #domain_WalletServiceTerms{
-                withdrawals = #domain_WithdrawalServiceTerms{methods = {value, _}}
+                withdrawals = #domain_WithdrawalServiceTerms{methods = {ResultType, _}}
             }
         } =
             pm_client_party:compute_payment_institution_terms(
@@ -998,10 +999,11 @@ check_all_withdrawal_methods(C) ->
         ok
     end,
 
-    TermsFun(bank_card, ?bank_card(<<"visa-re">>)),
-    TermsFun(digital_wallet, ?pmt_srv(<<"qiwi-ref">>)),
-    TermsFun(mobile, ?mob(<<"mts-ref">>)),
-    TermsFun(crypto_currency, ?crypta(<<"bitcoin-ref">>)).
+    TermsFun(value, bank_card, ?bank_card(<<"visa-ref">>)),
+    TermsFun(value, digital_wallet, ?pmt_srv(<<"qiwi-ref">>)),
+    TermsFun(value, mobile, ?mob(<<"mts-ref">>)),
+    TermsFun(value, crypto_currency, ?crypta(<<"bitcoin-ref">>)),
+    TermsFun(decisions, bank_card, ?bank_card(<<"wrong-ref">>)).
 
 shop_not_found_on_retrieval(C) ->
     Client = cfg(client, C),
