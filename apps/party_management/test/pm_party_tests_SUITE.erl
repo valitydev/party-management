@@ -912,6 +912,10 @@ compute_payment_institution_terms(C) ->
 check_all_payment_methods(C) ->
     Client = cfg(client, C),
     TermsFun = fun(Type, Object) ->
+        logger:info(
+            "Test check_all_payment_methods type: ~p object:~n~p",
+            [Type, Object]
+        ),
         ?assertMatch(
             #domain_TermSet{
                 payouts = #domain_PayoutsServiceTerms{
@@ -999,6 +1003,10 @@ contract_w2w_terms(C) ->
 check_all_withdrawal_methods(C) ->
     Client = cfg(client, C),
     TermsFun = fun(Type, Object) ->
+        logger:info(
+            "Test check_all_withdrawal_methods type: ~p object:~n~p",
+            [Type, Object]
+        ),
         ?assertMatch(
             #domain_TermSet{
                 wallets = #domain_WalletServiceTerms{
