@@ -943,8 +943,8 @@ check_all_payment_methods(C) ->
     TermsFun(payment_terminal_deprecated, wechat),
     TermsFun(digital_wallet_deprecated, rbkmoney),
     TermsFun(tokenized_bank_card_deprecated, ?tkz_bank_card(visa, applepay)),
-    TermsFun(empty_cvv_bank_card_deprecated, visa),
-    TermsFun(crypto_currency_deprecated, litecoin).
+    TermsFun(empty_cvv_bank_card_deprecated, visa).
+    % TermsFun(crypto_currency_deprecated, litecoin).
 % TermsFun(mobile_deprecated, yota),
 % TermsFun(generic, ?gnrc(?pmt_srv(<<"generic-ref">>))).
 
