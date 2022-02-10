@@ -409,7 +409,7 @@ end_per_testcase(_Name, _C) ->
 -define(REAL_CONTRACTOR_ID, <<"CONTRACTOR1">>).
 -define(REAL_CONTRACT_ID, <<"CONTRACT1">>).
 -define(REAL_PARTY_PAYMENT_METHODS, [
-    % ?pmt(bank_card_deprecated, maestro),
+    ?pmt(bank_card_deprecated, maestro),
     ?pmt(bank_card_deprecated, mastercard),
     ?pmt(bank_card_deprecated, visa)
 ]).
@@ -2150,10 +2150,10 @@ construct_domain_fixture() ->
                         }},
                         [?pomt(wallet_info)]
                     ),
-                    % PayoutMDFun(
-                    %     {bank_card, #domain_BankCardCondition{definition = {payment_system_is, maestro}}},
-                    %     [?pomt(wallet_info)]
-                    % ),
+                    PayoutMDFun(
+                        {bank_card, #domain_BankCardCondition{definition = {payment_system_is, maestro}}},
+                        [?pomt(wallet_info)]
+                    ),
                     PayoutMDFun(
                         {payment_terminal, #domain_PaymentTerminalCondition{
                             definition = {provider_is_deprecated, wechat}
