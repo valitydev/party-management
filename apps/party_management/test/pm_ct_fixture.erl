@@ -103,6 +103,8 @@ construct_category(Ref, Name, Type) ->
 
 -spec construct_payment_method(dmsl_domain_thrift:'PaymentMethodRef'()) ->
     {payment_method, dmsl_domain_thrift:'PaymentMethodObject'()}.
+construct_payment_method(?pmt(generic, ?gnrc(?pmt_srv(Name))) = Ref) ->
+    construct_payment_method(Name, Ref);
 construct_payment_method(?pmt(mobile, ?mob(Name)) = Ref) ->
     construct_payment_method(Name, Ref);
 construct_payment_method(?pmt(_, ?pmt_srv(Name)) = Ref) ->
