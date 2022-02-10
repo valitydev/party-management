@@ -2107,7 +2107,7 @@ construct_domain_fixture() ->
                     ),
                     PayoutMDFun(
                         {bank_card, #domain_BankCardCondition{definition = {empty_cvv_is, true}}},
-                        []
+                        [?pomt(wallet_info)]
                     ),
 
                     %% For check_all_payment_methods
@@ -2172,15 +2172,6 @@ construct_domain_fixture() ->
                             definition =
                                 {payment_system, #domain_PaymentSystemCondition{
                                     token_provider_is_deprecated = applepay
-                                }}
-                        }},
-                        [?pomt(wallet_info)]
-                    ),
-                    PayoutMDFun(
-                        {bank_card, #domain_BankCardCondition{
-                            definition =
-                                {payment_system, #domain_PaymentSystemCondition{
-                                    payment_system_is_deprecated = visa
                                 }}
                         }},
                         [?pomt(wallet_info)]
