@@ -2454,7 +2454,6 @@ construct_domain_fixture() ->
         pm_ct_fixture:construct_payout_method(?pomt(russian_bank_account)),
         pm_ct_fixture:construct_payout_method(?pomt(international_bank_account)),
         pm_ct_fixture:construct_payout_method(?pomt(wallet_info)),
-        pm_ct_fixture:construct_payout_method(?pomt(payment_institution_account)),
 
         pm_ct_fixture:construct_proxy(?prx(1), <<"Dummy proxy">>),
         pm_ct_fixture:construct_inspector(?insp(1), <<"Dummy Inspector">>, ?prx(1)),
