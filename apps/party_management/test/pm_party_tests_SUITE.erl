@@ -916,7 +916,7 @@ check_all_payment_methods(C) ->
             #domain_TermSet{
                 payouts = #domain_PayoutsServiceTerms{
                     payout_methods =
-                        {value, [?pomt(international_bank_account)]}
+                        {value, [?pomt(wallet_info)]}
                 }
             },
             pm_client_party:compute_payment_institution_terms(
@@ -2107,7 +2107,7 @@ construct_domain_fixture() ->
                     ),
                     PayoutMDFun(
                         {bank_card, #domain_BankCardCondition{definition = {empty_cvv_is, true}}},
-                        [?pomt(russian_bank_account)]
+                        []
                     ),
 
                     %% For check_all_payment_methods
@@ -2120,7 +2120,7 @@ construct_domain_fixture() ->
                                 }
                             }
                         }},
-                        [?pomt(international_bank_account)]
+                        [?pomt(wallet_info)]
                     ),
                     PayoutMDFun(
                         {payment_terminal, #domain_PaymentTerminalCondition{
@@ -2129,43 +2129,43 @@ construct_domain_fixture() ->
                                 ?pmt_srv(<<"alipay-ref">>)
                             }
                         }},
-                        [?pomt(international_bank_account)]
+                        [?pomt(wallet_info)]
                     ),
                     PayoutMDFun(
                         {digital_wallet, #domain_DigitalWalletCondition{
                             definition =
                                 {payment_service_is, ?pmt_srv(<<"qiwi-ref">>)}
                         }},
-                        [?pomt(international_bank_account)]
+                        [?pomt(wallet_info)]
                     ),
                     PayoutMDFun(
                         {mobile_commerce, #domain_MobileCommerceCondition{
                             definition = {operator_is, ?mob(<<"mts-ref">>)}
                         }},
-                        [?pomt(international_bank_account)]
+                        [?pomt(wallet_info)]
                     ),
                     PayoutMDFun(
                         {crypto_currency, #domain_CryptoCurrencyCondition{
                             definition = {crypto_currency_is, ?crypta(<<"bitcoin-ref">>)}
                         }},
-                        [?pomt(international_bank_account)]
+                        [?pomt(wallet_info)]
                     ),
                     % PayoutMDFun(
                     %     {bank_card, #domain_BankCardCondition{definition = {payment_system_is, maestro}}},
-                    %     [?pomt(international_bank_account)]
+                    %     [?pomt(wallet_info)]
                     % ),
                     PayoutMDFun(
                         {payment_terminal, #domain_PaymentTerminalCondition{
                             definition = {provider_is_deprecated, wechat}
                         }},
-                        [?pomt(international_bank_account)]
+                        [?pomt(wallet_info)]
                     ),
                     PayoutMDFun(
                         {digital_wallet, #domain_DigitalWalletCondition{
                             definition =
                                 {provider_is_deprecated, rbkmoney}
                         }},
-                        [?pomt(international_bank_account)]
+                        [?pomt(wallet_info)]
                     ),
                     PayoutMDFun(
                         {bank_card, #domain_BankCardCondition{
@@ -2174,28 +2174,28 @@ construct_domain_fixture() ->
                                     token_provider_is_deprecated = applepay
                                 }}
                         }},
-                        [?pomt(international_bank_account)]
+                        [?pomt(wallet_info)]
                     ),
                     % PayoutMDFun(
                     %     {bank_card, #domain_BankCardCondition{definition =
                     %             {payment_system, #domain_PaymentSystemCondition{
                     %                 payment_system_is_deprecated = visa
                     %             }}}},
-                    %     [?pomt(international_bank_account)]
+                    %     [?pomt(wallet_info)]
                     % ),
                     PayoutMDFun(
                         {crypto_currency, #domain_CryptoCurrencyCondition{
                             definition = {crypto_currency_is_deprecated, litecoin}
                         }},
-                        [?pomt(international_bank_account)]
+                        [?pomt(wallet_info)]
                     ),
                     PayoutMDFun(
                         {mobile_commerce, #domain_MobileCommerceCondition{definition = {operator_is_deprecated, yota}}},
-                        [?pomt(international_bank_account)]
+                        [?pomt(wallet_info)]
                     ),
                     PayoutMDFun(
                         {generic, {payment_service_is, ?pmt_srv(<<"generic-ref">>)}},
-                        [?pomt(international_bank_account)]
+                        [?pomt(wallet_info)]
                     ),
                     #domain_PayoutMethodDecision{
                         if_ = {condition, {payment_tool, {bank_card, #domain_BankCardCondition{}}}},
@@ -2460,6 +2460,8 @@ construct_domain_fixture() ->
 
         pm_ct_fixture:construct_payout_method(?pomt(russian_bank_account)),
         pm_ct_fixture:construct_payout_method(?pomt(international_bank_account)),
+        pm_ct_fixture:construct_payout_method(?pomt(wallet_info)),
+        pm_ct_fixture:construct_payout_method(?pomt(payment_institution_account)),
 
         pm_ct_fixture:construct_proxy(?prx(1), <<"Dummy proxy">>),
         pm_ct_fixture:construct_inspector(?insp(1), <<"Dummy Inspector">>, ?prx(1)),
