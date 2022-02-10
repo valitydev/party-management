@@ -3,8 +3,6 @@ ARG OTP_VERSION
 # Build the release
 FROM docker.io/library/erlang:${OTP_VERSION} AS builder
 
-ARG BUILDARCH
-
 # Install thrift compiler
 ARG THRIFT_VERSION
 
