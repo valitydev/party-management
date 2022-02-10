@@ -942,8 +942,8 @@ check_all_payment_methods(C) ->
     TermsFun(bank_card_deprecated, maestro),
     TermsFun(payment_terminal_deprecated, wechat),
     TermsFun(digital_wallet_deprecated, rbkmoney),
-    TermsFun(tokenized_bank_card_deprecated, ?tkz_bank_card(visa, applepay)).
-% TermsFun(empty_cvv_bank_card_deprecated, visa).
+    TermsFun(tokenized_bank_card_deprecated, ?tkz_bank_card(visa, applepay)),
+    TermsFun(empty_cvv_bank_card_deprecated, visa).
 % TermsFun(crypto_currency_deprecated, litecoin).
 % TermsFun(mobile_deprecated, yota),
 % TermsFun(generic, ?gnrc(?pmt_srv(<<"generic-ref">>))).
@@ -2176,13 +2176,15 @@ construct_domain_fixture() ->
                         }},
                         [?pomt(wallet_info)]
                     ),
-                    % PayoutMDFun(
-                    %     {bank_card, #domain_BankCardCondition{definition =
-                    %             {payment_system, #domain_PaymentSystemCondition{
-                    %                 payment_system_is_deprecated = visa
-                    %             }}}},
-                    %     [?pomt(wallet_info)]
-                    % ),
+                    PayoutMDFun(
+                        {bank_card, #domain_BankCardCondition{
+                            definition =
+                                {payment_system, #domain_PaymentSystemCondition{
+                                    payment_system_is_deprecated = visa
+                                }}
+                        }},
+                        [?pomt(wallet_info)]
+                    ),
                     PayoutMDFun(
                         {crypto_currency, #domain_CryptoCurrencyCondition{
                             definition = {crypto_currency_is_deprecated, litecoin}
