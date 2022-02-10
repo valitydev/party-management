@@ -1,9 +1,7 @@
-name: Build Docker image
+name: Build and push Docker image
 on:
   push:
     branches: [master]
-  pull_request:
-    branches: ["*"]
 
 env:
   REGISTRY: ghcr.io
