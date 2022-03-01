@@ -7,6 +7,8 @@
 -export([reduce_provider/3]).
 -export([reduce_provider_terminal_terms/4]).
 
+-export([compute_proxy/3]).
+
 -type provider() :: dmsl_domain_thrift:'Provider'().
 -type terminal() :: dmsl_domain_thrift:'Terminal'().
 -type provision_terms() :: dmsl_domain_thrift:'ProvisionTermSet'().
@@ -270,3 +272,26 @@ merge_withdrawal_terms(ProviderTerms, TerminalTerms) ->
 
 reduce_if_defined(Selector, VS, Rev) ->
     pm_maybe:apply(fun(X) -> pm_selector:reduce(X, VS, Rev) end, Selector).
+
+-spec compute_proxy(provider(), terminal(), domain_revision()) ->
+    dmsl_domain_thrift:'ProxyDefinition'().
+compute_proxy(Provider, Terminal, DomainRevision) ->
+    Proxy = Provider#domain_Provider.proxy,
+    ProxyDef = pm_domain:get(DomainRevision, {proxy, Proxy#domain_Proxy.ref}),
+    EffectiveOptions = lists:foldl(
+        fun
+            (undefined, M) ->
+                M;
+            (M1, M) ->
+                maps:merge(M1, M)
+        end,
+        #{},
+        [
+            Terminal#domain_Terminal.options,
+            Proxy#domain_Proxy.additional,
+            ProxyDef#domain_ProxyDefinition.options
+        ]
+    ),
+    ProxyDef#domain_ProxyDefinition{
+        options = EffectiveOptions
+    }.

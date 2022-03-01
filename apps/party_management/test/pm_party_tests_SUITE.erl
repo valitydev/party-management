@@ -99,6 +99,9 @@
 -export([compute_provider_terminal_terms_ok/1]).
 -export([compute_provider_terminal_terms_not_found/1]).
 -export([compute_provider_terminal_terms_undefined_terms/1]).
+-export([compute_provider_terminal_ok/1]).
+-export([compute_provider_terminal_empty_varset_ok/1]).
+-export([compute_provider_terminal_not_found/1]).
 -export([compute_globals_ok/1]).
 -export([compute_payment_routing_ruleset_ok/1]).
 -export([compute_payment_routing_ruleset_unreducable/1]).
@@ -265,6 +268,9 @@ groups() ->
             compute_provider_terminal_terms_ok,
             compute_provider_terminal_terms_not_found,
             compute_provider_terminal_terms_undefined_terms,
+            compute_provider_terminal_ok,
+            compute_provider_terminal_empty_varset_ok,
+            compute_provider_terminal_not_found,
             compute_globals_ok,
             compute_payment_routing_ruleset_ok,
             compute_payment_routing_ruleset_unreducable,
@@ -499,6 +505,9 @@ end_per_testcase(_Name, _C) ->
 -spec compute_provider_terminal_terms_ok(config()) -> _ | no_return().
 -spec compute_provider_terminal_terms_not_found(config()) -> _ | no_return().
 -spec compute_provider_terminal_terms_undefined_terms(config()) -> _ | no_return().
+-spec compute_provider_terminal_ok(config()) -> _ | no_return().
+-spec compute_provider_terminal_empty_varset_ok(config()) -> _ | no_return().
+-spec compute_provider_terminal_not_found(config()) -> _ | no_return().
 -spec compute_globals_ok(config()) -> _ | no_return().
 -spec compute_payment_routing_ruleset_ok(config()) -> _ | no_return().
 -spec compute_payment_routing_ruleset_unreducable(config()) -> _ | no_return().
@@ -1716,6 +1725,95 @@ compute_provider_terminal_terms_undefined_terms(C) ->
         )
     ).
 
+compute_provider_terminal_ok(C) ->
+    Client = cfg(client, C),
+    Revision = pm_domain:head(),
+    Varset = #payproc_Varset{
+        currency = ?cur(<<"RUB">>)
+    },
+    ExpectedCashflow = ?cfpost(
+        {system, settlement},
+        {provider, settlement},
+        {product,
+            {min_of,
+                ?ordset([
+                    ?fixed(10, <<"RUB">>),
+                    ?share(5, 100, operation_amount, round_half_towards_zero)
+                ])}}
+    ),
+    ExpectedPaymentMethods = ?ordset([
+        ?pmt(bank_card_deprecated, visa)
+    ]),
+    ?assertMatch(
+        #payproc_ProviderTerminal{
+            ref = ?trm(1),
+            name = <<"Brominal 1">>,
+            description = <<"Brominal 1">>,
+            provider = #payproc_ProviderDetails{
+                ref = ?prv(1),
+                name = <<"Brovider">>,
+                description = <<"A provider but bro">>
+            },
+            proxy = #domain_ProxyDefinition{
+                name = <<"Dummy proxy">>,
+                url = <<"http://dummy.proxy/">>,
+                options = #{
+                    <<"proxy">> := <<"def">>,
+                    <<"pro">> := <<"vader">>,
+                    <<"term">> := <<"inal">>,
+                    <<"override_proxy">> := <<"proxydef">>,
+                    <<"override_provider">> := <<"provider">>,
+                    <<"override_terminal">> := <<"terminal">>
+                }
+            },
+            terms = #domain_ProvisionTermSet{
+                payments = #domain_PaymentsProvisionTerms{
+                    cash_flow = {value, [ExpectedCashflow]},
+                    payment_methods = {value, ExpectedPaymentMethods}
+                },
+                recurrent_paytools = #domain_RecurrentPaytoolsProvisionTerms{
+                    cash_value = {value, ?cash(1000, <<"RUB">>)}
+                }
+            }
+        },
+        pm_client_party:compute_provider_terminal(?trm(1), Revision, Varset, Client)
+    ).
+
+compute_provider_terminal_empty_varset_ok(C) ->
+    Client = cfg(client, C),
+    Revision = pm_domain:head(),
+    ?assertMatch(
+        #payproc_ProviderTerminal{
+            ref = ?trm(1),
+            provider = #payproc_ProviderDetails{
+                ref = ?prv(1)
+            },
+            proxy = #domain_ProxyDefinition{
+                url = <<"http://dummy.proxy/">>,
+                options = #{
+                    <<"override_proxy">> := <<"proxydef">>,
+                    <<"override_provider">> := <<"provider">>,
+                    <<"override_terminal">> := <<"terminal">>
+                }
+            },
+            terms = undefined
+        },
+        pm_client_party:compute_provider_terminal(?trm(1), Revision, undefined, Client)
+    ).
+
+compute_provider_terminal_not_found(C) ->
+    Client = cfg(client, C),
+    DomainRevision = pm_domain:head(),
+    ?assertMatch(
+        {exception, #payproc_TerminalNotFound{}},
+        pm_client_party:compute_provider_terminal(
+            ?trm(?WRONG_DMT_OBJ_ID),
+            DomainRevision,
+            #payproc_Varset{},
+            Client
+        )
+    ).
+
 compute_globals_ok(C) ->
     Client = cfg(client, C),
     DomainRevision = pm_domain:head(),
@@ -2455,7 +2553,18 @@ construct_domain_fixture() ->
         pm_ct_fixture:construct_payout_method(?pomt(international_bank_account)),
         pm_ct_fixture:construct_payout_method(?pomt(wallet_info)),
 
-        pm_ct_fixture:construct_proxy(?prx(1), <<"Dummy proxy">>),
+        pm_ct_fixture:construct_proxy(
+            ?prx(1),
+            <<"Dummy proxy">>,
+            <<"http://dummy.proxy/">>,
+            #{
+                <<"proxy">> => <<"def">>,
+                <<"override_proxy">> => <<"proxydef">>,
+                <<"override_provider">> => <<"proxydef">>,
+                <<"override_terminal">> => <<"proxydef">>
+            }
+        ),
+
         pm_ct_fixture:construct_inspector(?insp(1), <<"Dummy Inspector">>, ?prx(1)),
         pm_ct_fixture:construct_system_account_set(?sas(1)),
         pm_ct_fixture:construct_system_account_set(?sas(2)),
@@ -2584,8 +2693,14 @@ construct_domain_fixture() ->
             data = #domain_Provider{
                 name = <<"Brovider">>,
                 description = <<"A provider but bro">>,
-                terminal = {value, [?prvtrm(1)]},
-                proxy = #domain_Proxy{ref = ?prx(1), additional = #{}},
+                proxy = #domain_Proxy{
+                    ref = ?prx(1),
+                    additional = #{
+                        <<"pro">> => <<"vader">>,
+                        <<"override_provider">> => <<"provider">>,
+                        <<"override_terminal">> => <<"provider">>
+                    }
+                },
                 abs_account = <<"1234567890">>,
                 accounts = pm_ct_fixture:construct_provider_account_set([?cur(<<"RUB">>)]),
                 terms = #domain_ProvisionTermSet{
@@ -2679,7 +2794,6 @@ construct_domain_fixture() ->
             data = #domain_Provider{
                 name = <<"Provider 2">>,
                 description = <<"Provider without terms">>,
-                terminal = {value, [?prvtrm(4)]},
                 proxy = #domain_Proxy{ref = ?prx(1), additional = #{}},
                 abs_account = <<"1234567890">>,
                 accounts = pm_ct_fixture:construct_provider_account_set([?cur(<<"RUB">>)])
@@ -2691,6 +2805,11 @@ construct_domain_fixture() ->
             data = #domain_Terminal{
                 name = <<"Brominal 1">>,
                 description = <<"Brominal 1">>,
+                provider_ref = ?prv(1),
+                options = #{
+                    <<"term">> => <<"inal">>,
+                    <<"override_terminal">> => <<"terminal">>
+                },
                 terms = #domain_ProvisionTermSet{
                     payments = #domain_PaymentsProvisionTerms{
                         payment_methods =
@@ -2707,6 +2826,7 @@ construct_domain_fixture() ->
             data = #domain_Terminal{
                 name = <<"Brominal 2">>,
                 description = <<"Brominal 2">>,
+                provider_ref = ?prv(1),
                 terms = #domain_ProvisionTermSet{
                     payments = #domain_PaymentsProvisionTerms{
                         payment_methods =
@@ -2723,6 +2843,7 @@ construct_domain_fixture() ->
             data = #domain_Terminal{
                 name = <<"Brominal 3">>,
                 description = <<"Brominal 3">>,
+                provider_ref = ?prv(1),
                 terms = #domain_ProvisionTermSet{
                     payments = #domain_PaymentsProvisionTerms{
                         payment_methods =
@@ -2738,7 +2859,8 @@ construct_domain_fixture() ->
             ref = ?trm(4),
             data = #domain_Terminal{
                 name = <<"Terminal 4">>,
-                description = <<"Terminal without terms">>
+                description = <<"Terminal without terms">>,
+                provider_ref = ?prv(2)
             }
         }}
     ].

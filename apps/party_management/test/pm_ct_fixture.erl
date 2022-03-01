@@ -14,7 +14,7 @@
 -export([construct_payment_method/1]).
 -export([construct_payout_method/1]).
 -export([construct_proxy/2]).
--export([construct_proxy/3]).
+-export([construct_proxy/4]).
 -export([construct_inspector/3]).
 -export([construct_inspector/4]).
 -export([construct_inspector/5]).
@@ -197,16 +197,16 @@ construct_payout_method(?pomt(M) = Ref) ->
 
 -spec construct_proxy(proxy(), name()) -> {proxy, dmsl_domain_thrift:'ProxyObject'()}.
 construct_proxy(Ref, Name) ->
-    construct_proxy(Ref, Name, #{}).
+    construct_proxy(Ref, Name, <<>>, #{}).
 
--spec construct_proxy(proxy(), name(), Opts :: map()) -> {proxy, dmsl_domain_thrift:'ProxyObject'()}.
-construct_proxy(Ref, Name, Opts) ->
+-spec construct_proxy(proxy(), name(), binary(), Opts :: map()) -> {proxy, dmsl_domain_thrift:'ProxyObject'()}.
+construct_proxy(Ref, Name, Url, Opts) ->
     {proxy, #domain_ProxyObject{
         ref = Ref,
         data = #domain_ProxyDefinition{
             name = Name,
             description = Name,
-            url = <<>>,
+            url = Url,
             options = Opts
         }
     }}.

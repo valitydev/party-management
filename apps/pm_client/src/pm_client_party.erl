@@ -49,6 +49,7 @@
 -export([pull_event/2]).
 
 -export([compute_provider/4]).
+-export([compute_provider_terminal/4]).
 -export([compute_provider_terminal_terms/5]).
 -export([compute_globals/3]).
 -export([compute_routing_ruleset/4]).
@@ -265,6 +266,15 @@ get_shop_account(ShopID, Client) ->
     dmsl_domain_thrift:'Provider'() | woody_error:business_error().
 compute_provider(ProviderRef, Revision, Varset, Client) ->
     call(Client, 'ComputeProvider', with_user_info([ProviderRef, Revision, Varset])).
+
+-spec compute_provider_terminal(
+    terminal_ref(),
+    domain_revision(),
+    varset(),
+    pid()
+) -> dmsl_payment_processing_thrift:'ProviderTerminal'() | woody_error:business_error().
+compute_provider_terminal(TerminalRef, Revision, Varset, Client) ->
+    call(Client, 'ComputeProviderTerminal', [TerminalRef, Revision, Varset]).
 
 -spec compute_provider_terminal_terms(
     provider_ref(),
