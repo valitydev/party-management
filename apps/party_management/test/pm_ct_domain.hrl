@@ -61,7 +61,7 @@
     }}
 ).
 
--define(share_with_rounding_method(P, Q, C, RM),
+-define(share(P, Q, C, RM),
     {share, #domain_CashVolumeShare{
         parts = #'Rational'{p = P, q = Q},
         'of' = C,

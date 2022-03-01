@@ -1627,7 +1627,7 @@ compute_provider_ok(C) ->
             {min_of,
                 ?ordset([
                     ?fixed(10, <<"RUB">>),
-                    ?share_with_rounding_method(5, 100, operation_amount, round_half_towards_zero)
+                    ?share(5, 100, operation_amount, round_half_towards_zero)
                 ])}}
     ),
     #domain_Provider{
@@ -1660,7 +1660,7 @@ compute_provider_terminal_terms_ok(C) ->
             {min_of,
                 ?ordset([
                     ?fixed(10, <<"RUB">>),
-                    ?share_with_rounding_method(5, 100, operation_amount, round_half_towards_zero)
+                    ?share(5, 100, operation_amount, round_half_towards_zero)
                 ])}}
     ),
     PaymentMethods = ?ordset([?pmt(bank_card_deprecated, visa)]),
@@ -1678,29 +1678,29 @@ compute_provider_terminal_terms_not_found(C) ->
     Client = cfg(client, C),
     DomainRevision = pm_domain:head(),
     {exception, #payproc_TerminalNotFound{}} =
-        (catch pm_client_party:compute_provider_terminal_terms(
+        pm_client_party:compute_provider_terminal_terms(
             ?prv(1),
             ?trm(?WRONG_DMT_OBJ_ID),
             DomainRevision,
             #payproc_Varset{},
             Client
-        )),
+        ),
     {exception, #payproc_ProviderNotFound{}} =
-        (catch pm_client_party:compute_provider_terminal_terms(
+        pm_client_party:compute_provider_terminal_terms(
             ?prv(?WRONG_DMT_OBJ_ID),
             ?trm(1),
             DomainRevision,
             #payproc_Varset{},
             Client
-        )),
+        ),
     {exception, #payproc_ProviderNotFound{}} =
-        (catch pm_client_party:compute_provider_terminal_terms(
+        pm_client_party:compute_provider_terminal_terms(
             ?prv(?WRONG_DMT_OBJ_ID),
             ?trm(?WRONG_DMT_OBJ_ID),
             DomainRevision,
             #payproc_Varset{},
             Client
-        )).
+        ).
 
 compute_provider_terminal_terms_undefined_terms(C) ->
     Client = cfg(client, C),
@@ -2617,7 +2617,7 @@ construct_domain_fixture() ->
                                                     {min_of,
                                                         ?ordset([
                                                             ?fixed(10, <<"RUB">>),
-                                                            ?share_with_rounding_method(
+                                                            ?share(
                                                                 5,
                                                                 100,
                                                                 operation_amount,
@@ -2638,7 +2638,7 @@ construct_domain_fixture() ->
                                                     {min_of,
                                                         ?ordset([
                                                             ?fixed(10, <<"USD">>),
-                                                            ?share_with_rounding_method(
+                                                            ?share(
                                                                 5,
                                                                 100,
                                                                 operation_amount,
