@@ -270,7 +270,7 @@ compute_provider(ProviderRef, Revision, Varset, Client) ->
 -spec compute_provider_terminal(
     terminal_ref(),
     domain_revision(),
-    varset(),
+    varset() | undefined,
     pid()
 ) -> dmsl_payment_processing_thrift:'ProviderTerminal'() | woody_error:business_error().
 compute_provider_terminal(TerminalRef, Revision, Varset, Client) ->
