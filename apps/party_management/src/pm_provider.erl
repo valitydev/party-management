@@ -42,8 +42,6 @@ reduce_withdrawal_terms(#domain_WithdrawalProvisionTerms{} = Terms, VS, Rev) ->
 
 reduce_provision_term_set(undefined = ProvisionTermSet, _VS, _DomainRevision) ->
     ProvisionTermSet;
-reduce_provision_term_set(ProvisionTermSet, VS = #{}, _DomainRevision) when map_size(VS) == 0 ->
-    ProvisionTermSet;
 reduce_provision_term_set(ProvisionTermSet, VS, DomainRevision) ->
     #domain_ProvisionTermSet{
         payments = pm_maybe:apply(
