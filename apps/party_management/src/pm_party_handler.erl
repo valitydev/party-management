@@ -147,14 +147,18 @@ handle_function_('ComputeProvider', Args, _Opts) ->
     ok = assume_user_identity(UserInfo),
     Provider = get_provider(ProviderRef, DomainRevision),
     VS = pm_varset:decode_varset(Varset),
-    pm_provider:reduce_provider(Provider, VS, DomainRevision);
+    ComputedProvider = pm_provider:reduce_provider(Provider, VS, DomainRevision),
+    _ = assert_provider_reduced(ComputedProvider),
+    ComputedProvider;
 handle_function_('ComputeProviderTerminalTerms', Args, _Opts) ->
     {UserInfo, ProviderRef, TerminalRef, DomainRevision, Varset} = Args,
     ok = assume_user_identity(UserInfo),
     Provider = get_provider(ProviderRef, DomainRevision),
     Terminal = get_terminal(TerminalRef, DomainRevision),
     VS = pm_varset:decode_varset(Varset),
-    pm_provider:reduce_provider_terminal_terms(Provider, Terminal, VS, DomainRevision);
+    Terms = pm_provider:reduce_provider_terminal_terms(Provider, Terminal, VS, DomainRevision),
+    _ = assert_provider_terms_reduced(Terms),
+    Terms;
 handle_function_('ComputeProviderTerminal', {TerminalRef, DomainRevision, VarsetIn}, _Opts) ->
     Terminal = get_terminal(TerminalRef, DomainRevision),
     ProviderRef = Terminal#domain_Terminal.provider_ref,
@@ -299,6 +303,14 @@ assert_party_accessible(PartyID) ->
         invalid_user ->
             throw(#payproc_InvalidUser{})
     end.
+
+assert_provider_reduced(#domain_Provider{terms = Terms}) ->
+    assert_provider_terms_reduced(Terms).
+
+assert_provider_terms_reduced(#domain_ProvisionTermSet{}) ->
+    ok;
+assert_provider_terms_reduced(undefined) ->
+    throw(#payproc_ProvisionTermSetUndefined{}).
 
 set_party_mgmt_meta(PartyID) ->
     scoper:add_meta(#{party_id => PartyID}).

@@ -22,18 +22,13 @@ reduce_provider(Provider, VS, Rev) ->
         terms = reduce_provision_term_set(Provider#domain_Provider.terms, VS, Rev)
     }.
 
--spec reduce_provider_terminal_terms(provider(), terminal(), varset(), domain_revision()) -> provision_terms().
+-spec reduce_provider_terminal_terms(provider(), terminal(), varset(), domain_revision()) ->
+    provision_terms() | undefined.
 reduce_provider_terminal_terms(Provider, Terminal, VS, Rev) ->
     ProviderTerms = Provider#domain_Provider.terms,
     TerminalTerms = Terminal#domain_Terminal.terms,
     MergedTerms = merge_provision_term_sets(ProviderTerms, TerminalTerms),
-    ReducedTerms = reduce_provision_term_set(MergedTerms, VS, Rev),
-    case ReducedTerms of
-        undefined ->
-            throw(#payproc_ProvisionTermSetUndefined{});
-        _ ->
-            ReducedTerms
-    end.
+    reduce_provision_term_set(MergedTerms, VS, Rev).
 
 reduce_withdrawal_terms(undefined = Terms, _VS, _Rev) ->
     Terms;
