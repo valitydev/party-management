@@ -49,6 +49,7 @@
 -export([pull_event/2]).
 
 -export([compute_provider/4]).
+-export([compute_provider_terminal/4]).
 -export([compute_provider_terminal_terms/5]).
 -export([compute_globals/3]).
 -export([compute_routing_ruleset/4]).
@@ -117,149 +118,163 @@ stop(Client) ->
 
 -spec create(party_params(), pid()) -> ok | woody_error:business_error().
 create(PartyParams, Client) ->
-    map_result_error(gen_server:call(Client, {call, 'Create', [PartyParams]})).
+    call(Client, 'Create', with_user_info_party_id([PartyParams])).
 
 -spec get(pid()) -> dmsl_domain_thrift:'Party'() | woody_error:business_error().
 get(Client) ->
-    map_result_error(gen_server:call(Client, {call, 'Get', []})).
+    call(Client, 'Get', with_user_info_party_id([])).
 
 -spec get_revision(pid()) -> dmsl_domain_thrift:'Party'() | woody_error:business_error().
 get_revision(Client) ->
-    map_result_error(gen_server:call(Client, {call, 'GetRevision', []})).
+    call(Client, 'GetRevision', with_user_info_party_id([])).
 
 -spec get_status(pid()) -> dmsl_domain_thrift:'PartyStatus'() | woody_error:business_error().
 get_status(Client) ->
-    map_result_error(gen_server:call(Client, {call, 'GetStatus', []})).
+    call(Client, 'GetStatus', with_user_info_party_id([])).
 
 -spec checkout(party_revision_param(), pid()) -> dmsl_domain_thrift:'Party'() | woody_error:business_error().
 checkout(PartyRevisionParam, Client) ->
-    map_result_error(gen_server:call(Client, {call, 'Checkout', [PartyRevisionParam]})).
+    call(Client, 'Checkout', with_user_info_party_id([PartyRevisionParam])).
 
 -spec block(binary(), pid()) -> ok | woody_error:business_error().
 block(Reason, Client) ->
-    map_result_error(gen_server:call(Client, {call, 'Block', [Reason]})).
+    call(Client, 'Block', with_user_info_party_id([Reason])).
 
 -spec unblock(binary(), pid()) -> ok | woody_error:business_error().
 unblock(Reason, Client) ->
-    map_result_error(gen_server:call(Client, {call, 'Unblock', [Reason]})).
+    call(Client, 'Unblock', with_user_info_party_id([Reason])).
 
 -spec suspend(pid()) -> ok | woody_error:business_error().
 suspend(Client) ->
-    map_result_error(gen_server:call(Client, {call, 'Suspend', []})).
+    call(Client, 'Suspend', with_user_info_party_id([])).
 
 -spec activate(pid()) -> ok | woody_error:business_error().
 activate(Client) ->
-    map_result_error(gen_server:call(Client, {call, 'Activate', []})).
+    call(Client, 'Activate', with_user_info_party_id([])).
 
 -spec get_meta(pid()) -> meta() | woody_error:business_error().
 get_meta(Client) ->
-    map_result_error(gen_server:call(Client, {call, 'GetMeta', []})).
+    call(Client, 'GetMeta', with_user_info_party_id([])).
 
 -spec get_metadata(meta_ns(), pid()) -> meta_data() | woody_error:business_error().
 get_metadata(NS, Client) ->
-    map_result_error(gen_server:call(Client, {call, 'GetMetaData', [NS]})).
+    call(Client, 'GetMetaData', with_user_info_party_id([NS])).
 
 -spec set_metadata(meta_ns(), meta_data(), pid()) -> ok | woody_error:business_error().
 set_metadata(NS, Data, Client) ->
-    map_result_error(gen_server:call(Client, {call, 'SetMetaData', [NS, Data]})).
+    call(Client, 'SetMetaData', with_user_info_party_id([NS, Data])).
 
 -spec remove_metadata(meta_ns(), pid()) -> ok | woody_error:business_error().
 remove_metadata(NS, Client) ->
-    map_result_error(gen_server:call(Client, {call, 'RemoveMetaData', [NS]})).
+    call(Client, 'RemoveMetaData', with_user_info_party_id([NS])).
 
 -spec get_contract(contract_id(), pid()) -> dmsl_domain_thrift:'Contract'() | woody_error:business_error().
 get_contract(ID, Client) ->
-    map_result_error(gen_server:call(Client, {call, 'GetContract', [ID]})).
+    call(Client, 'GetContract', with_user_info_party_id([ID])).
 
 -spec compute_contract_terms(
-    contract_id(), timestamp(), party_revision_param(), domain_revision(), contract_terms_varset(), pid()
+    contract_id(),
+    timestamp(),
+    party_revision_param(),
+    domain_revision(),
+    contract_terms_varset(),
+    pid()
 ) ->
     dmsl_domain_thrift:'TermSet'() | woody_error:business_error().
 compute_contract_terms(ID, Timestamp, PartyRevision, DomainRevision, Varset, Client) ->
-    Args = [ID, Timestamp, PartyRevision, DomainRevision, Varset],
-    map_result_error(gen_server:call(Client, {call, 'ComputeContractTerms', Args})).
+    Args = with_user_info_party_id([ID, Timestamp, PartyRevision, DomainRevision, Varset]),
+    call(Client, 'ComputeContractTerms', Args).
 
 -spec compute_payment_institution_terms(payment_intitution_ref(), varset(), pid()) ->
     dmsl_domain_thrift:'TermSet'() | woody_error:business_error().
 compute_payment_institution_terms(Ref, Varset, Client) ->
-    map_result_error(gen_server:call(Client, {call_without_party, 'ComputePaymentInstitutionTerms', [Ref, Varset]})).
+    call(Client, 'ComputePaymentInstitutionTerms', with_user_info([Ref, Varset])).
 
 -spec compute_payout_cash_flow(dmsl_payment_processing_thrift:'PayoutParams'(), pid()) ->
     dmsl_domain_thrift:'FinalCashFlow'() | woody_error:business_error().
 compute_payout_cash_flow(Params, Client) ->
-    map_result_error(gen_server:call(Client, {call, 'ComputePayoutCashFlow', [Params]})).
+    call(Client, 'ComputePayoutCashFlow', with_user_info_party_id([Params])).
 
 -spec get_shop(shop_id(), pid()) -> dmsl_domain_thrift:'Shop'() | woody_error:business_error().
 get_shop(ID, Client) ->
-    map_result_error(gen_server:call(Client, {call, 'GetShop', [ID]})).
+    call(Client, 'GetShop', with_user_info_party_id([ID])).
 
 -spec get_shop_contract(shop_id(), pid()) ->
     dmsl_payment_processing_thrift:'ShopContract'() | woody_error:business_error().
 get_shop_contract(ID, Client) ->
-    map_result_error(gen_server:call(Client, {call, 'GetShopContract', [ID]})).
+    call(Client, 'GetShopContract', with_user_info_party_id([ID])).
 
 -spec block_shop(shop_id(), binary(), pid()) -> ok | woody_error:business_error().
 block_shop(ID, Reason, Client) ->
-    map_result_error(gen_server:call(Client, {call, 'BlockShop', [ID, Reason]})).
+    call(Client, 'BlockShop', with_user_info_party_id([ID, Reason])).
 
 -spec unblock_shop(shop_id(), binary(), pid()) -> ok | woody_error:business_error().
 unblock_shop(ID, Reason, Client) ->
-    map_result_error(gen_server:call(Client, {call, 'UnblockShop', [ID, Reason]})).
+    call(Client, 'UnblockShop', with_user_info_party_id([ID, Reason])).
 
 -spec suspend_shop(shop_id(), pid()) -> ok | woody_error:business_error().
 suspend_shop(ID, Client) ->
-    map_result_error(gen_server:call(Client, {call, 'SuspendShop', [ID]})).
+    call(Client, 'SuspendShop', with_user_info_party_id([ID])).
 
 -spec activate_shop(shop_id(), pid()) -> ok | woody_error:business_error().
 activate_shop(ID, Client) ->
-    map_result_error(gen_server:call(Client, {call, 'ActivateShop', [ID]})).
+    call(Client, 'ActivateShop', with_user_info_party_id([ID])).
 
 -spec compute_shop_terms(shop_id(), timestamp(), party_revision_param(), shop_terms_varset(), pid()) ->
     dmsl_domain_thrift:'TermSet'() | woody_error:business_error().
 compute_shop_terms(ID, Timestamp, PartyRevision, VS, Client) ->
-    map_result_error(gen_server:call(Client, {call, 'ComputeShopTerms', [ID, Timestamp, PartyRevision, VS]})).
+    call(Client, 'ComputeShopTerms', with_user_info_party_id([ID, Timestamp, PartyRevision, VS])).
 
 -spec get_claim(claim_id(), pid()) -> claim() | woody_error:business_error().
 get_claim(ID, Client) ->
-    map_result_error(gen_server:call(Client, {call, 'GetClaim', [ID]})).
+    call(Client, 'GetClaim', with_user_info_party_id([ID])).
 
 -spec get_claims(pid()) -> [claim()] | woody_error:business_error().
 get_claims(Client) ->
-    map_result_error(gen_server:call(Client, {call, 'GetClaims', []})).
+    call(Client, 'GetClaims', with_user_info_party_id([])).
 
 -spec create_claim(changeset(), pid()) -> claim() | woody_error:business_error().
 create_claim(Changeset, Client) ->
-    map_result_error(gen_server:call(Client, {call, 'CreateClaim', [Changeset]})).
+    call(Client, 'CreateClaim', with_user_info_party_id([Changeset])).
 
 -spec update_claim(claim_id(), claim_revision(), changeset(), pid()) -> ok | woody_error:business_error().
 update_claim(ID, Revision, Changeset, Client) ->
-    map_result_error(gen_server:call(Client, {call, 'UpdateClaim', [ID, Revision, Changeset]})).
+    call(Client, 'UpdateClaim', with_user_info_party_id([ID, Revision, Changeset])).
 
 -spec accept_claim(claim_id(), claim_revision(), pid()) -> ok | woody_error:business_error().
 accept_claim(ID, Revision, Client) ->
-    map_result_error(gen_server:call(Client, {call, 'AcceptClaim', [ID, Revision]})).
+    call(Client, 'AcceptClaim', with_user_info_party_id([ID, Revision])).
 
 -spec deny_claim(claim_id(), claim_revision(), binary() | undefined, pid()) -> ok | woody_error:business_error().
 deny_claim(ID, Revision, Reason, Client) ->
-    map_result_error(gen_server:call(Client, {call, 'DenyClaim', [ID, Revision, Reason]})).
+    call(Client, 'DenyClaim', with_user_info_party_id([ID, Revision, Reason])).
 
 -spec revoke_claim(claim_id(), claim_revision(), binary() | undefined, pid()) -> ok | woody_error:business_error().
 revoke_claim(ID, Revision, Reason, Client) ->
-    map_result_error(gen_server:call(Client, {call, 'RevokeClaim', [ID, Revision, Reason]})).
+    call(Client, 'RevokeClaim', with_user_info_party_id([ID, Revision, Reason])).
 
 -spec get_account_state(shop_account_id(), pid()) ->
     dmsl_payment_processing_thrift:'AccountState'() | woody_error:business_error().
 get_account_state(AccountID, Client) ->
-    map_result_error(gen_server:call(Client, {call, 'GetAccountState', [AccountID]})).
+    call(Client, 'GetAccountState', with_user_info_party_id([AccountID])).
 
 -spec get_shop_account(shop_id(), pid()) -> dmsl_domain_thrift:'ShopAccount'() | woody_error:business_error().
 get_shop_account(ShopID, Client) ->
-    map_result_error(gen_server:call(Client, {call, 'GetShopAccount', [ShopID]})).
+    call(Client, 'GetShopAccount', with_user_info_party_id([ShopID])).
 
 -spec compute_provider(provider_ref(), domain_revision(), varset(), pid()) ->
     dmsl_domain_thrift:'Provider'() | woody_error:business_error().
 compute_provider(ProviderRef, Revision, Varset, Client) ->
-    map_result_error(gen_server:call(Client, {call_without_party, 'ComputeProvider', [ProviderRef, Revision, Varset]})).
+    call(Client, 'ComputeProvider', with_user_info([ProviderRef, Revision, Varset])).
+
+-spec compute_provider_terminal(
+    terminal_ref(),
+    domain_revision(),
+    varset() | undefined,
+    pid()
+) -> dmsl_payment_processing_thrift:'ProviderTerminal'() | woody_error:business_error().
+compute_provider_terminal(TerminalRef, Revision, Varset, Client) ->
+    call(Client, 'ComputeProviderTerminal', [TerminalRef, Revision, Varset]).
 
 -spec compute_provider_terminal_terms(
     provider_ref(),
@@ -269,27 +284,18 @@ compute_provider(ProviderRef, Revision, Varset, Client) ->
     pid()
 ) -> dmsl_domain_thrift:'ProvisionTermSet'() | woody_error:business_error().
 compute_provider_terminal_terms(ProviderRef, TerminalRef, Revision, Varset, Client) ->
-    map_result_error(
-        gen_server:call(
-            Client,
-            {call_without_party, 'ComputeProviderTerminalTerms', [ProviderRef, TerminalRef, Revision, Varset]}
-        )
-    ).
+    Args = with_user_info([ProviderRef, TerminalRef, Revision, Varset]),
+    call(Client, 'ComputeProviderTerminalTerms', Args).
 
 -spec compute_globals(domain_revision(), varset(), pid()) ->
     dmsl_domain_thrift:'Globals'() | woody_error:business_error().
 compute_globals(Revision, Varset, Client) ->
-    map_result_error(gen_server:call(Client, {call_without_party, 'ComputeGlobals', [Revision, Varset]})).
+    call(Client, 'ComputeGlobals', with_user_info([Revision, Varset])).
 
 -spec compute_routing_ruleset(routing_ruleset_ref(), domain_revision(), varset(), pid()) ->
     dmsl_domain_thrift:'RoutingRuleset'() | woody_error:business_error().
 compute_routing_ruleset(RoutingRuleSetRef, Revision, Varset, Client) ->
-    map_result_error(
-        gen_server:call(
-            Client,
-            {call_without_party, 'ComputeRoutingRuleset', [RoutingRuleSetRef, Revision, Varset]}
-        )
-    ).
+    call(Client, 'ComputeRoutingRuleset', with_user_info([RoutingRuleSetRef, Revision, Varset])).
 
 -define(DEFAULT_NEXT_EVENT_TIMEOUT, 5000).
 
@@ -300,6 +306,9 @@ pull_event(Client) ->
 -spec pull_event(timeout(), pid()) -> tuple() | timeout | woody_error:business_error().
 pull_event(Timeout, Client) ->
     gen_server:call(Client, {pull_event, Timeout}, infinity).
+
+call(Client, Function, Args) ->
+    map_result_error(gen_server:call(Client, {call, Function, Args})).
 
 map_result_error({ok, Result}) ->
     Result;
@@ -335,12 +344,14 @@ init({UserInfo, PartyID, ApiClient}) ->
     }}.
 
 -spec handle_call(term(), callref(), state()) -> {reply, term(), state()} | {noreply, state()}.
-handle_call({call, Function, Args0}, _From, St = #state{client = Client}) ->
-    Args = [St#state.user_info, St#state.party_id | Args0],
-    Result = pm_client_api:call(party_management, Function, Args, Client),
-    {reply, Result, St};
-handle_call({call_without_party, Function, Args0}, _From, St = #state{client = Client}) ->
-    Args = [St#state.user_info | Args0],
+handle_call({call, Function, ArgsIn}, _From, St = #state{client = Client}) ->
+    Args = lists:map(
+        fun
+            (Fun) when is_function(Fun, 1) -> Fun(St);
+            (Arg) -> Arg
+        end,
+        ArgsIn
+    ),
     Result = pm_client_api:call(party_management, Function, Args, Client),
     {reply, Result, St};
 handle_call({pull_event, Timeout}, _From, St = #state{poller = Poller, client = Client}) ->
@@ -375,3 +386,9 @@ terminate(_Reason, _State) ->
 -spec code_change(Vsn | {down, Vsn}, state(), term()) -> {error, noimpl} when Vsn :: term().
 code_change(_OldVsn, _State, _Extra) ->
     {error, noimpl}.
+
+with_user_info(Args) ->
+    [fun(St) -> St#state.user_info end | Args].
+
+with_user_info_party_id(Args) ->
+    [fun(St) -> St#state.user_info end, fun(St) -> St#state.party_id end | Args].

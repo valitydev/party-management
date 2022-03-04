@@ -19,7 +19,6 @@ handle_function(Func, Args, Opts) ->
 
 -spec handle_function_(woody:func(), woody:args(), pm_woody_wrapper:handler_opts()) -> term() | no_return().
 %% Party
-
 handle_function_('Create', {UserInfo, PartyID, PartyParams}, _Opts) ->
     ok = set_meta_and_check_access(UserInfo, PartyID),
     pm_party_machine:start(PartyID, PartyParams);
@@ -46,7 +45,6 @@ handle_function_(Fun, Args, _Opts) when
     ok = set_meta_and_check_access(UserInfo, PartyID),
     call(PartyID, Fun, Args);
 %% Contract
-
 handle_function_('GetContract', {UserInfo, PartyID, ContractID}, _Opts) ->
     ok = set_meta_and_check_access(UserInfo, PartyID),
     Party = pm_party_machine:get_party(PartyID),
@@ -75,7 +73,6 @@ handle_function_('ComputeContractTerms', Args, _Opts) ->
     Terms = pm_party:get_terms(Contract, Timestamp, DomainRevision),
     pm_party:reduce_terms(Terms, DecodedVS, DomainRevision);
 %% Shop
-
 handle_function_('GetShop', {UserInfo, PartyID, ID}, _Opts) ->
     ok = set_meta_and_check_access(UserInfo, PartyID),
     Party = pm_party_machine:get_party(PartyID),
@@ -113,7 +110,6 @@ handle_function_(Fun, Args, _Opts) when
     ok = set_meta_and_check_access(UserInfo, PartyID),
     call(PartyID, Fun, Args);
 %% Claim
-
 handle_function_('GetClaim', {UserInfo, PartyID, ID}, _Opts) ->
     ok = set_meta_and_check_access(UserInfo, PartyID),
     pm_party_machine:get_claim(ID, PartyID);
@@ -132,13 +128,11 @@ handle_function_(Fun, Args, _Opts) when
     ok = set_meta_and_check_access(UserInfo, PartyID),
     call(PartyID, Fun, Args);
 %% Event
-
 handle_function_('GetEvents', {UserInfo, PartyID, Range}, _Opts) ->
     ok = set_meta_and_check_access(UserInfo, PartyID),
     #payproc_EventRange{'after' = AfterID, limit = Limit} = Range,
     pm_party_machine:get_public_history(PartyID, AfterID, Limit);
 %% ShopAccount
-
 handle_function_('GetAccountState', {UserInfo, PartyID, AccountID}, _Opts) ->
     ok = set_meta_and_check_access(UserInfo, PartyID),
     Party = pm_party_machine:get_party(PartyID),
@@ -148,22 +142,48 @@ handle_function_('GetShopAccount', {UserInfo, PartyID, ShopID}, _Opts) ->
     Party = pm_party_machine:get_party(PartyID),
     pm_party:get_shop_account(ShopID, Party);
 %% Providers
-
 handle_function_('ComputeProvider', Args, _Opts) ->
     {UserInfo, ProviderRef, DomainRevision, Varset} = Args,
     ok = assume_user_identity(UserInfo),
     Provider = get_provider(ProviderRef, DomainRevision),
     VS = pm_varset:decode_varset(Varset),
-    pm_provider:reduce_provider(Provider, VS, DomainRevision);
+    ComputedProvider = pm_provider:reduce_provider(Provider, VS, DomainRevision),
+    _ = assert_provider_reduced(ComputedProvider),
+    ComputedProvider;
 handle_function_('ComputeProviderTerminalTerms', Args, _Opts) ->
     {UserInfo, ProviderRef, TerminalRef, DomainRevision, Varset} = Args,
     ok = assume_user_identity(UserInfo),
     Provider = get_provider(ProviderRef, DomainRevision),
     Terminal = get_terminal(TerminalRef, DomainRevision),
     VS = pm_varset:decode_varset(Varset),
-    pm_provider:reduce_provider_terminal_terms(Provider, Terminal, VS, DomainRevision);
+    Terms = pm_provider:reduce_provider_terminal_terms(Provider, Terminal, VS, DomainRevision),
+    _ = assert_provider_terms_reduced(Terms),
+    Terms;
+handle_function_('ComputeProviderTerminal', {TerminalRef, DomainRevision, VarsetIn}, _Opts) ->
+    Terminal = get_terminal(TerminalRef, DomainRevision),
+    ProviderRef = Terminal#domain_Terminal.provider_ref,
+    Provider = get_provider(ProviderRef, DomainRevision),
+    Proxy = pm_provider:compute_proxy(Provider, Terminal, DomainRevision),
+    ComputedTerms = pm_maybe:apply(
+        fun(Varset) ->
+            VS = pm_varset:decode_varset(Varset),
+            pm_provider:reduce_provider_terminal_terms(Provider, Terminal, VS, DomainRevision)
+        end,
+        VarsetIn
+    ),
+    #payproc_ProviderTerminal{
+        ref = TerminalRef,
+        name = Terminal#domain_Terminal.name,
+        description = Terminal#domain_Terminal.description,
+        proxy = Proxy,
+        provider = #payproc_ProviderDetails{
+            ref = ProviderRef,
+            name = Provider#domain_Provider.name,
+            description = Provider#domain_Provider.description
+        },
+        terms = ComputedTerms
+    };
 %% Globals
-
 handle_function_('ComputeGlobals', Args, _Opts) ->
     {UserInfo, DomainRevision, Varset} = Args,
     ok = assume_user_identity(UserInfo),
@@ -171,7 +191,6 @@ handle_function_('ComputeGlobals', Args, _Opts) ->
     VS = pm_varset:decode_varset(Varset),
     pm_globals:reduce_globals(Globals, VS, DomainRevision);
 %% RuleSets
-
 %% Deprecated, will be replaced by 'ComputeRoutingRuleset'
 handle_function_('ComputePaymentRoutingRuleset', Args, _Opts) ->
     {UserInfo, RuleSetRef, DomainRevision, Varset} = Args,
@@ -284,6 +303,14 @@ assert_party_accessible(PartyID) ->
         invalid_user ->
             throw(#payproc_InvalidUser{})
     end.
+
+assert_provider_reduced(#domain_Provider{terms = Terms}) ->
+    assert_provider_terms_reduced(Terms).
+
+assert_provider_terms_reduced(#domain_ProvisionTermSet{}) ->
+    ok;
+assert_provider_terms_reduced(undefined) ->
+    throw(#payproc_ProvisionTermSetUndefined{}).
 
 set_party_mgmt_meta(PartyID) ->
     scoper:add_meta(#{party_id => PartyID}).
