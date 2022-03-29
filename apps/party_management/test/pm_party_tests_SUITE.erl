@@ -70,8 +70,6 @@
 -export([shop_account_set_retrieval/1]).
 -export([shop_account_retrieval/1]).
 
--export([party_access_control/1]).
-
 -export([contract_not_found/1]).
 -export([contract_creation/1]).
 -export([contract_terms_retrieval/1]).
@@ -131,7 +129,6 @@ cfg(Key, C) ->
 -spec all() -> [{group, group_name()}].
 all() ->
     [
-        {group, party_access_control},
         {group, party_creation},
         {group, party_revisioning},
         {group, party_blocking_suspension},
@@ -155,10 +152,6 @@ groups() ->
             party_creation,
             party_already_exists,
             party_retrieval
-        ]},
-        {party_access_control, [sequence], [
-            party_creation,
-            party_access_control
         ]},
         {party_revisioning, [sequence], [
             party_creation,
@@ -477,8 +470,6 @@ end_per_testcase(_Name, _C) ->
 -spec shop_already_active(config()) -> _ | no_return().
 -spec shop_account_set_retrieval(config()) -> _ | no_return().
 -spec shop_account_retrieval(config()) -> _ | no_return().
-
--spec party_access_control(config()) -> _ | no_return().
 
 -spec contract_not_found(config()) -> _ | no_return().
 -spec contract_creation(config()) -> _ | no_return().
@@ -1570,56 +1561,6 @@ contract_w_contractor_creation(C) ->
     Claim = assert_claim_pending(pm_client_party:create_claim(Changeset, Client), Client),
     ok = accept_claim(Claim, Client),
     #domain_Contract{id = ContractID, contractor_id = ContractorID} = pm_client_party:get_contract(ContractID, Client).
-
-%% Access control tests
-
-party_access_control(C) ->
-    PartyID = cfg(party_id, C),
-    % External Success
-    GoodExternalClient = cfg(client, C),
-    #domain_Party{id = PartyID} = pm_client_party:get(GoodExternalClient),
-
-    % External Reject
-    BadExternalClient0 = pm_client_party:start(
-        #payproc_UserInfo{id = <<"FakE1D">>, type = {external_user, #payproc_ExternalUser{}}},
-        PartyID,
-        pm_client_api:new()
-    ),
-    ?invalid_user() = pm_client_party:get(BadExternalClient0),
-    pm_client_party:stop(BadExternalClient0),
-
-    % UserIdentity has priority
-    UserIdentity = #{
-        id => PartyID,
-        realm => <<"internal">>
-    },
-    Context = woody_user_identity:put(UserIdentity, woody_context:new()),
-    UserIdentityClient1 = pm_client_party:start(
-        #payproc_UserInfo{id = <<"FakE1D">>, type = {external_user, #payproc_ExternalUser{}}},
-        PartyID,
-        pm_client_api:new(Context)
-    ),
-    #domain_Party{id = PartyID} = pm_client_party:get(UserIdentityClient1),
-    pm_client_party:stop(UserIdentityClient1),
-
-    % Internal Success
-    GoodInternalClient = pm_client_party:start(
-        #payproc_UserInfo{id = <<"F4KE1D">>, type = {internal_user, #payproc_InternalUser{}}},
-        PartyID,
-        pm_client_api:new()
-    ),
-    #domain_Party{id = PartyID} = pm_client_party:get(GoodInternalClient),
-    pm_client_party:stop(GoodInternalClient),
-
-    % Service Success
-    GoodServiceClient = pm_client_party:start(
-        #payproc_UserInfo{id = <<"fAkE1D">>, type = {service_user, #payproc_ServiceUser{}}},
-        PartyID,
-        pm_client_api:new()
-    ),
-    #domain_Party{id = PartyID} = pm_client_party:get(GoodServiceClient),
-    pm_client_party:stop(GoodServiceClient),
-    ok.
 
 %% Compute providers
 
