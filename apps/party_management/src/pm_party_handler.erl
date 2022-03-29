@@ -15,7 +15,7 @@ handle_function(Func, Args0, Opts) ->
     scoper:scope(
         partymgmt,
         fun() ->
-            handle_function_(Func, filter_user_info_arg(Func, Args0), Opts)
+            handle_function_(Func, remove_user_info_arg(Func, Args0), Opts)
         end
     ).
 
@@ -241,18 +241,27 @@ handle_function_(
 
 %%
 
+%% @TODO Delete after protocol migration
 %% This is a migration measure to make sure we can accept both old and new (with no userinfo) protocol here
-filter_user_info_arg(Func, Args0)when
-    Func =:= 'ComputeProviderTerminal'
-->
+remove_user_info_arg('ComputeProviderTerminal', Args0) ->
     Args0;
-filter_user_info_arg(_Func, Args0) ->
+remove_user_info_arg(_Func, Args0) ->
     erlang:delete_element(1, Args0).
+
+add_user_info_arg('ComputeProviderTerminal', Args0) ->
+    Args0;
+add_user_info_arg(_Func, Args0) ->
+    erlang:insert_element(1, Args0, undefined).
 
 %%
 
 call(PartyID, FunctionName, Args) ->
-    pm_party_machine:call(PartyID, party_management, {'PartyManagement', FunctionName}, Args).
+    pm_party_machine:call(
+        PartyID,
+        party_management,
+        {'PartyManagement', FunctionName},
+        add_user_info_arg(FunctionName, Args)
+    ).
 
 %%
 

@@ -113,7 +113,7 @@ process_signal(timeout, _Machine) ->
 -spec process_call(call(), pm_machine:machine()) -> {pm_machine:response(), pm_machine:result()}.
 process_call({{'PartyManagement', Fun}, Args}, Machine) ->
     PartyID = erlang:element(2, Args),
-    process_call_(PartyID, Fun, Args, Machine);
+    process_call_(PartyID, Fun, remove_user_info_arg(Args), Machine);
 process_call({{'ClaimCommitter', Fun}, Args}, Machine) ->
     PartyID = erlang:element(1, Args),
     process_call_(PartyID, Fun, Args, Machine).
@@ -142,36 +142,39 @@ process_call_(PartyID, Fun, Args, Machine) ->
             respond_w_exception(Exception)
     end.
 
+remove_user_info_arg(Args0) ->
+    erlang:delete_element(1, Args0).
+
 %% Party
 
-handle_call('Block', {_, _PartyID, Reason}, AuxSt, St) ->
+handle_call('Block', {_PartyID, Reason}, AuxSt, St) ->
     handle_block(party, Reason, AuxSt, St);
-handle_call('Unblock', {_, _PartyID, Reason}, AuxSt, St) ->
+handle_call('Unblock', {_PartyID, Reason}, AuxSt, St) ->
     handle_unblock(party, Reason, AuxSt, St);
-handle_call('Suspend', {_, _PartyID}, AuxSt, St) ->
+handle_call('Suspend', {_PartyID}, AuxSt, St) ->
     handle_suspend(party, AuxSt, St);
-handle_call('Activate', {_, _PartyID}, AuxSt, St) ->
+handle_call('Activate', {_PartyID}, AuxSt, St) ->
     handle_activate(party, AuxSt, St);
 %% Shop
 
-handle_call('BlockShop', {_, _PartyID, ID, Reason}, AuxSt, St) ->
+handle_call('BlockShop', {_PartyID, ID, Reason}, AuxSt, St) ->
     handle_block({shop, ID}, Reason, AuxSt, St);
-handle_call('UnblockShop', {_, _PartyID, ID, Reason}, AuxSt, St) ->
+handle_call('UnblockShop', {_PartyID, ID, Reason}, AuxSt, St) ->
     handle_unblock({shop, ID}, Reason, AuxSt, St);
-handle_call('SuspendShop', {_, _PartyID, ID}, AuxSt, St) ->
+handle_call('SuspendShop', {_PartyID, ID}, AuxSt, St) ->
     handle_suspend({shop, ID}, AuxSt, St);
-handle_call('ActivateShop', {_, _PartyID, ID}, AuxSt, St) ->
+handle_call('ActivateShop', {_PartyID, ID}, AuxSt, St) ->
     handle_activate({shop, ID}, AuxSt, St);
 %% PartyMeta
 
-handle_call('SetMetaData', {_, _PartyID, NS, Data}, AuxSt, St) ->
+handle_call('SetMetaData', {_PartyID, NS, Data}, AuxSt, St) ->
     respond(
         ok,
         [?party_meta_set(NS, Data)],
         AuxSt,
         St
     );
-handle_call('RemoveMetaData', {_, _PartyID, NS}, AuxSt, St) ->
+handle_call('RemoveMetaData', {_PartyID, NS}, AuxSt, St) ->
     _ = get_st_metadata(NS, St),
     respond(
         ok,
@@ -181,7 +184,7 @@ handle_call('RemoveMetaData', {_, _PartyID, NS}, AuxSt, St) ->
     );
 %% Claim
 
-handle_call('CreateClaim', {_, _PartyID, Changeset}, AuxSt, St) ->
+handle_call('CreateClaim', {_PartyID, Changeset}, AuxSt, St) ->
     ok = assert_party_operable(St),
     {Claim, Changes} = create_claim(Changeset, St),
     respond(
@@ -190,7 +193,7 @@ handle_call('CreateClaim', {_, _PartyID, Changeset}, AuxSt, St) ->
         AuxSt,
         St
     );
-handle_call('UpdateClaim', {_, _PartyID, ID, ClaimRevision, Changeset}, AuxSt, St) ->
+handle_call('UpdateClaim', {_PartyID, ID, ClaimRevision, Changeset}, AuxSt, St) ->
     ok = assert_party_operable(St),
     ok = assert_claim_modification_allowed(ID, ClaimRevision, St),
     respond(
@@ -199,7 +202,7 @@ handle_call('UpdateClaim', {_, _PartyID, ID, ClaimRevision, Changeset}, AuxSt, S
         AuxSt,
         St
     );
-handle_call('AcceptClaim', {_, _PartyID, ID, ClaimRevision}, AuxSt, St) ->
+handle_call('AcceptClaim', {_PartyID, ID, ClaimRevision}, AuxSt, St) ->
     ok = assert_claim_modification_allowed(ID, ClaimRevision, St),
     Timestamp = pm_datetime:format_now(),
     Revision = get_next_party_revision(St),
@@ -215,7 +218,7 @@ handle_call('AcceptClaim', {_, _PartyID, ID, ClaimRevision}, AuxSt, St) ->
         AuxSt,
         St
     );
-handle_call('DenyClaim', {_, _PartyID, ID, ClaimRevision, Reason}, AuxSt, St) ->
+handle_call('DenyClaim', {_PartyID, ID, ClaimRevision, Reason}, AuxSt, St) ->
     ok = assert_claim_modification_allowed(ID, ClaimRevision, St),
     Timestamp = pm_datetime:format_now(),
     Claim = pm_claim:deny(Reason, Timestamp, get_st_claim(ID, St)),
@@ -225,7 +228,7 @@ handle_call('DenyClaim', {_, _PartyID, ID, ClaimRevision, Reason}, AuxSt, St) ->
         AuxSt,
         St
     );
-handle_call('RevokeClaim', {_, _PartyID, ID, ClaimRevision, Reason}, AuxSt, St) ->
+handle_call('RevokeClaim', {_PartyID, ID, ClaimRevision, Reason}, AuxSt, St) ->
     ok = assert_party_operable(St),
     ok = assert_claim_modification_allowed(ID, ClaimRevision, St),
     Timestamp = pm_datetime:format_now(),
