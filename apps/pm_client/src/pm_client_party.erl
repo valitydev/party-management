@@ -3,7 +3,6 @@
 -include_lib("damsel/include/dmsl_payment_processing_thrift.hrl").
 
 -export([start/2]).
--export([start_link/2]).
 -export([stop/1]).
 
 -export([create/2]).
@@ -60,9 +59,6 @@
 -export([init/1]).
 -export([handle_call/3]).
 -export([handle_cast/2]).
--export([handle_info/2]).
--export([terminate/2]).
--export([code_change/3]).
 
 %%
 
@@ -93,14 +89,7 @@
 
 -spec start(party_id(), pm_client_api:t()) -> pid().
 start(PartyID, ApiClient) ->
-    start(start, PartyID, ApiClient).
-
--spec start_link(party_id(), pm_client_api:t()) -> pid().
-start_link(PartyID, ApiClient) ->
-    start(start_link, PartyID, ApiClient).
-
-start(Mode, PartyID, ApiClient) ->
-    {ok, Pid} = gen_server:Mode(?MODULE, {PartyID, ApiClient}, []),
+    {ok, Pid} = gen_server:start(?MODULE, {PartyID, ApiClient}, []),
     Pid.
 
 -spec stop(pid()) -> ok.
@@ -365,19 +354,6 @@ handle_call(Call, _From, State) ->
 handle_cast(Cast, State) ->
     _ = logger:warning("unexpected cast received: ~tp", [Cast]),
     {noreply, State}.
-
--spec handle_info(_, state()) -> {noreply, state()}.
-handle_info(Info, State) ->
-    _ = logger:warning("unexpected info received: ~tp", [Info]),
-    {noreply, State}.
-
--spec terminate(Reason, state()) -> ok when Reason :: normal | shutdown | {shutdown, term()} | term().
-terminate(_Reason, _State) ->
-    ok.
-
--spec code_change(Vsn | {down, Vsn}, state(), term()) -> {error, noimpl} when Vsn :: term().
-code_change(_OldVsn, _State, _Extra) ->
-    {error, noimpl}.
 
 with_user_info(Args) ->
     [undefined | Args].
