@@ -66,7 +66,6 @@
 
 %%
 
--type user_info() :: dmsl_payment_processing_thrift:'UserInfo'().
 -type party_id() :: dmsl_domain_thrift:'PartyID'().
 -type party_params() :: dmsl_payment_processing_thrift:'PartyParams'().
 -type domain_revision() :: dmsl_domain_thrift:'DataRevision'().
@@ -325,7 +324,7 @@ map_result_error({error, Error}) ->
 -type state() :: #state{}.
 -type callref() :: {pid(), Tag :: reference()}.
 
--spec init({user_info(), party_id(), pm_client_api:t()}) -> {ok, state()}.
+-spec init({party_id(), pm_client_api:t()}) -> {ok, state()}.
 init({PartyID, ApiClient}) ->
     {ok, #state{
         party_id = PartyID,
