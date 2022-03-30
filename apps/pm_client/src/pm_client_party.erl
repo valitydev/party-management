@@ -95,18 +95,14 @@
 
 -spec start(party_id(), pm_client_api:t()) -> pid().
 start(PartyID, ApiClient) ->
-    start(start, undefined, PartyID, ApiClient).
-
--spec start(user_info(), party_id(), pm_client_api:t()) -> pid().
-start(UserInfo, PartyID, ApiClient) ->
-    start(start, UserInfo, PartyID, ApiClient).
+    start(start, PartyID, ApiClient).
 
 -spec start_link(party_id(), pm_client_api:t()) -> pid().
 start_link(PartyID, ApiClient) ->
-    start(start_link, undefined, PartyID, ApiClient).
+    start(start_link, PartyID, ApiClient).
 
-start(Mode, UserInfo, PartyID, ApiClient) ->
-    {ok, Pid} = gen_server:Mode(?MODULE, {UserInfo, PartyID, ApiClient}, []),
+start(Mode, PartyID, ApiClient) ->
+    {ok, Pid} = gen_server:Mode(?MODULE, {PartyID, ApiClient}, []),
     Pid.
 
 -spec stop(pid()) -> ok.
@@ -332,13 +328,13 @@ map_result_error({error, Error}) ->
 -type callref() :: {pid(), Tag :: reference()}.
 
 -spec init({user_info(), party_id(), pm_client_api:t()}) -> {ok, state()}.
-init({UserInfo, PartyID, ApiClient}) ->
+init({PartyID, ApiClient}) ->
     {ok, #state{
-        user_info = UserInfo,
+        user_info = undefined,
         party_id = PartyID,
         client = ApiClient,
         poller = pm_client_event_poller:new(
-            {party_management, 'GetEvents', [UserInfo, PartyID]},
+            {party_management, 'GetEvents', [undefined, PartyID]},
             fun(Event) -> Event#payproc_Event.id end
         )
     }}.
