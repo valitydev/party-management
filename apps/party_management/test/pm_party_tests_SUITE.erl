@@ -87,6 +87,7 @@
 
 -export([compute_payment_institution_terms/1]).
 -export([compute_payout_cash_flow/1]).
+-export([compute_payout_cash_flow_payout_tool/1]).
 
 -export([contractor_creation/1]).
 -export([contractor_modification/1]).
@@ -214,6 +215,7 @@ groups() ->
             shop_already_exists,
             shop_update,
             compute_payout_cash_flow,
+            compute_payout_cash_flow_payout_tool,
             {group, shop_blocking_suspension}
         ]},
         {shop_blocking_suspension, [sequence], [
@@ -486,6 +488,7 @@ end_per_testcase(_Name, _C) ->
 -spec contract_adjustment_expiration(config()) -> _ | no_return().
 -spec compute_payment_institution_terms(config()) -> _ | no_return().
 -spec compute_payout_cash_flow(config()) -> _ | no_return().
+-spec compute_payout_cash_flow_payout_tool(config()) -> _ | no_return().
 -spec contract_w2w_terms(config()) -> _ | no_return().
 -spec contractor_creation(config()) -> _ | no_return().
 -spec contractor_modification(config()) -> _ | no_return().
@@ -967,6 +970,30 @@ compute_payout_cash_flow(C) ->
             volume = #domain_Cash{amount = 2500, currency = ?cur(<<"RUB">>)}
         }
     ] = pm_client_party:compute_payout_cash_flow(Params, Client).
+
+compute_payout_cash_flow_payout_tool(C) ->
+    Client = cfg(client, C),
+    Params = #payproc_PayoutParams{
+        id = ?REAL_SHOP_ID,
+        amount = #domain_Cash{amount = 10000, currency = ?cur(<<"RUB">>)},
+        timestamp = pm_datetime:format_now(),
+        payout_tool_id = <<"1">>
+    },
+    [
+        #domain_FinalCashFlowPosting{
+            source = #domain_FinalCashFlowAccount{account_type = {merchant, settlement}},
+            destination = #domain_FinalCashFlowAccount{account_type = {merchant, payout}},
+            volume = #domain_Cash{amount = 7500, currency = ?cur(<<"RUB">>)}
+        },
+        #domain_FinalCashFlowPosting{
+            source = #domain_FinalCashFlowAccount{account_type = {merchant, settlement}},
+            destination = #domain_FinalCashFlowAccount{account_type = {system, settlement}},
+            volume = #domain_Cash{amount = 2500, currency = ?cur(<<"RUB">>)}
+        }
+    ] = pm_client_party:compute_payout_cash_flow(Params, Client),
+    {exception, #payproc_PayoutToolNotFound{}} = pm_client_party:compute_payout_cash_flow(
+        Params#payproc_PayoutParams{payout_tool_id = <<"Nope">>}, Client
+    ).
 
 contract_w2w_terms(C) ->
     Client = cfg(client, C),
