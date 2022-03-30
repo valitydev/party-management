@@ -172,7 +172,7 @@ handle_function_('ComputeGlobals', Args, _Opts) ->
 handle_function_(ComputeRulesetFun, Args, _Opts) when
     %% 'ComputePaymentRoutingRuleset' is deprecated, will be replaced by 'ComputeRoutingRuleset'
     ComputeRulesetFun =:= 'ComputePaymentRoutingRuleset' orelse
-    ComputeRulesetFun =:= 'ComputeRoutingRuleset'
+        ComputeRulesetFun =:= 'ComputeRoutingRuleset'
 ->
     {RuleSetRef, DomainRevision, Varset} = Args,
     RuleSet = get_payment_routing_ruleset(RuleSetRef, DomainRevision),
