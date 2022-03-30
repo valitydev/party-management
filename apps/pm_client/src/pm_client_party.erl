@@ -26,6 +26,7 @@
 -export([get_shop_contract/2]).
 -export([compute_shop_terms/5]).
 -export([compute_payment_institution_terms/3]).
+-export([compute_payment_institution/4]).
 -export([compute_payout_cash_flow/2]).
 
 -export([block_shop/3]).
@@ -172,6 +173,11 @@ compute_contract_terms(ID, Timestamp, PartyRevision, DomainRevision, Varset, Cli
     dmsl_domain_thrift:'TermSet'() | woody_error:business_error().
 compute_payment_institution_terms(Ref, Varset, Client) ->
     call(Client, 'ComputePaymentInstitutionTerms', with_user_info([Ref, Varset])).
+
+-spec compute_payment_institution(payment_intitution_ref(), domain_revision(), varset(), pid()) ->
+    dmsl_domain_thrift:'TermSet'() | woody_error:business_error().
+compute_payment_institution(Ref, DomainRevision, Varset, Client) ->
+    call(Client, 'ComputePaymentInstitution', with_user_info([Ref, DomainRevision, Varset])).
 
 -spec compute_payout_cash_flow(dmsl_payment_processing_thrift:'PayoutParams'(), pid()) ->
     dmsl_domain_thrift:'FinalCashFlow'() | woody_error:business_error().

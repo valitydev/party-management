@@ -86,6 +86,7 @@
 -export([contract_w2w_terms/1]).
 
 -export([compute_payment_institution_terms/1]).
+-export([compute_payment_institution/1]).
 -export([compute_payout_cash_flow/1]).
 -export([compute_payout_cash_flow_payout_tool/1]).
 
@@ -201,6 +202,7 @@ groups() ->
             contract_payout_tool_creation,
             contract_payout_tool_modification,
             compute_payment_institution_terms,
+            compute_payment_institution,
             contract_w2w_terms
         ]},
         {shop_management, [sequence], [
@@ -487,6 +489,7 @@ end_per_testcase(_Name, _C) ->
 -spec contract_adjustment_creation(config()) -> _ | no_return().
 -spec contract_adjustment_expiration(config()) -> _ | no_return().
 -spec compute_payment_institution_terms(config()) -> _ | no_return().
+-spec compute_payment_institution(config()) -> _ | no_return().
 -spec compute_payout_cash_flow(config()) -> _ | no_return().
 -spec compute_payout_cash_flow_payout_tool(config()) -> _ | no_return().
 -spec contract_w2w_terms(config()) -> _ | no_return().
@@ -910,6 +913,22 @@ compute_payment_institution_terms(C) ->
     ?assert_different_term_sets(T2, T3),
     ?assert_different_term_sets(T2, T4),
     ?assert_different_term_sets(T3, T4).
+
+compute_payment_institution(C) ->
+    Client = cfg(client, C),
+    DomainRevision = pm_domain:head(),
+    TermsFun = fun(PartyID) ->
+        #domain_PaymentInstitution{} =
+            pm_client_party:compute_payment_institution(
+                ?pinst(4),
+                DomainRevision,
+                #payproc_Varset{party_id = PartyID},
+                Client
+            )
+    end,
+    T1 = TermsFun(<<"12345">>),
+    T2 = TermsFun(<<"67890">>),
+    ?assert_different_term_sets(T1, T2).
 
 -spec check_all_payment_methods(config()) -> _.
 check_all_payment_methods(C) ->
@@ -2576,6 +2595,31 @@ construct_domain_fixture() ->
             data = #domain_PaymentInstitution{
                 name = <<"Chetky Payments Inc.">>,
                 system_account_set = {value, ?sas(2)},
+                default_contract_template = {value, ?tmpl(2)},
+                providers = {value, ?ordset([])},
+                inspector = {value, ?insp(1)},
+                residences = [],
+                realm = live
+            }
+        }},
+
+        {payment_institution, #domain_PaymentInstitutionObject{
+            ref = ?pinst(4),
+            data = #domain_PaymentInstitution{
+                name = <<"Chetky Payments Inc.">>,
+                system_account_set =
+                    {decisions, [
+                        #domain_SystemAccountSetDecision{
+                            if_ = ?partycond(<<"12345">>, undefined),
+                            then_ =
+                                {value, ?sas(2)}
+                        },
+                        #domain_SystemAccountSetDecision{
+                            if_ = ?partycond(<<"67890">>, undefined),
+                            then_ =
+                                {value, ?sas(1)}
+                        }
+                    ]},
                 default_contract_template = {value, ?tmpl(2)},
                 providers = {value, ?ordset([])},
                 inspector = {value, ?insp(1)},
