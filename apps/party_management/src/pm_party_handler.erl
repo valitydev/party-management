@@ -169,13 +169,11 @@ handle_function_('ComputeGlobals', Args, _Opts) ->
     VS = pm_varset:decode_varset(Varset),
     pm_globals:reduce_globals(Globals, VS, DomainRevision);
 %% RuleSets
-%% Deprecated, will be replaced by 'ComputeRoutingRuleset'
-handle_function_('ComputePaymentRoutingRuleset', Args, _Opts) ->
-    {RuleSetRef, DomainRevision, Varset} = Args,
-    RuleSet = get_payment_routing_ruleset(RuleSetRef, DomainRevision),
-    VS = pm_varset:decode_varset(Varset),
-    pm_ruleset:reduce_payment_routing_ruleset(RuleSet, VS, DomainRevision);
-handle_function_('ComputeRoutingRuleset', Args, _Opts) ->
+handle_function_(ComputeRulesetFun, Args, _Opts) when
+    %% 'ComputePaymentRoutingRuleset' is deprecated, will be replaced by 'ComputeRoutingRuleset'
+    ComputeRulesetFun =:= 'ComputePaymentRoutingRuleset' orelse
+    ComputeRulesetFun =:= 'ComputeRoutingRuleset'
+->
     {RuleSetRef, DomainRevision, Varset} = Args,
     RuleSet = get_payment_routing_ruleset(RuleSetRef, DomainRevision),
     VS = pm_varset:decode_varset(Varset),
