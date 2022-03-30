@@ -317,7 +317,6 @@ map_result_error({error, Error}) ->
 -type event() :: dmsl_payment_processing_thrift:'Event'().
 
 -record(state, {
-    user_info :: user_info(),
     party_id :: party_id(),
     poller :: pm_client_event_poller:st(event()),
     client :: pm_client_api:t()
@@ -329,7 +328,6 @@ map_result_error({error, Error}) ->
 -spec init({user_info(), party_id(), pm_client_api:t()}) -> {ok, state()}.
 init({PartyID, ApiClient}) ->
     {ok, #state{
-        user_info = undefined,
         party_id = PartyID,
         client = ApiClient,
         poller = pm_client_event_poller:new(
@@ -383,7 +381,7 @@ code_change(_OldVsn, _State, _Extra) ->
     {error, noimpl}.
 
 with_user_info(Args) ->
-    [fun(St) -> St#state.user_info end | Args].
+    [undefined | Args].
 
 with_user_info_party_id(Args) ->
-    [fun(St) -> St#state.user_info end, fun(St) -> St#state.party_id end | Args].
+    [undefined, fun(St) -> St#state.party_id end | Args].
