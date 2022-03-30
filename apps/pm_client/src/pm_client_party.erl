@@ -3,7 +3,6 @@
 -include_lib("damsel/include/dmsl_payment_processing_thrift.hrl").
 
 -export([start/2]).
--export([start/3]).
 -export([start_link/2]).
 -export([stop/1]).
 
