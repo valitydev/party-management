@@ -11,11 +11,11 @@
 %%
 
 -spec handle_function(woody:func(), woody:args(), pm_woody_wrapper:handler_opts()) -> term() | no_return().
-handle_function(Func, Args0, Opts) ->
+handle_function(Func, Args, Opts) ->
     scoper:scope(
         partymgmt,
         fun() ->
-            handle_function_(Func, remove_user_info_arg(Func, Args0), Opts)
+            handle_function_(Func, remove_user_info_arg(Func, Args), Opts)
         end
     ).
 

@@ -60,8 +60,7 @@ cleanup() ->
     ok.
 
 -spec get_woody_context(context()) -> woody_context().
-get_woody_context(Context) ->
-    #{woody_context := WoodyContext} = Context,
+get_woody_context(#{woody_context := WoodyContext}) ->
     WoodyContext.
 
 %% Internal functions
