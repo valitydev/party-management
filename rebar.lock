@@ -60,11 +60,8 @@
  {<<"woody">>,
   {git,"https://github.com/valitydev/woody_erlang.git",
        {ref,"0c2e16dfc8a51f6f63fcd74df982178a9aeab322"}},
-  0},
- {<<"woody_user_identity">>,
-  {git,"https://github.com/valitydev/woody_erlang_user_identity.git",
-       {ref,"a480762fea8d7c08f105fb39ca809482b6cb042e"}},
-  0}]}.
+  0}
+  ]}.
 [
 {pkg_hash,[
  {<<"cache">>, <<"B23A5FE7095445A88412A6E614C933377E0137B44FFED77C9B3FEF1A731A20B2">>},

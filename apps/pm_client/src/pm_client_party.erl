@@ -3,8 +3,6 @@
 -include_lib("damsel/include/dmsl_payment_processing_thrift.hrl").
 
 -export([start/2]).
--export([start/3]).
--export([start_link/2]).
 -export([stop/1]).
 
 -export([create/2]).
@@ -28,6 +26,7 @@
 -export([get_shop_contract/2]).
 -export([compute_shop_terms/5]).
 -export([compute_payment_institution_terms/3]).
+-export([compute_payment_institution/4]).
 -export([compute_payout_cash_flow/2]).
 
 -export([block_shop/3]).
@@ -61,13 +60,9 @@
 -export([init/1]).
 -export([handle_call/3]).
 -export([handle_cast/2]).
--export([handle_info/2]).
--export([terminate/2]).
--export([code_change/3]).
 
 %%
 
--type user_info() :: dmsl_payment_processing_thrift:'UserInfo'().
 -type party_id() :: dmsl_domain_thrift:'PartyID'().
 -type party_params() :: dmsl_payment_processing_thrift:'PartyParams'().
 -type domain_revision() :: dmsl_domain_thrift:'DataRevision'().
@@ -95,18 +90,7 @@
 
 -spec start(party_id(), pm_client_api:t()) -> pid().
 start(PartyID, ApiClient) ->
-    start(start, undefined, PartyID, ApiClient).
-
--spec start(user_info(), party_id(), pm_client_api:t()) -> pid().
-start(UserInfo, PartyID, ApiClient) ->
-    start(start, UserInfo, PartyID, ApiClient).
-
--spec start_link(party_id(), pm_client_api:t()) -> pid().
-start_link(PartyID, ApiClient) ->
-    start(start_link, undefined, PartyID, ApiClient).
-
-start(Mode, UserInfo, PartyID, ApiClient) ->
-    {ok, Pid} = gen_server:Mode(?MODULE, {UserInfo, PartyID, ApiClient}, []),
+    {ok, Pid} = gen_server:start(?MODULE, {PartyID, ApiClient}, []),
     Pid.
 
 -spec stop(pid()) -> ok.
@@ -189,6 +173,11 @@ compute_contract_terms(ID, Timestamp, PartyRevision, DomainRevision, Varset, Cli
     dmsl_domain_thrift:'TermSet'() | woody_error:business_error().
 compute_payment_institution_terms(Ref, Varset, Client) ->
     call(Client, 'ComputePaymentInstitutionTerms', with_user_info([Ref, Varset])).
+
+-spec compute_payment_institution(payment_intitution_ref(), domain_revision(), varset(), pid()) ->
+    dmsl_domain_thrift:'TermSet'() | woody_error:business_error().
+compute_payment_institution(Ref, DomainRevision, Varset, Client) ->
+    call(Client, 'ComputePaymentInstitution', with_user_info([Ref, DomainRevision, Varset])).
 
 -spec compute_payout_cash_flow(dmsl_payment_processing_thrift:'PayoutParams'(), pid()) ->
     dmsl_domain_thrift:'FinalCashFlow'() | woody_error:business_error().
@@ -322,7 +311,6 @@ map_result_error({error, Error}) ->
 -type event() :: dmsl_payment_processing_thrift:'Event'().
 
 -record(state, {
-    user_info :: user_info(),
     party_id :: party_id(),
     poller :: pm_client_event_poller:st(event()),
     client :: pm_client_api:t()
@@ -331,14 +319,13 @@ map_result_error({error, Error}) ->
 -type state() :: #state{}.
 -type callref() :: {pid(), Tag :: reference()}.
 
--spec init({user_info(), party_id(), pm_client_api:t()}) -> {ok, state()}.
-init({UserInfo, PartyID, ApiClient}) ->
+-spec init({party_id(), pm_client_api:t()}) -> {ok, state()}.
+init({PartyID, ApiClient}) ->
     {ok, #state{
-        user_info = UserInfo,
         party_id = PartyID,
         client = ApiClient,
         poller = pm_client_event_poller:new(
-            {party_management, 'GetEvents', [UserInfo, PartyID]},
+            {party_management, 'GetEvents', [undefined, PartyID]},
             fun(Event) -> Event#payproc_Event.id end
         )
     }}.
@@ -374,21 +361,8 @@ handle_cast(Cast, State) ->
     _ = logger:warning("unexpected cast received: ~tp", [Cast]),
     {noreply, State}.
 
--spec handle_info(_, state()) -> {noreply, state()}.
-handle_info(Info, State) ->
-    _ = logger:warning("unexpected info received: ~tp", [Info]),
-    {noreply, State}.
-
--spec terminate(Reason, state()) -> ok when Reason :: normal | shutdown | {shutdown, term()} | term().
-terminate(_Reason, _State) ->
-    ok.
-
--spec code_change(Vsn | {down, Vsn}, state(), term()) -> {error, noimpl} when Vsn :: term().
-code_change(_OldVsn, _State, _Extra) ->
-    {error, noimpl}.
-
 with_user_info(Args) ->
-    [fun(St) -> St#state.user_info end | Args].
+    [undefined | Args].
 
 with_user_info_party_id(Args) ->
-    [fun(St) -> St#state.user_info end, fun(St) -> St#state.party_id end | Args].
+    [undefined, fun(St) -> St#state.party_id end | Args].

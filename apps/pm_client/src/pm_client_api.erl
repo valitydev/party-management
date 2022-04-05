@@ -1,6 +1,5 @@
 -module(pm_client_api).
 
--export([new/0]).
 -export([new/1]).
 -export([call/4]).
 
@@ -9,10 +8,6 @@
 %%
 
 -type t() :: woody_context:ctx().
-
--spec new() -> t().
-new() ->
-    woody_context:new().
 
 -spec new(woody_context:ctx()) -> t().
 new(Context) ->

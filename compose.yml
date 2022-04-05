@@ -16,7 +16,7 @@ services:
       machinegun:
         condition: service_healthy
       dominant:
-        condition: service_started
+        condition: service_healthy
       shumway:
         condition: service_healthy
     ports:
@@ -24,20 +24,20 @@ services:
     command: /sbin/init
 
   dominant:
-    image: ghcr.io/valitydev/dominant:sha-d3f2615
+    image: ghcr.io/valitydev/dominant:sha-eb1cccb
     depends_on:
       - machinegun
     ports:
       - "8022"
     command: /opt/dominant/bin/dominant foreground
     healthcheck:
-      test: curl http://localhost:8022/health
+      test: "/opt/dominant/bin/dominant ping"
       interval: 5s
       timeout: 1s
       retries: 20
 
   machinegun:
-    image: docker.io/rbkmoney/machinegun:c05a8c18cd4f7966d70b6ad84cac9429cdfe37ae
+    image: ghcr.io/valitydev/machinegun:sha-7f0a21a
     ports:
       - "8022"
     command: /opt/machinegun/bin/machinegun foreground
@@ -45,7 +45,7 @@ services:
       - ./test/machinegun/config.yaml:/opt/machinegun/etc/config.yaml
       - ./test/machinegun/cookie:/opt/machinegun/etc/cookie
     healthcheck:
-      test: curl http://localhost:8022/health
+      test: "/opt/machinegun/bin/machinegun ping"
       interval: 5s
       timeout: 1s
       retries: 20
