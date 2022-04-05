@@ -302,7 +302,7 @@ init_per_group(shop_blocking_suspension, C) ->
     C;
 init_per_group(Group, C) ->
     PartyID = list_to_binary(lists:concat([Group, ".", erlang:system_time()])),
-    ApiClient = pm_ct_helper:create_client(PartyID),
+    ApiClient = pm_ct_helper:create_client(),
     Client = pm_client_party:start(PartyID, ApiClient),
     [{party_id, PartyID}, {client, Client} | C].
 

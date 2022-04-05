@@ -9,12 +9,10 @@
 -export([get_woody_context/1]).
 
 -opaque context() :: #{
-    woody_context := woody_context(),
-    user_identity => user_identity()
+    woody_context := woody_context()
 }.
 
 -type options() :: #{
-    user_identity => user_identity(),
     woody_context => woody_context()
 }.
 
@@ -23,7 +21,6 @@
 
 %% Internal types
 
--type user_identity() :: woody_user_identity:user_identity().
 -type woody_context() :: woody_context:ctx().
 
 %% TODO change when moved to separate app

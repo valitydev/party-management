@@ -11,8 +11,7 @@
 
 -type handler_opts() :: #{
     handler := module(),
-    default_handling_timeout => timeout(),
-    user_identity => undefined | woody_user_identity:user_identity()
+    default_handling_timeout => timeout()
 }.
 
 -type client_opts() :: #{
