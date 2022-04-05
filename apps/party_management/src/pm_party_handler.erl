@@ -22,14 +22,19 @@ handle_function(Func, Args, Opts) ->
 -spec handle_function_(woody:func(), woody:args(), pm_woody_wrapper:handler_opts()) -> term() | no_return().
 %% Party
 handle_function_('Create', {PartyID, PartyParams}, _Opts) ->
+    _ = set_party_mgmt_meta(PartyID),
     pm_party_machine:start(PartyID, PartyParams);
 handle_function_('Checkout', {PartyID, RevisionParam}, _Opts) ->
+    _ = set_party_mgmt_meta(PartyID),
     checkout_party(PartyID, RevisionParam, #payproc_InvalidPartyRevision{});
 handle_function_('Get', {PartyID}, _Opts) ->
+    _ = set_party_mgmt_meta(PartyID),
     pm_party_machine:get_party(PartyID);
 handle_function_('GetRevision', {PartyID}, _Opts) ->
+    _ = set_party_mgmt_meta(PartyID),
     pm_party_machine:get_last_revision(PartyID);
 handle_function_('GetStatus', {PartyID}, _Opts) ->
+    _ = set_party_mgmt_meta(PartyID),
     pm_party_machine:get_status(PartyID);
 handle_function_(Fun, Args, _Opts) when
     Fun =:= 'Block' orelse
@@ -38,13 +43,16 @@ handle_function_(Fun, Args, _Opts) when
         Fun =:= 'Activate'
 ->
     PartyID = erlang:element(1, Args),
+    _ = set_party_mgmt_meta(PartyID),
     call(PartyID, Fun, Args);
 %% Contract
 handle_function_('GetContract', {PartyID, ContractID}, _Opts) ->
+    _ = set_party_mgmt_meta(PartyID),
     Party = pm_party_machine:get_party(PartyID),
     ensure_contract(pm_party:get_contract(ContractID, Party));
 handle_function_('ComputeContractTerms', Args, _Opts) ->
     {PartyID, ContractID, Timestamp, PartyRevisionParams, DomainRevision, Varset} = Args,
+    _ = set_party_mgmt_meta(PartyID),
     Party = checkout_party(PartyID, PartyRevisionParams),
     Contract = ensure_contract(pm_party:get_contract(ContractID, Party)),
     VS =
@@ -67,15 +75,18 @@ handle_function_('ComputeContractTerms', Args, _Opts) ->
     pm_party:reduce_terms(Terms, DecodedVS, DomainRevision);
 %% Shop
 handle_function_('GetShop', {PartyID, ID}, _Opts) ->
+    _ = set_party_mgmt_meta(PartyID),
     Party = pm_party_machine:get_party(PartyID),
     ensure_shop(pm_party:get_shop(ID, Party));
 handle_function_('GetShopContract', {PartyID, ID}, _Opts) ->
+    _ = set_party_mgmt_meta(PartyID),
     Party = pm_party_machine:get_party(PartyID),
     Shop = ensure_shop(pm_party:get_shop(ID, Party)),
     Contract = pm_party:get_contract(Shop#domain_Shop.contract_id, Party),
     Contractor = pm_party:get_contractor(Contract#domain_Contract.contractor_id, Party),
     #payproc_ShopContract{shop = Shop, contract = Contract, contractor = Contractor};
 handle_function_('ComputeShopTerms', {PartyID, ShopID, Timestamp, PartyRevision, Varset}, _Opts) ->
+    _ = set_party_mgmt_meta(PartyID),
     Party = checkout_party(PartyID, PartyRevision),
     Shop = ensure_shop(pm_party:get_shop(ShopID, Party)),
     Contract = pm_party:get_contract(Shop#domain_Shop.contract_id, Party),
@@ -96,11 +107,14 @@ handle_function_(Fun, Args, _Opts) when
         Fun =:= 'ActivateShop'
 ->
     PartyID = erlang:element(1, Args),
+    _ = set_party_mgmt_meta(PartyID),
     call(PartyID, Fun, Args);
 %% Claim
 handle_function_('GetClaim', {PartyID, ID}, _Opts) ->
+    _ = set_party_mgmt_meta(PartyID),
     pm_party_machine:get_claim(ID, PartyID);
 handle_function_('GetClaims', {PartyID}, _Opts) ->
+    _ = set_party_mgmt_meta(PartyID),
     pm_party_machine:get_claims(PartyID);
 handle_function_(Fun, Args, _Opts) when
     Fun =:= 'CreateClaim' orelse
@@ -110,16 +124,20 @@ handle_function_(Fun, Args, _Opts) when
         Fun =:= 'RevokeClaim'
 ->
     PartyID = erlang:element(1, Args),
+    _ = set_party_mgmt_meta(PartyID),
     call(PartyID, Fun, Args);
 %% Event
 handle_function_('GetEvents', {PartyID, Range}, _Opts) ->
+    _ = set_party_mgmt_meta(PartyID),
     #payproc_EventRange{'after' = AfterID, limit = Limit} = Range,
     pm_party_machine:get_public_history(PartyID, AfterID, Limit);
 %% ShopAccount
 handle_function_('GetAccountState', {PartyID, AccountID}, _Opts) ->
+    _ = set_party_mgmt_meta(PartyID),
     Party = pm_party_machine:get_party(PartyID),
     pm_party:get_account_state(AccountID, Party);
 handle_function_('GetShopAccount', {PartyID, ShopID}, _Opts) ->
+    _ = set_party_mgmt_meta(PartyID),
     Party = pm_party_machine:get_party(PartyID),
     pm_party:get_shop_account(ShopID, Party);
 %% Providers
@@ -181,14 +199,17 @@ handle_function_(ComputeRulesetFun, Args, _Opts) when
 %% PartyMeta
 
 handle_function_('GetMeta', {PartyID}, _Opts) ->
+    _ = set_party_mgmt_meta(PartyID),
     pm_party_machine:get_meta(PartyID);
 handle_function_('GetMetaData', {PartyID, NS}, _Opts) ->
+    _ = set_party_mgmt_meta(PartyID),
     pm_party_machine:get_metadata(NS, PartyID);
 handle_function_(Fun, Args, _Opts) when
     Fun =:= 'SetMetaData' orelse
         Fun =:= 'RemoveMetaData'
 ->
     PartyID = erlang:element(1, Args),
+    _ = set_party_mgmt_meta(PartyID),
     call(PartyID, Fun, Args);
 %% Payment Institutions
 
@@ -215,6 +236,7 @@ handle_function_(
     {PartyID, #payproc_PayoutParams{id = ShopID, amount = Amount, timestamp = Timestamp} = PayoutParams},
     _Opts
 ) ->
+    _ = set_party_mgmt_meta(PartyID),
     Party = checkout_party(PartyID, {timestamp, Timestamp}),
     Shop = ensure_shop(pm_party:get_shop(ShopID, Party)),
     Contract = pm_party:get_contract(Shop#domain_Shop.contract_id, Party),
@@ -280,6 +302,9 @@ assert_provider_terms_reduced(#domain_ProvisionTermSet{}) ->
     ok;
 assert_provider_terms_reduced(undefined) ->
     throw(#payproc_ProvisionTermSetUndefined{}).
+
+set_party_mgmt_meta(PartyID) ->
+    scoper:add_meta(#{party_id => PartyID}).
 
 checkout_party(PartyID, RevisionParam) ->
     checkout_party(PartyID, RevisionParam, #payproc_PartyNotExistsYet{}).
