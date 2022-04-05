@@ -70,8 +70,6 @@
 -export([shop_account_set_retrieval/1]).
 -export([shop_account_retrieval/1]).
 
--export([party_access_control/1]).
-
 -export([contract_not_found/1]).
 -export([contract_creation/1]).
 -export([contract_terms_retrieval/1]).
@@ -88,7 +86,9 @@
 -export([contract_w2w_terms/1]).
 
 -export([compute_payment_institution_terms/1]).
+-export([compute_payment_institution/1]).
 -export([compute_payout_cash_flow/1]).
+-export([compute_payout_cash_flow_payout_tool/1]).
 
 -export([contractor_creation/1]).
 -export([contractor_modification/1]).
@@ -131,7 +131,6 @@ cfg(Key, C) ->
 -spec all() -> [{group, group_name()}].
 all() ->
     [
-        {group, party_access_control},
         {group, party_creation},
         {group, party_revisioning},
         {group, party_blocking_suspension},
@@ -155,10 +154,6 @@ groups() ->
             party_creation,
             party_already_exists,
             party_retrieval
-        ]},
-        {party_access_control, [sequence], [
-            party_creation,
-            party_access_control
         ]},
         {party_revisioning, [sequence], [
             party_creation,
@@ -207,6 +202,7 @@ groups() ->
             contract_payout_tool_creation,
             contract_payout_tool_modification,
             compute_payment_institution_terms,
+            compute_payment_institution,
             contract_w2w_terms
         ]},
         {shop_management, [sequence], [
@@ -221,6 +217,7 @@ groups() ->
             shop_already_exists,
             shop_update,
             compute_payout_cash_flow,
+            compute_payout_cash_flow_payout_tool,
             {group, shop_blocking_suspension}
         ]},
         {shop_blocking_suspension, [sequence], [
@@ -305,7 +302,7 @@ init_per_group(shop_blocking_suspension, C) ->
     C;
 init_per_group(Group, C) ->
     PartyID = list_to_binary(lists:concat([Group, ".", erlang:system_time()])),
-    ApiClient = pm_ct_helper:create_client(PartyID),
+    ApiClient = pm_ct_helper:create_client(),
     Client = pm_client_party:start(PartyID, ApiClient),
     [{party_id, PartyID}, {client, Client} | C].
 
@@ -478,8 +475,6 @@ end_per_testcase(_Name, _C) ->
 -spec shop_account_set_retrieval(config()) -> _ | no_return().
 -spec shop_account_retrieval(config()) -> _ | no_return().
 
--spec party_access_control(config()) -> _ | no_return().
-
 -spec contract_not_found(config()) -> _ | no_return().
 -spec contract_creation(config()) -> _ | no_return().
 -spec contract_terms_retrieval(config()) -> _ | no_return().
@@ -494,7 +489,9 @@ end_per_testcase(_Name, _C) ->
 -spec contract_adjustment_creation(config()) -> _ | no_return().
 -spec contract_adjustment_expiration(config()) -> _ | no_return().
 -spec compute_payment_institution_terms(config()) -> _ | no_return().
+-spec compute_payment_institution(config()) -> _ | no_return().
 -spec compute_payout_cash_flow(config()) -> _ | no_return().
+-spec compute_payout_cash_flow_payout_tool(config()) -> _ | no_return().
 -spec contract_w2w_terms(config()) -> _ | no_return().
 -spec contractor_creation(config()) -> _ | no_return().
 -spec contractor_modification(config()) -> _ | no_return().
@@ -917,6 +914,22 @@ compute_payment_institution_terms(C) ->
     ?assert_different_term_sets(T2, T4),
     ?assert_different_term_sets(T3, T4).
 
+compute_payment_institution(C) ->
+    Client = cfg(client, C),
+    DomainRevision = pm_domain:head(),
+    TermsFun = fun(PartyID) ->
+        #domain_PaymentInstitution{} =
+            pm_client_party:compute_payment_institution(
+                ?pinst(4),
+                DomainRevision,
+                #payproc_Varset{party_id = PartyID},
+                Client
+            )
+    end,
+    T1 = TermsFun(<<"12345">>),
+    T2 = TermsFun(<<"67890">>),
+    ?assert_different_term_sets(T1, T2).
+
 -spec check_all_payment_methods(config()) -> _.
 check_all_payment_methods(C) ->
     Client = cfg(client, C),
@@ -976,6 +989,30 @@ compute_payout_cash_flow(C) ->
             volume = #domain_Cash{amount = 2500, currency = ?cur(<<"RUB">>)}
         }
     ] = pm_client_party:compute_payout_cash_flow(Params, Client).
+
+compute_payout_cash_flow_payout_tool(C) ->
+    Client = cfg(client, C),
+    Params = #payproc_PayoutParams{
+        id = ?REAL_SHOP_ID,
+        amount = #domain_Cash{amount = 10000, currency = ?cur(<<"RUB">>)},
+        timestamp = pm_datetime:format_now(),
+        payout_tool_id = <<"1">>
+    },
+    [
+        #domain_FinalCashFlowPosting{
+            source = #domain_FinalCashFlowAccount{account_type = {merchant, settlement}},
+            destination = #domain_FinalCashFlowAccount{account_type = {merchant, payout}},
+            volume = #domain_Cash{amount = 7500, currency = ?cur(<<"RUB">>)}
+        },
+        #domain_FinalCashFlowPosting{
+            source = #domain_FinalCashFlowAccount{account_type = {merchant, settlement}},
+            destination = #domain_FinalCashFlowAccount{account_type = {system, settlement}},
+            volume = #domain_Cash{amount = 2500, currency = ?cur(<<"RUB">>)}
+        }
+    ] = pm_client_party:compute_payout_cash_flow(Params, Client),
+    {exception, #payproc_PayoutToolNotFound{}} = pm_client_party:compute_payout_cash_flow(
+        Params#payproc_PayoutParams{payout_tool_id = <<"Nope">>}, Client
+    ).
 
 contract_w2w_terms(C) ->
     Client = cfg(client, C),
@@ -1570,56 +1607,6 @@ contract_w_contractor_creation(C) ->
     Claim = assert_claim_pending(pm_client_party:create_claim(Changeset, Client), Client),
     ok = accept_claim(Claim, Client),
     #domain_Contract{id = ContractID, contractor_id = ContractorID} = pm_client_party:get_contract(ContractID, Client).
-
-%% Access control tests
-
-party_access_control(C) ->
-    PartyID = cfg(party_id, C),
-    % External Success
-    GoodExternalClient = cfg(client, C),
-    #domain_Party{id = PartyID} = pm_client_party:get(GoodExternalClient),
-
-    % External Reject
-    BadExternalClient0 = pm_client_party:start(
-        #payproc_UserInfo{id = <<"FakE1D">>, type = {external_user, #payproc_ExternalUser{}}},
-        PartyID,
-        pm_client_api:new()
-    ),
-    ?invalid_user() = pm_client_party:get(BadExternalClient0),
-    pm_client_party:stop(BadExternalClient0),
-
-    % UserIdentity has priority
-    UserIdentity = #{
-        id => PartyID,
-        realm => <<"internal">>
-    },
-    Context = woody_user_identity:put(UserIdentity, woody_context:new()),
-    UserIdentityClient1 = pm_client_party:start(
-        #payproc_UserInfo{id = <<"FakE1D">>, type = {external_user, #payproc_ExternalUser{}}},
-        PartyID,
-        pm_client_api:new(Context)
-    ),
-    #domain_Party{id = PartyID} = pm_client_party:get(UserIdentityClient1),
-    pm_client_party:stop(UserIdentityClient1),
-
-    % Internal Success
-    GoodInternalClient = pm_client_party:start(
-        #payproc_UserInfo{id = <<"F4KE1D">>, type = {internal_user, #payproc_InternalUser{}}},
-        PartyID,
-        pm_client_api:new()
-    ),
-    #domain_Party{id = PartyID} = pm_client_party:get(GoodInternalClient),
-    pm_client_party:stop(GoodInternalClient),
-
-    % Service Success
-    GoodServiceClient = pm_client_party:start(
-        #payproc_UserInfo{id = <<"fAkE1D">>, type = {service_user, #payproc_ServiceUser{}}},
-        PartyID,
-        pm_client_api:new()
-    ),
-    #domain_Party{id = PartyID} = pm_client_party:get(GoodServiceClient),
-    pm_client_party:stop(GoodServiceClient),
-    ok.
 
 %% Compute providers
 
@@ -2608,6 +2595,31 @@ construct_domain_fixture() ->
             data = #domain_PaymentInstitution{
                 name = <<"Chetky Payments Inc.">>,
                 system_account_set = {value, ?sas(2)},
+                default_contract_template = {value, ?tmpl(2)},
+                providers = {value, ?ordset([])},
+                inspector = {value, ?insp(1)},
+                residences = [],
+                realm = live
+            }
+        }},
+
+        {payment_institution, #domain_PaymentInstitutionObject{
+            ref = ?pinst(4),
+            data = #domain_PaymentInstitution{
+                name = <<"Chetky Payments Inc.">>,
+                system_account_set =
+                    {decisions, [
+                        #domain_SystemAccountSetDecision{
+                            if_ = ?partycond(<<"12345">>, undefined),
+                            then_ =
+                                {value, ?sas(2)}
+                        },
+                        #domain_SystemAccountSetDecision{
+                            if_ = ?partycond(<<"67890">>, undefined),
+                            then_ =
+                                {value, ?sas(1)}
+                        }
+                    ]},
                 default_contract_template = {value, ?tmpl(2)},
                 providers = {value, ?ordset([])},
                 inspector = {value, ?insp(1)},

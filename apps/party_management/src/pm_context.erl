@@ -7,15 +7,12 @@
 -export([cleanup/0]).
 
 -export([get_woody_context/1]).
--export([set_user_identity/2]).
 
 -opaque context() :: #{
-    woody_context := woody_context(),
-    user_identity => user_identity()
+    woody_context := woody_context()
 }.
 
 -type options() :: #{
-    user_identity => user_identity(),
     woody_context => woody_context()
 }.
 
@@ -24,7 +21,6 @@
 
 %% Internal types
 
--type user_identity() :: woody_user_identity:user_identity().
 -type woody_context() :: woody_context:ctx().
 
 %% TODO change when moved to separate app
@@ -61,13 +57,8 @@ cleanup() ->
     ok.
 
 -spec get_woody_context(context()) -> woody_context().
-get_woody_context(Context) ->
-    #{woody_context := WoodyContext} = ensure_woody_user_info_set(Context),
+get_woody_context(#{woody_context := WoodyContext}) ->
     WoodyContext.
-
--spec set_user_identity(user_identity(), context()) -> context().
-set_user_identity(Identity, Context) ->
-    Context#{user_identity => Identity}.
 
 %% Internal functions
 
@@ -76,10 +67,3 @@ ensure_woody_context_exists(#{woody_context := _WoodyContext} = Options) ->
     Options;
 ensure_woody_context_exists(Options) ->
     Options#{woody_context => woody_context:new()}.
-
--spec ensure_woody_user_info_set(context()) -> context().
-ensure_woody_user_info_set(#{user_identity := Identity, woody_context := WoodyContext} = Context) ->
-    NewWoodyContext = woody_user_identity:put(Identity, WoodyContext),
-    Context#{woody_context := NewWoodyContext};
-ensure_woody_user_info_set(Context) ->
-    Context.
