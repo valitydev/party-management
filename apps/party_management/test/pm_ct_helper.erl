@@ -93,7 +93,7 @@ start_app(party_management = AppName) ->
                 }
             }},
             {services, #{
-                accounter => <<"http://shumway:8022/shumpune">>,
+                accounter => <<"http://shumway:8022/accounter">>,
                 automaton => <<"http://machinegun:8022/v1/automaton">>,
                 party_management => #{
                     url => <<"http://party-management:8022/v1/processing/partymgmt">>,

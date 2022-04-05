@@ -51,7 +51,7 @@ services:
       retries: 20
 
   shumway:
-    image: docker.io/rbkmoney/shumway:44eb989065b27be619acd16b12ebdb2288b46c36
+    image: docker.io/rbkmoney/shumway:d5b74714437b1a1b11689a38297fd2a6c08e0db2
     restart: unless-stopped
     depends_on:
       - shumway-db

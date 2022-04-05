@@ -1,10 +1,3 @@
-%%% Accounting
-%%%
-%%% TODO
-%%%  - Brittle posting id assignment, it should be a level upper, maybe even in
-%%%    `pm_cashflow`.
-%%%  - Stuff cash flow details in the posting description fields.
-
 -module(pm_accounting).
 
 -export([get_account/1]).
@@ -12,17 +5,11 @@
 -export([create_account/1]).
 
 -include_lib("damsel/include/dmsl_payment_processing_thrift.hrl").
--include_lib("shumpune_proto/include/shumpune_shumpune_thrift.hrl").
+-include_lib("damsel/include/dmsl_accounter_thrift.hrl").
 
 -type amount() :: dmsl_domain_thrift:'Amount'().
 -type currency_code() :: dmsl_domain_thrift:'CurrencySymbolicCode'().
 -type account_id() :: dmsl_accounter_thrift:'AccountID'().
--type batch_id() :: dmsl_accounter_thrift:'BatchID'().
--type final_cash_flow() :: dmsl_domain_thrift:'FinalCashFlow'().
--type batch() :: {batch_id(), final_cash_flow()}.
--type clock() :: shumpune_shumpune_thrift:'Clock'().
-
--export_type([batch/0]).
 
 -type account() :: #{
     account_id => account_id(),
@@ -38,25 +25,13 @@
 
 -spec get_account(account_id()) -> account().
 get_account(AccountID) ->
-    case call_accounter('GetAccountByID', {AccountID}) of
-        {ok, Result} ->
-            construct_account(AccountID, Result);
-        {exception, #shumpune_AccountNotFound{}} ->
-            pm_woody_wrapper:raise(#payproc_AccountNotFound{})
-    end.
+    Account = do_get_account(AccountID),
+    construct_account(Account).
 
 -spec get_balance(account_id()) -> balance().
 get_balance(AccountID) ->
-    get_balance(AccountID, {latest, #shumpune_LatestClock{}}).
-
--spec get_balance(account_id(), clock()) -> balance().
-get_balance(AccountID, Clock) ->
-    case call_accounter('GetBalanceByID', {AccountID, Clock}) of
-        {ok, Result} ->
-            construct_balance(AccountID, Result);
-        {exception, #shumpune_AccountNotFound{}} ->
-            pm_woody_wrapper:raise(#payproc_AccountNotFound{})
-    end.
+    Account = do_get_account(AccountID),
+    construct_balance(Account).
 
 -spec create_account(currency_code()) -> account_id().
 create_account(CurrencyCode) ->
@@ -66,23 +41,30 @@ create_account(CurrencyCode) ->
 create_account(CurrencyCode, Description) ->
     case call_accounter('CreateAccount', {construct_prototype(CurrencyCode, Description)}) of
         {ok, Result} ->
+            Result
+    end.
+
+-spec do_get_account(account_id()) -> account().
+do_get_account(AccountID) ->
+    case call_accounter('GetAccountByID', {AccountID}) of
+        {ok, Result} ->
             Result;
-        {exception, Exception} ->
-            % FIXME
-            error({accounting, Exception})
+        {exception, #accounter_AccountNotFound{}} ->
+            pm_woody_wrapper:raise(#payproc_AccountNotFound{})
     end.
 
 construct_prototype(CurrencyCode, Description) ->
-    #shumpune_AccountPrototype{
+    #accounter_AccountPrototype{
         currency_sym_code = CurrencyCode,
-        description = Description
+        description = Description,
+        creation_time = pm_datetime:format_now()
     }.
 
 %%
 
 construct_account(
-    AccountID,
-    #shumpune_Account{
+    #accounter_Account{
+        id = AccountID,
         currency_sym_code = CurrencyCode
     }
 ) ->
@@ -92,8 +74,8 @@ construct_account(
     }.
 
 construct_balance(
-    AccountID,
-    #shumpune_Balance{
+    #accounter_Account{
+        id = AccountID,
         own_amount = OwnAmount,
         min_available_amount = MinAvailableAmount,
         max_available_amount = MaxAvailableAmount
