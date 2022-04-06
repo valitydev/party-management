@@ -10,6 +10,7 @@
 -type amount() :: dmsl_domain_thrift:'Amount'().
 -type currency_code() :: dmsl_domain_thrift:'CurrencySymbolicCode'().
 -type account_id() :: dmsl_accounter_thrift:'AccountID'().
+-type thrift_account() :: dmsl_accounter_thrift:'Account'().
 
 -type account() :: #{
     account_id => account_id(),
@@ -44,7 +45,7 @@ create_account(CurrencyCode, Description) ->
             Result
     end.
 
--spec do_get_account(account_id()) -> account().
+-spec do_get_account(account_id()) -> thrift_account().
 do_get_account(AccountID) ->
     case call_accounter('GetAccountByID', {AccountID}) of
         {ok, Result} ->
