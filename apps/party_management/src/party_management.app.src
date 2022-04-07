@@ -10,7 +10,6 @@
         stdlib,
         genlib,
         pm_proto,
-        shumpune_proto,
         cowboy,
         woody,
         scoper,  % should be before any scoper event handler usage

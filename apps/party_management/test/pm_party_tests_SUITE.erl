@@ -69,6 +69,7 @@
 
 -export([shop_account_set_retrieval/1]).
 -export([shop_account_retrieval/1]).
+-export([get_account_state_not_found/1]).
 
 -export([contract_not_found/1]).
 -export([contract_creation/1]).
@@ -242,7 +243,8 @@ groups() ->
             contract_creation,
             shop_creation,
             shop_account_set_retrieval,
-            shop_account_retrieval
+            shop_account_retrieval,
+            get_account_state_not_found
         ]},
         {claim_management, [sequence], [
             party_creation,
@@ -474,6 +476,7 @@ end_per_testcase(_Name, _C) ->
 -spec shop_already_active(config()) -> _ | no_return().
 -spec shop_account_set_retrieval(config()) -> _ | no_return().
 -spec shop_account_retrieval(config()) -> _ | no_return().
+-spec get_account_state_not_found(config()) -> _ | no_return().
 
 -spec contract_not_found(config()) -> _ | no_return().
 -spec contract_creation(config()) -> _ | no_return().
@@ -1558,6 +1561,11 @@ shop_account_retrieval(C) ->
     Client = cfg(client, C),
     {shop_account_set_retrieval, #domain_ShopAccount{guarantee = AccountID}} = ?config(saved_config, C),
     #payproc_AccountState{account_id = AccountID} = pm_client_party:get_account_state(AccountID, Client).
+
+get_account_state_not_found(C) ->
+    Client = cfg(client, C),
+    {exception, #payproc_AccountNotFound{}} =
+        (catch pm_client_party:get_account_state(420, Client)).
 
 %%
 
