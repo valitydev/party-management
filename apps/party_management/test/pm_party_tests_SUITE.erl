@@ -1564,11 +1564,8 @@ shop_account_retrieval(C) ->
 
 get_account_state_not_found(C) ->
     Client = cfg(client, C),
-    ?assertException(
-        exception,
-        #payproc_AccountNotFound{},
-        pm_client_party:get_account_state(420, Client)
-    ).
+    {exception, #payproc_AccountNotFound{}} =
+        (catch pm_client_party:get_account_state(420, Client)).
 
 %%
 
