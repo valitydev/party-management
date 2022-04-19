@@ -144,10 +144,24 @@
     {wallet_modification, #claim_management_WalletModificationUnit{id = ID, modification = Modification}}
 ).
 
+-define(cm_wallet_creation_params(Name, ContractID),
+    {creation, #claim_management_WalletParams{
+        name = Name,
+        contract_id = ContractID
+    }}
+).
+
 -define(cm_wallet_account_creation_params(CurrencyRef),
     {account_creation, #claim_management_WalletAccountParams{
         currency = CurrencyRef
     }}
+).
+
+-define(cm_wallet_creation(WalletID, Name, ContractID),
+    ?cm_wallet_modification(
+        WalletID,
+        ?cm_wallet_creation_params(Name, ContractID)
+    )
 ).
 
 -define(cm_wallet_account_creation(WalletID, CurrencyRef),
