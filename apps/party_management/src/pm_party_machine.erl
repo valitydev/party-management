@@ -112,8 +112,8 @@ process_signal(timeout, _Machine) ->
 
 -spec process_call(call(), pm_machine:machine()) -> {pm_machine:response(), pm_machine:result()}.
 process_call({{'PartyManagement', Fun}, Args}, Machine) ->
-    PartyID = erlang:element(2, Args),
-    process_call_(PartyID, Fun, remove_user_info_arg(Args), Machine);
+    PartyID = erlang:element(1, Args),
+    process_call_(PartyID, Fun, Args, Machine);
 process_call({{'ClaimCommitter', Fun}, Args}, Machine) ->
     PartyID = erlang:element(1, Args),
     process_call_(PartyID, Fun, Args, Machine).
@@ -141,9 +141,6 @@ process_call_(PartyID, Fun, Args, Machine) ->
         throw:Exception ->
             respond_w_exception(Exception)
     end.
-
-remove_user_info_arg(Args0) ->
-    erlang:delete_element(1, Args0).
 
 %% Party
 

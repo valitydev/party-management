@@ -334,10 +334,6 @@ end_per_testcase(_Name, _C) ->
     suspension = Suspension
 }).
 
--define(invalid_user(),
-    {exception, #payproc_InvalidUser{}}
-).
-
 -define(party_not_found(),
     {exception, #payproc_PartyNotFound{}}
 ).
