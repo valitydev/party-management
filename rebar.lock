@@ -9,7 +9,7 @@
  {<<"cowlib">>,{pkg,<<"cowlib">>,<<"2.11.0">>},2},
  {<<"damsel">>,
   {git,"https://github.com/valitydev/damsel.git",
-       {ref,"3efe7dffaae0f40a77dead166a52f8c9108f2d8d"}},
+       {ref,"3eae2029bbe08440836ef0acf6177815c1f66edd"}},
   0},
  {<<"dmt_client">>,
   {git,"https://github.com/valitydev/dmt_client.git",
@@ -60,8 +60,7 @@
  {<<"woody">>,
   {git,"https://github.com/valitydev/woody_erlang.git",
        {ref,"0c2e16dfc8a51f6f63fcd74df982178a9aeab322"}},
-  0}
-  ]}.
+  0}]}.
 [
 {pkg_hash,[
  {<<"cache">>, <<"B23A5FE7095445A88412A6E614C933377E0137B44FFED77C9B3FEF1A731A20B2">>},

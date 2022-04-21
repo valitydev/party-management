@@ -30,6 +30,7 @@
 -export([shop_already_exists/1]).
 -export([invalid_shop_payout_tool_not_in_contract/1]).
 -export([invalid_shop_payout_tool_currency_mismatch/1]).
+-export([wallet_account_creation/1]).
 
 -type config() :: pm_ct_helper:config().
 -type test_case_name() :: pm_ct_helper:test_case_name().
@@ -69,7 +70,8 @@ all() ->
         contract_already_terminated,
         shop_already_exists,
         invalid_shop_payout_tool_not_in_contract,
-        invalid_shop_payout_tool_currency_mismatch
+        invalid_shop_payout_tool_currency_mismatch,
+        wallet_account_creation
     ].
 
 -spec init_per_suite(config()) -> config().
@@ -522,6 +524,28 @@ shop_already_exists(C) ->
     Claim = claim(Modifications, PartyID),
     {exception, ?cm_invalid_party_changeset(?cm_invalid_shop_already_exists(ShopID), [{party_modification, Mod}])} =
         accept_claim(Claim, C).
+
+-spec wallet_account_creation(config()) -> _.
+wallet_account_creation(C) ->
+    WalletID = <<"Wallet">>,
+    WalletName = <<"MyWallet">>,
+    WalletCurrency = ?cur(<<"RUB">>),
+    ContractID = ?REAL_CONTRACT_ID1,
+    Modifications = [
+        ?cm_wallet_creation(WalletID, WalletName, ContractID),
+        ?cm_wallet_account_creation(WalletID, WalletCurrency)
+    ],
+    PartyID = cfg(party_id, C),
+    Claim = claim(Modifications, PartyID),
+    ok = accept_claim(Claim, C),
+    ok = commit_claim(Claim, C),
+    {ok, Party} = get_party(PartyID, C),
+    #domain_Wallet{
+        name = WalletName,
+        account = #domain_WalletAccount{
+            currency = WalletCurrency
+        }
+    } = pm_party:get_wallet(WalletID, Party).
 
 %%% Internal functions
 
