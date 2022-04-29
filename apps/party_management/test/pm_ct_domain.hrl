@@ -30,6 +30,7 @@
 -define(crypta(ID), #domain_CryptoCurrencyRef{id = ID}).
 -define(token_srv(ID), #domain_BankCardTokenServiceRef{id = ID}).
 -define(bank_card(ID), #domain_BankCardPaymentMethod{payment_system = ?pmt_sys(ID)}).
+-define(bank_card_no_cvv(ID), #domain_BankCardPaymentMethod{payment_system = ?pmt_sys(ID), is_cvv_empty = true}).
 -define(token_bank_card(ID, Prv), ?token_bank_card(ID, Prv, dpan)).
 -define(token_bank_card(ID, Prv, Method), #domain_BankCardPaymentMethod{
     payment_system = ?pmt_sys(ID),
@@ -75,14 +76,6 @@
     volume = V
 }).
 
--define(tkz_bank_card(PaymentSystem, TokenProvider), ?tkz_bank_card(PaymentSystem, TokenProvider, dpan)).
-
--define(tkz_bank_card(PaymentSystem, TokenProvider, TokenizationMethod), #domain_TokenizedBankCard{
-    payment_system_deprecated = PaymentSystem,
-    token_provider_deprecated = TokenProvider,
-    tokenization_method = TokenizationMethod
-}).
-
 -define(timeout_reason(), <<"Timeout">>).
 
 -define(bank_card_payment_tool(BankName, IsCVVEmpty),
@@ -92,7 +85,6 @@
         last_digits = <<>>,
         bank_name = BankName,
         payment_system = #domain_PaymentSystemRef{id = <<"VISA">>},
-        payment_system_deprecated = visa,
         issuer_country = rus,
         is_cvv_empty = IsCVVEmpty
     }}

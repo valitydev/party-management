@@ -101,14 +101,18 @@ encode_decode_test() ->
             amount = 20,
             currency = #domain_CurrencyRef{symbolic_code = <<"RUB">>}
         },
-        payment_method => #domain_PaymentMethodRef{id = {bank_card_deprecated, visa}},
+        payment_method => #domain_PaymentMethodRef{
+            id = {bank_card, #domain_BankCardPaymentMethod{
+                payment_system = #domain_PaymentSystemRef{id = <<"visa">>}
+            }}
+        },
         payout_method => #domain_PayoutMethodRef{id = any},
         wallet_id => <<"wallet_id">>,
         shop_id => <<"shop_id">>,
         identification_level => full,
         payment_tool =>
             {digital_wallet, #domain_DigitalWallet{
-                provider_deprecated = qiwi,
+                payment_service = #domain_PaymentServiceRef{id = <<"qiwi">>},
                 id = <<"digital_wallet_id">>
             }},
         party_id => <<"party_id">>,
