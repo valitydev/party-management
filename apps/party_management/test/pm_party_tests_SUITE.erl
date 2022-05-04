@@ -410,9 +410,9 @@ end_per_testcase(_Name, _C) ->
 -define(REAL_CONTRACTOR_ID, <<"CONTRACTOR1">>).
 -define(REAL_CONTRACT_ID, <<"CONTRACT1">>).
 -define(REAL_PARTY_PAYMENT_METHODS, [
-    ?pmt(bank_card, ?bank_card(<<"visa">>)),
+    ?pmt(bank_card, ?bank_card(<<"maestro">>)),
     ?pmt(bank_card, ?bank_card(<<"mastercard">>)),
-    ?pmt(bank_card, ?bank_card(<<"maestro">>))
+    ?pmt(bank_card, ?bank_card(<<"visa">>))
 ]).
 
 -define(WRONG_DMT_OBJ_ID, 99999).
@@ -639,11 +639,14 @@ contract_terms_retrieval(C) ->
         Varset,
         Client
     ),
-    #domain_TermSet{
-        payments = #domain_PaymentsServiceTerms{
-            payment_methods = {value, [?pmt(bank_card, ?bank_card(<<"visa">>))]}
-        }
-    } = TermSet1,
+    ?assertMatch(
+        #domain_TermSet{
+            payments = #domain_PaymentsServiceTerms{
+                payment_methods = {value, [?pmt(bank_card, ?bank_card(<<"visa">>))]}
+            }
+        },
+        TermSet1
+    ),
     _ = pm_domain:update(construct_term_set_for_party(PartyID, undefined)),
     DomainRevision2 = pm_domain:head(),
     Timstamp2 = pm_datetime:format_now(),
@@ -655,11 +658,14 @@ contract_terms_retrieval(C) ->
         Varset,
         Client
     ),
-    #domain_TermSet{
-        payments = #domain_PaymentsServiceTerms{
-            payment_methods = {value, ?REAL_PARTY_PAYMENT_METHODS}
-        }
-    } = TermSet2.
+    ?assertMatch(
+        #domain_TermSet{
+            payments = #domain_PaymentsServiceTerms{
+                payment_methods = {value, ?REAL_PARTY_PAYMENT_METHODS}
+            }
+        },
+        TermSet2
+    ).
 
 contract_already_exists(C) ->
     Client = cfg(client, C),
@@ -1116,18 +1122,24 @@ shop_terms_retrieval(C) ->
     Timestamp = pm_datetime:format_now(),
     VS = #payproc_ComputeShopTermsVarset{},
     TermSet1 = pm_client_party:compute_shop_terms(ShopID, Timestamp, {timestamp, Timestamp}, VS, Client),
-    #domain_TermSet{
-        payments = #domain_PaymentsServiceTerms{
-            payment_methods = {value, [?pmt(bank_card, ?bank_card(<<"visa">>))]}
-        }
-    } = TermSet1,
+    ?assertMatch(
+        #domain_TermSet{
+            payments = #domain_PaymentsServiceTerms{
+                payment_methods = {value, [?pmt(bank_card, ?bank_card(<<"visa">>))]}
+            }
+        },
+        TermSet1
+    ),
     _ = pm_domain:update(construct_term_set_for_party(PartyID, {shop_is, ShopID})),
     TermSet2 = pm_client_party:compute_shop_terms(ShopID, pm_datetime:format_now(), {timestamp, Timestamp}, VS, Client),
-    #domain_TermSet{
-        payments = #domain_PaymentsServiceTerms{
-            payment_methods = {value, ?REAL_PARTY_PAYMENT_METHODS}
-        }
-    } = TermSet2.
+    ?assertMatch(
+        #domain_TermSet{
+            payments = #domain_PaymentsServiceTerms{
+                payment_methods = {value, ?REAL_PARTY_PAYMENT_METHODS}
+            }
+        },
+        TermSet2
+    ).
 
 shop_already_exists(C) ->
     Client = cfg(client, C),
@@ -2481,6 +2493,7 @@ construct_domain_fixture() ->
 
         pm_ct_fixture:construct_payment_system(?pmt_sys(<<"visa">>), <<"Visa">>),
         pm_ct_fixture:construct_payment_system(?pmt_sys(<<"mastercard">>), <<"Mastercard">>),
+        pm_ct_fixture:construct_payment_system(?pmt_sys(<<"maestro">>), <<"Maestro">>),
         pm_ct_fixture:construct_payment_system(?pmt_sys(<<"jcb">>), <<"JCB">>),
         pm_ct_fixture:construct_payment_service(?pmt_srv(<<"alipay">>), <<"Euroset">>),
         pm_ct_fixture:construct_payment_service(?pmt_srv(<<"qiwi">>), <<"Qiwi">>),
@@ -2491,6 +2504,7 @@ construct_domain_fixture() ->
 
         pm_ct_fixture:construct_payment_method(?pmt(bank_card, ?bank_card(<<"visa">>))),
         pm_ct_fixture:construct_payment_method(?pmt(bank_card, ?bank_card(<<"mastercard">>))),
+        pm_ct_fixture:construct_payment_method(?pmt(bank_card, ?bank_card(<<"maestro">>))),
         pm_ct_fixture:construct_payment_method(?pmt(bank_card, ?bank_card(<<"jcb">>))),
         pm_ct_fixture:construct_payment_method(?pmt(bank_card, ?token_bank_card(<<"visa">>, <<"applepay">>))),
         pm_ct_fixture:construct_payment_method(?pmt(payment_terminal, ?pmt_srv(<<"alipay">>))),

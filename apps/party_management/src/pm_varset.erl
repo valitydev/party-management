@@ -102,9 +102,10 @@ encode_decode_test() ->
             currency = #domain_CurrencyRef{symbolic_code = <<"RUB">>}
         },
         payment_method => #domain_PaymentMethodRef{
-            id = {bank_card, #domain_BankCardPaymentMethod{
-                payment_system = #domain_PaymentSystemRef{id = <<"visa">>}
-            }}
+            id =
+                {bank_card, #domain_BankCardPaymentMethod{
+                    payment_system = #domain_PaymentSystemRef{id = <<"visa">>}
+                }}
         },
         payout_method => #domain_PayoutMethodRef{id = any},
         wallet_id => <<"wallet_id">>,

@@ -84,7 +84,7 @@
         bin = <<>>,
         last_digits = <<>>,
         bank_name = BankName,
-        payment_system = #domain_PaymentSystemRef{id = <<"VISA">>},
+        payment_system = #domain_PaymentSystemRef{id = <<"visa">>},
         issuer_country = rus,
         is_cvv_empty = IsCVVEmpty
     }}
