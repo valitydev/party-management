@@ -207,9 +207,75 @@ test_generic_condition(_Cond, _Data) ->
 -dialyzer({nowarn_function, test_condition_test/0}).
 -spec test_condition_test() -> _.
 test_condition_test() ->
-    PaymentServiceRef = #domain_PaymentServiceRef{id = <<"id">>},
     RevisionUnused = 1,
+    PaymentSystemRef = #domain_PaymentSystemRef{id = <<"id">>},
+    BankCardTokenServiceRef = #domain_BankCardTokenServiceRef{id = <<"id">>},
 
+    %% BankCard
+    ?assertEqual(
+        true,
+        test_condition(
+            {bank_card, #domain_BankCardCondition{}},
+            {bank_card, #domain_BankCard{}},
+            RevisionUnused
+        )
+    ),
+    ?assertEqual(
+        true,
+        test_condition(
+            {bank_card, #domain_BankCardCondition{definition = {payment_system, #domain_PaymentSystemCondition{
+                payment_system_is = PaymentSystemRef
+            }}}},
+            {bank_card, #domain_BankCard{payment_system = PaymentSystemRef}},
+            RevisionUnused
+        )
+    ),
+    ?assertEqual(
+        true,
+        test_condition(
+            {bank_card, #domain_BankCardCondition{definition = {payment_system, #domain_PaymentSystemCondition{
+                token_service_is = BankCardTokenServiceRef
+            }}}},
+            {bank_card, #domain_BankCard{payment_token = BankCardTokenServiceRef}},
+            RevisionUnused
+        )
+    ),
+    ?assertEqual(
+        true,
+        test_condition(
+            {bank_card, #domain_BankCardCondition{definition = {payment_system, #domain_PaymentSystemCondition{
+                tokenization_method_is = dpan
+            }}}},
+            {bank_card, #domain_BankCard{tokenization_method = dpan}},
+            RevisionUnused
+        )
+    ),
+    ?assertEqual(
+        true,
+        test_condition(
+            {bank_card, #domain_BankCardCondition{definition = {issuer_country_is, 'RUS'}}},
+            {bank_card, #domain_BankCard{issuer_country = 'RUS'}},
+            RevisionUnused
+        )
+    ),
+    ?assertEqual(
+        true,
+        test_condition(
+            {bank_card, #domain_BankCardCondition{definition = {empty_cvv_is, true}}},
+            {bank_card, #domain_BankCard{is_cvv_empty = true}},
+            RevisionUnused
+        )
+    ),
+    ?assertEqual(
+        false,
+        test_condition(
+            {bank_card, #domain_BankCardCondition{definition = {empty_cvv_is, true}}},
+            {bank_card, #domain_BankCard{}},
+            RevisionUnused
+        )
+    ),
+
+    PaymentServiceRef = #domain_PaymentServiceRef{id = <<"id">>},
     %% PaymentTerminal
     ?assertEqual(
         true,
