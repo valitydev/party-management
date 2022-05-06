@@ -223,9 +223,12 @@ test_condition_test() ->
     ?assertEqual(
         true,
         test_condition(
-            {bank_card, #domain_BankCardCondition{definition = {payment_system, #domain_PaymentSystemCondition{
-                payment_system_is = PaymentSystemRef
-            }}}},
+            {bank_card, #domain_BankCardCondition{
+                definition =
+                    {payment_system, #domain_PaymentSystemCondition{
+                        payment_system_is = PaymentSystemRef
+                    }}
+            }},
             {bank_card, #domain_BankCard{payment_system = PaymentSystemRef}},
             RevisionUnused
         )
@@ -233,9 +236,12 @@ test_condition_test() ->
     ?assertEqual(
         true,
         test_condition(
-            {bank_card, #domain_BankCardCondition{definition = {payment_system, #domain_PaymentSystemCondition{
-                token_service_is = BankCardTokenServiceRef
-            }}}},
+            {bank_card, #domain_BankCardCondition{
+                definition =
+                    {payment_system, #domain_PaymentSystemCondition{
+                        token_service_is = BankCardTokenServiceRef
+                    }}
+            }},
             {bank_card, #domain_BankCard{payment_token = BankCardTokenServiceRef}},
             RevisionUnused
         )
@@ -243,9 +249,12 @@ test_condition_test() ->
     ?assertEqual(
         true,
         test_condition(
-            {bank_card, #domain_BankCardCondition{definition = {payment_system, #domain_PaymentSystemCondition{
-                tokenization_method_is = dpan
-            }}}},
+            {bank_card, #domain_BankCardCondition{
+                definition =
+                    {payment_system, #domain_PaymentSystemCondition{
+                        tokenization_method_is = dpan
+                    }}
+            }},
             {bank_card, #domain_BankCard{tokenization_method = dpan}},
             RevisionUnused
         )
