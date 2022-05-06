@@ -943,7 +943,7 @@ check_all_payment_methods(C) ->
             #domain_TermSet{
                 payouts = #domain_PayoutsServiceTerms{
                     payout_methods =
-                        {value, [?pomt(wallet_info)]}
+                        {value, [_]}
                 }
             },
             pm_client_party:compute_payment_institution_terms(
@@ -2216,7 +2216,7 @@ construct_domain_fixture() ->
                                 }
                             }
                         }},
-                        [?pomt(wallet_info)]
+                        [?pomt(international_bank_account)]
                     ),
                     PayoutMDFun(
                         {payment_terminal, #domain_PaymentTerminalCondition{
