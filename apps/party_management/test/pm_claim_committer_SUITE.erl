@@ -659,7 +659,7 @@ construct_domain_fixture() ->
             payment_methods =
                 {value,
                     ordsets:from_list([
-                        ?pmt(bank_card_deprecated, visa)
+                        ?pmt(bank_card, ?bank_card(<<"visa">>))
                     ])}
         }
     },
@@ -740,11 +740,11 @@ construct_domain_fixture() ->
         pm_ct_fixture:construct_category(?cat(2), <<"Generic Store">>, live),
         pm_ct_fixture:construct_category(?cat(3), <<"Guns & Booze">>, live),
 
-        pm_ct_fixture:construct_payment_method(?pmt(bank_card_deprecated, visa)),
-        pm_ct_fixture:construct_payment_method(?pmt(bank_card_deprecated, mastercard)),
-        pm_ct_fixture:construct_payment_method(?pmt(bank_card_deprecated, maestro)),
-        pm_ct_fixture:construct_payment_method(?pmt(payment_terminal_deprecated, euroset)),
-        pm_ct_fixture:construct_payment_method(?pmt(empty_cvv_bank_card_deprecated, visa)),
+        pm_ct_fixture:construct_payment_method(?pmt(bank_card, ?bank_card(<<"visa">>))),
+        pm_ct_fixture:construct_payment_method(?pmt(bank_card, ?bank_card(<<"mastercard">>))),
+        pm_ct_fixture:construct_payment_method(?pmt(bank_card, ?bank_card(<<"maestro">>))),
+        pm_ct_fixture:construct_payment_method(?pmt(payment_terminal, ?pmt_srv(<<"euroset">>))),
+        pm_ct_fixture:construct_payment_method(?pmt(bank_card, ?bank_card_no_cvv(<<"visa">>))),
 
         pm_ct_fixture:construct_payout_method(?pomt(russian_bank_account)),
         pm_ct_fixture:construct_payout_method(?pomt(international_bank_account)),
@@ -886,7 +886,7 @@ construct_domain_fixture() ->
                                 payment_methods =
                                     {value,
                                         ordsets:from_list([
-                                            ?pmt(bank_card_deprecated, visa)
+                                            ?pmt(bank_card, ?bank_card(<<"visa">>))
                                         ])}
                             }
                         }
