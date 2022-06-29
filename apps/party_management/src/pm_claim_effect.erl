@@ -2,7 +2,8 @@
 
 -include("party_events.hrl").
 
--include_lib("damsel/include/dmsl_payment_processing_thrift.hrl").
+-include_lib("damsel/include/dmsl_payproc_thrift.hrl").
+-include_lib("damsel/include/dmsl_domain_thrift.hrl").
 
 -export([make/3]).
 -export([make_safe/3]).
@@ -11,8 +12,8 @@
 
 %% Interface
 
--type change() :: dmsl_payment_processing_thrift:'PartyModification'().
--type effect() :: dmsl_payment_processing_thrift:'ClaimEffect'().
+-type change() :: dmsl_payproc_thrift:'PartyModification'().
+-type effect() :: dmsl_payproc_thrift:'ClaimEffect'().
 -type timestamp() :: pm_datetime:timestamp().
 -type revision() :: pm_domain:revision().
 

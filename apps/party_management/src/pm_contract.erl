@@ -1,7 +1,8 @@
 -module(pm_contract).
 
--include_lib("damsel/include/dmsl_claim_management_thrift.hrl").
--include_lib("damsel/include/dmsl_payment_processing_thrift.hrl").
+-include_lib("damsel/include/dmsl_claimmgmt_thrift.hrl").
+-include_lib("damsel/include/dmsl_payproc_thrift.hrl").
+-include_lib("damsel/include/dmsl_domain_thrift.hrl").
 
 %%
 
@@ -23,13 +24,13 @@
 -type contract() :: dmsl_domain_thrift:'Contract'().
 -type contract_id() :: dmsl_domain_thrift:'ContractID'().
 -type contract_params() ::
-    dmsl_payment_processing_thrift:'ContractParams'() | dmsl_claim_management_thrift:'ContractParams'().
+    dmsl_payproc_thrift:'ContractParams'() | dmsl_claimmgmt_thrift:'ContractParams'().
 -type contract_template() :: dmsl_domain_thrift:'ContractTemplate'().
 -type adjustment() :: dmsl_domain_thrift:'ContractAdjustment'().
 -type adjustment_id() :: dmsl_domain_thrift:'ContractAdjustmentID'().
 -type adjustment_params() ::
-    dmsl_payment_processing_thrift:'ContractAdjustmentParams'()
-    | dmsl_claim_management_thrift:'ContractAdjustmentParams'().
+    dmsl_payproc_thrift:'ContractAdjustmentParams'()
+    | dmsl_claimmgmt_thrift:'ContractAdjustmentParams'().
 -type payout_tool() :: dmsl_domain_thrift:'PayoutTool'().
 -type payout_tool_id() :: dmsl_domain_thrift:'PayoutToolID'().
 -type category() :: dmsl_domain_thrift:'CategoryRef'().
@@ -68,8 +69,8 @@ create(ID, #payproc_ContractParams{} = Params, Timestamp, Revision) ->
         adjustments = [],
         payout_tools = []
     };
-create(ID, #claim_management_ContractParams{} = Params, Timestamp, Revision) ->
-    #claim_management_ContractParams{
+create(ID, #claimmgmt_ContractParams{} = Params, Timestamp, Revision) ->
+    #claimmgmt_ContractParams{
         contractor_id = ContractorID,
         template = TemplateRef,
         payment_institution = PaymentInstitutionRef
@@ -130,8 +131,8 @@ create_adjustment(ID, #payproc_ContractAdjustmentParams{} = Params, Timestamp, R
         valid_until = instantiate_contract_lifetime_bound(ValidUntil, Timestamp),
         terms = TermSetHierarchyRef
     };
-create_adjustment(ID, #claim_management_ContractAdjustmentParams{} = Params, Timestamp, Revision) ->
-    #claim_management_ContractAdjustmentParams{
+create_adjustment(ID, #claimmgmt_ContractAdjustmentParams{} = Params, Timestamp, Revision) ->
+    #claimmgmt_ContractAdjustmentParams{
         template = TemplateRef
     } = Params,
     #domain_ContractTemplate{
@@ -219,14 +220,14 @@ ensure_contract_creation_params(
         payment_institution = ValidRef
     };
 ensure_contract_creation_params(
-    #claim_management_ContractParams{
+    #claimmgmt_ContractParams{
         template = TemplateRef,
         payment_institution = PaymentInstitutionRef
     } = Params,
     Revision
 ) ->
     ValidRef = ensure_payment_institution(PaymentInstitutionRef),
-    Params#claim_management_ContractParams{
+    Params#claimmgmt_ContractParams{
         template = ensure_contract_template(TemplateRef, ValidRef, Revision),
         payment_institution = ValidRef
     }.

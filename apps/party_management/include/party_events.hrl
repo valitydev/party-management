@@ -1,7 +1,7 @@
 -ifndef(__pm_party_events_hrl__).
 -define(__pm_party_events_hrl__, included).
 
--include_lib("damsel/include/dmsl_payment_processing_thrift.hrl").
+-include_lib("damsel/include/dmsl_payproc_thrift.hrl").
 
 -define(party_ev(PartyChanges), {party_changes, PartyChanges}).
 

@@ -4,7 +4,9 @@
 -include_lib("party_management/include/party_events.hrl").
 -include_lib("common_test/include/ct.hrl").
 -include_lib("stdlib/include/assert.hrl").
--include_lib("damsel/include/dmsl_payment_processing_thrift.hrl").
+-include_lib("damsel/include/dmsl_payproc_thrift.hrl").
+-include_lib("damsel/include/dmsl_domain_thrift.hrl").
+-include_lib("damsel/include/dmsl_base_thrift.hrl").
 
 -export([all/0]).
 -export([groups/0]).
@@ -2127,7 +2129,7 @@ construct_term_set_for_party(PartyID, Def) ->
             parent_terms = undefined,
             term_sets = [
                 #domain_TimedTermSet{
-                    action_time = #'TimestampInterval'{},
+                    action_time = #base_TimestampInterval{},
                     terms = TermSet
                 }
             ]

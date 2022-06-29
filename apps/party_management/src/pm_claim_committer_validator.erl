@@ -16,8 +16,9 @@
 
 -module(pm_claim_committer_validator).
 
--include_lib("damsel/include/dmsl_payment_processing_thrift.hrl").
--include_lib("damsel/include/dmsl_claim_management_thrift.hrl").
+-include_lib("damsel/include/dmsl_payproc_thrift.hrl").
+-include_lib("damsel/include/dmsl_claimmgmt_thrift.hrl").
+-include_lib("damsel/include/dmsl_domain_thrift.hrl").
 
 -include("claim_management.hrl").
 -include("party_events.hrl").

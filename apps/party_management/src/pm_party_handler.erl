@@ -1,6 +1,7 @@
 -module(pm_party_handler).
 
--include_lib("damsel/include/dmsl_payment_processing_thrift.hrl").
+-include_lib("damsel/include/dmsl_payproc_thrift.hrl").
+-include_lib("damsel/include/dmsl_domain_thrift.hrl").
 
 %% Woody handler called by pm_woody_wrapper
 

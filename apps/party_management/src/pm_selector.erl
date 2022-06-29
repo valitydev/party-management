@@ -20,12 +20,11 @@
     | dmsl_domain_thrift:'CashFlowSelector'()
     | dmsl_domain_thrift:'PaymentMethodSelector'()
     | dmsl_domain_thrift:'ProviderSelector'()
-    | dmsl_domain_thrift:'TerminalSelector'()
     | dmsl_domain_thrift:'SystemAccountSetSelector'()
     | dmsl_domain_thrift:'ExternalAccountSetSelector'()
     | dmsl_domain_thrift:'HoldLifetimeSelector'()
     | dmsl_domain_thrift:'CashValueSelector'()
-    | dmsl_domain_thrift:'CumulativeLimitSelector'()
+    | dmsl_domain_thrift:'TurnoverLimitSelector'()
     | dmsl_domain_thrift:'TimeSpanSelector'()
     | dmsl_domain_thrift:'FeeSelector'()
     | dmsl_domain_thrift:'InspectorSelector'().
@@ -159,7 +158,7 @@ reduce_condition(C, VS, Rev) ->
 
 -ifdef(TEST).
 -include_lib("eunit/include/eunit.hrl").
--include_lib("damsel/include/dmsl_payment_processing_thrift.hrl").
+-include_lib("damsel/include/dmsl_payproc_thrift.hrl").
 
 -spec test() -> _.
 

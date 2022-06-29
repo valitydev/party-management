@@ -1,6 +1,6 @@
 -module(pm_client_party).
 
--include_lib("damsel/include/dmsl_payment_processing_thrift.hrl").
+-include_lib("damsel/include/dmsl_payproc_thrift.hrl").
 
 -export([start/2]).
 -export([stop/1]).
@@ -64,25 +64,25 @@
 %%
 
 -type party_id() :: dmsl_domain_thrift:'PartyID'().
--type party_params() :: dmsl_payment_processing_thrift:'PartyParams'().
+-type party_params() :: dmsl_payproc_thrift:'PartyParams'().
 -type domain_revision() :: dmsl_domain_thrift:'DataRevision'().
 -type contract_id() :: dmsl_domain_thrift:'ContractID'().
 -type shop_id() :: dmsl_domain_thrift:'ShopID'().
--type claim_id() :: dmsl_payment_processing_thrift:'ClaimID'().
--type claim() :: dmsl_payment_processing_thrift:'Claim'().
--type claim_revision() :: dmsl_payment_processing_thrift:'ClaimRevision'().
--type changeset() :: dmsl_payment_processing_thrift:'PartyChangeset'().
+-type claim_id() :: dmsl_payproc_thrift:'ClaimID'().
+-type claim() :: dmsl_payproc_thrift:'Claim'().
+-type claim_revision() :: dmsl_payproc_thrift:'ClaimRevision'().
+-type changeset() :: dmsl_payproc_thrift:'PartyChangeset'().
 -type shop_account_id() :: dmsl_domain_thrift:'AccountID'().
 -type meta() :: dmsl_domain_thrift:'PartyMeta'().
 -type meta_ns() :: dmsl_domain_thrift:'PartyMetaNamespace'().
 -type meta_data() :: dmsl_domain_thrift:'PartyMetaData'().
 -type timestamp() :: dmsl_base_thrift:'Timestamp'().
 
--type party_revision_param() :: dmsl_payment_processing_thrift:'PartyRevisionParam'().
+-type party_revision_param() :: dmsl_payproc_thrift:'PartyRevisionParam'().
 -type payment_intitution_ref() :: dmsl_domain_thrift:'PaymentInstitutionRef'().
--type varset() :: dmsl_payment_processing_thrift:'Varset'().
--type contract_terms_varset() :: dmsl_payment_processing_thrift:'ComputeContractTermsVarset'().
--type shop_terms_varset() :: dmsl_payment_processing_thrift:'ComputeShopTermsVarset'().
+-type varset() :: dmsl_payproc_thrift:'Varset'().
+-type contract_terms_varset() :: dmsl_payproc_thrift:'ComputeContractTermsVarset'().
+-type shop_terms_varset() :: dmsl_payproc_thrift:'ComputeShopTermsVarset'().
 
 -type provider_ref() :: dmsl_domain_thrift:'ProviderRef'().
 -type terminal_ref() :: dmsl_domain_thrift:'TerminalRef'().
@@ -179,7 +179,7 @@ compute_payment_institution_terms(Ref, Varset, Client) ->
 compute_payment_institution(Ref, DomainRevision, Varset, Client) ->
     call(Client, 'ComputePaymentInstitution', [Ref, DomainRevision, Varset]).
 
--spec compute_payout_cash_flow(dmsl_payment_processing_thrift:'PayoutParams'(), pid()) ->
+-spec compute_payout_cash_flow(dmsl_payproc_thrift:'PayoutParams'(), pid()) ->
     dmsl_domain_thrift:'FinalCashFlow'() | woody_error:business_error().
 compute_payout_cash_flow(Params, Client) ->
     call(Client, 'ComputePayoutCashFlow', with_party_id([Params])).
@@ -189,7 +189,7 @@ get_shop(ID, Client) ->
     call(Client, 'GetShop', with_party_id([ID])).
 
 -spec get_shop_contract(shop_id(), pid()) ->
-    dmsl_payment_processing_thrift:'ShopContract'() | woody_error:business_error().
+    dmsl_payproc_thrift:'ShopContract'() | woody_error:business_error().
 get_shop_contract(ID, Client) ->
     call(Client, 'GetShopContract', with_party_id([ID])).
 
@@ -243,7 +243,7 @@ revoke_claim(ID, Revision, Reason, Client) ->
     call(Client, 'RevokeClaim', with_party_id([ID, Revision, Reason])).
 
 -spec get_account_state(shop_account_id(), pid()) ->
-    dmsl_payment_processing_thrift:'AccountState'() | woody_error:business_error().
+    dmsl_payproc_thrift:'AccountState'() | woody_error:business_error().
 get_account_state(AccountID, Client) ->
     call(Client, 'GetAccountState', with_party_id([AccountID])).
 
@@ -261,7 +261,7 @@ compute_provider(ProviderRef, Revision, Varset, Client) ->
     domain_revision(),
     varset() | undefined,
     pid()
-) -> dmsl_payment_processing_thrift:'ProviderTerminal'() | woody_error:business_error().
+) -> dmsl_payproc_thrift:'ProviderTerminal'() | woody_error:business_error().
 compute_provider_terminal(TerminalRef, Revision, Varset, Client) ->
     call(Client, 'ComputeProviderTerminal', [TerminalRef, Revision, Varset]).
 
@@ -308,7 +308,7 @@ map_result_error({error, Error}) ->
 
 %%
 
--type event() :: dmsl_payment_processing_thrift:'Event'().
+-type event() :: dmsl_payproc_thrift:'Event'().
 
 -record(state, {
     party_id :: party_id(),

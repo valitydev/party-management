@@ -9,6 +9,7 @@
 -module(pm_cashflow).
 
 -include_lib("damsel/include/dmsl_domain_thrift.hrl").
+-include_lib("damsel/include/dmsl_base_thrift.hrl").
 
 -type account() :: dmsl_domain_thrift:'CashFlowAccount'().
 -type account_id() :: dmsl_domain_thrift:'AccountID'().
@@ -80,7 +81,7 @@ resolve_account(AccountType, AccountMap) ->
     {product, {Fun, CVs}}
 ).
 
--define(rational(P, Q), #'Rational'{p = P, q = Q}).
+-define(rational(P, Q), #base_Rational{p = P, q = Q}).
 
 compute_volume(?fixed(Cash), _Context) ->
     Cash;

@@ -4,7 +4,7 @@
 -export([get_balance/1]).
 -export([create_account/1]).
 
--include_lib("damsel/include/dmsl_payment_processing_thrift.hrl").
+-include_lib("damsel/include/dmsl_payproc_thrift.hrl").
 -include_lib("damsel/include/dmsl_accounter_thrift.hrl").
 
 -type amount() :: dmsl_domain_thrift:'Amount'().

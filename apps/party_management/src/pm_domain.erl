@@ -7,7 +7,7 @@
 -module(pm_domain).
 
 -include_lib("damsel/include/dmsl_domain_thrift.hrl").
--include_lib("damsel/include/dmsl_domain_config_thrift.hrl").
+-include_lib("damsel/include/dmsl_domain_conf_thrift.hrl").
 
 %%
 
@@ -41,7 +41,7 @@ get(Revision, Ref) ->
     try
         extract_data(dmt_client:checkout_object(Revision, Ref))
     catch
-        throw:#'ObjectNotFound'{} ->
+        throw:#domain_conf_ObjectNotFound{} ->
             error({object_not_found, {Revision, Ref}})
     end.
 
@@ -50,7 +50,7 @@ find(Revision, Ref) ->
     try
         extract_data(dmt_client:checkout_object(Revision, Ref))
     catch
-        throw:#'ObjectNotFound'{} ->
+        throw:#domain_conf_ObjectNotFound{} ->
             notfound
     end.
 
@@ -60,7 +60,7 @@ exists(Revision, Ref) ->
         _ = dmt_client:checkout_object(Revision, Ref),
         true
     catch
-        throw:#'ObjectNotFound'{} ->
+        throw:#domain_conf_ObjectNotFound{} ->
             false
     end.
 
@@ -75,9 +75,9 @@ commit(Revision, Commit) ->
 insert(Object) when not is_list(Object) ->
     insert([Object]);
 insert(Objects) ->
-    Commit = #'Commit'{
+    Commit = #'domain_conf_Commit'{
         ops = [
-            {insert, #'InsertOp'{
+            {insert, #'domain_conf_InsertOp'{
                 object = Object
             }}
          || Object <- Objects
@@ -90,9 +90,9 @@ update(NewObject) when not is_list(NewObject) ->
     update([NewObject]);
 update(NewObjects) ->
     Revision = head(),
-    Commit = #'Commit'{
+    Commit = #'domain_conf_Commit'{
         ops = [
-            {update, #'UpdateOp'{
+            {update, #'domain_conf_UpdateOp'{
                 old_object = {Tag, {ObjectName, Ref, OldData}},
                 new_object = NewObject
             }}
@@ -104,9 +104,9 @@ update(NewObjects) ->
 
 -spec remove([object()]) -> revision() | no_return().
 remove(Objects) ->
-    Commit = #'Commit'{
+    Commit = #'domain_conf_Commit'{
         ops = [
-            {remove, #'RemoveOp'{
+            {remove, #'domain_conf_RemoveOp'{
                 object = Object
             }}
          || Object <- Objects
@@ -116,5 +116,5 @@ remove(Objects) ->
 
 -spec cleanup() -> revision() | no_return().
 cleanup() ->
-    #'Snapshot'{domain = Domain} = dmt_client:checkout(latest),
+    #'domain_conf_Snapshot'{domain = Domain} = dmt_client:checkout(latest),
     remove(maps:values(Domain)).

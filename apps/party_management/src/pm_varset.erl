@@ -1,6 +1,7 @@
 -module(pm_varset).
 
--include_lib("damsel/include/dmsl_payment_processing_thrift.hrl").
+-include_lib("damsel/include/dmsl_payproc_thrift.hrl").
+-include_lib("damsel/include/dmsl_domain_thrift.hrl").
 
 -export([encode_varset/1]).
 -export([decode_varset/2]).
@@ -22,9 +23,9 @@
     bin_data => dmsl_domain_thrift:'BinData'()
 }.
 
--type encoded_varset() :: dmsl_payment_processing_thrift:'Varset'().
--type contract_terms_varset() :: dmsl_payment_processing_thrift:'ComputeContractTermsVarset'().
--type shop_terms_varset() :: dmsl_payment_processing_thrift:'ComputeShopTermsVarset'().
+-type encoded_varset() :: dmsl_payproc_thrift:'Varset'().
+-type contract_terms_varset() :: dmsl_payproc_thrift:'ComputeContractTermsVarset'().
+-type shop_terms_varset() :: dmsl_payproc_thrift:'ComputeShopTermsVarset'().
 
 -spec encode_varset(varset()) -> encoded_varset().
 encode_varset(Varset) ->
@@ -107,7 +108,7 @@ encode_decode_test() ->
                     payment_system = #domain_PaymentSystemRef{id = <<"visa">>}
                 }}
         },
-        payout_method => #domain_PayoutMethodRef{id = any},
+        payout_method => #domain_PayoutMethodRef{id = russian_bank_account},
         wallet_id => <<"wallet_id">>,
         shop_id => <<"shop_id">>,
         identification_level => full,

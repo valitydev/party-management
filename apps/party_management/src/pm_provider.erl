@@ -1,7 +1,8 @@
 -module(pm_provider).
 
 -include_lib("damsel/include/dmsl_domain_thrift.hrl").
--include_lib("damsel/include/dmsl_payment_processing_thrift.hrl").
+-include_lib("damsel/include/dmsl_payproc_thrift.hrl").
+-include_lib("damsel/include/dmsl_domain_thrift.hrl").
 
 %% API
 -export([reduce_provider/3]).
@@ -18,7 +19,6 @@
 -spec reduce_provider(provider(), varset(), domain_revision()) -> provider().
 reduce_provider(Provider, VS, Rev) ->
     Provider#domain_Provider{
-        terminal = reduce_if_defined(Provider#domain_Provider.terminal, VS, Rev),
         terms = reduce_provision_term_set(Provider#domain_Provider.terms, VS, Rev)
     }.
 

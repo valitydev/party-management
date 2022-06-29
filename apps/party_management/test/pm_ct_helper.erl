@@ -169,7 +169,7 @@ create_client_w_context(WoodyCtx) ->
 
 %%
 
--include_lib("damsel/include/dmsl_payment_processing_thrift.hrl").
+-include_lib("damsel/include/dmsl_payproc_thrift.hrl").
 -include_lib("party_management/include/party_events.hrl").
 
 -type contract_id() :: dmsl_domain_thrift:'ContractID'().
@@ -320,7 +320,7 @@ get_first_payout_tool_id(ContractID, Client) ->
 -spec make_battle_ready_contract_params(
     dmsl_domain_thrift:'ContractTemplateRef'() | undefined,
     dmsl_domain_thrift:'PaymentInstitutionRef'()
-) -> dmsl_payment_processing_thrift:'ContractParams'().
+) -> dmsl_payproc_thrift:'ContractParams'().
 make_battle_ready_contract_params(TemplateRef, PaymentInstitutionRef) ->
     #payproc_ContractParams{
         contractor = make_battle_ready_contractor(),
@@ -349,7 +349,7 @@ make_battle_ready_contractor() ->
             russian_bank_account = BankAccount
         }}}.
 
--spec make_battle_ready_payout_tool_params() -> dmsl_payment_processing_thrift:'PayoutToolParams'().
+-spec make_battle_ready_payout_tool_params() -> dmsl_payproc_thrift:'PayoutToolParams'().
 make_battle_ready_payout_tool_params() ->
     #payproc_PayoutToolParams{
         currency = ?cur(<<"RUB">>),

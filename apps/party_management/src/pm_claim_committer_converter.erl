@@ -16,17 +16,17 @@
 
 -module(pm_claim_committer_converter).
 
--include_lib("damsel/include/dmsl_payment_processing_thrift.hrl").
+-include_lib("damsel/include/dmsl_payproc_thrift.hrl").
 
 -include("party_events.hrl").
 
 %% API
 -export([new_party_claim/4]).
 
--type payproc_claim() :: dmsl_payment_processing_thrift:'Claim'().
+-type payproc_claim() :: dmsl_payproc_thrift:'Claim'().
 -type timestamp() :: pm_datetime:timestamp().
 -type revision() :: pm_domain:revision().
--type claim_id() :: dmsl_claim_management_thrift:'ClaimID'().
+-type claim_id() :: dmsl_claimmgmt_thrift:'ClaimID'().
 
 -spec new_party_claim(claim_id(), revision(), timestamp(), timestamp()) -> payproc_claim().
 new_party_claim(ID, Revision, CreatedAt, UpdatedAt) ->

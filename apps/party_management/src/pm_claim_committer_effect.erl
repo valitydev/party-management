@@ -3,8 +3,9 @@
 -include("claim_management.hrl").
 -include("party_events.hrl").
 
--include_lib("damsel/include/dmsl_claim_management_thrift.hrl").
--include_lib("damsel/include/dmsl_payment_processing_thrift.hrl").
+-include_lib("damsel/include/dmsl_claimmgmt_thrift.hrl").
+-include_lib("damsel/include/dmsl_payproc_thrift.hrl").
+-include_lib("damsel/include/dmsl_domain_thrift.hrl").
 
 -export([make/3]).
 -export([make_safe/3]).
@@ -20,11 +21,11 @@
 
 -type modification() :: pm_claim_committer:modification().
 -type modifications() :: pm_claim_committer:modifications().
--type effect() :: dmsl_payment_processing_thrift:'ClaimEffect'().
+-type effect() :: dmsl_payproc_thrift:'ClaimEffect'().
 -type timestamp() :: pm_datetime:timestamp().
 -type revision() :: pm_domain:revision().
 -type party() :: pm_party:party().
--type effects() :: dmsl_payment_processing_thrift:'ClaimEffects'().
+-type effects() :: dmsl_payproc_thrift:'ClaimEffects'().
 
 -spec make(modification(), timestamp(), revision()) -> effect() | no_return().
 make(?cm_contractor_modification(ID, Modification), Timestamp, Revision) ->
@@ -153,7 +154,7 @@ assert_valid_object_ref(Prefix, Ref, Revision) ->
     pm_domain:ref()
 ) -> no_return().
 raise_invalid_object_ref(Prefix, Ref) ->
-    Ex = {invalid_object_reference, #claim_management_InvalidObjectReference{ref = Ref}},
+    Ex = {invalid_object_reference, #claimmgmt_InvalidObjectReference{ref = Ref}},
     raise_invalid_object_ref_(Prefix, Ex).
 
 -spec raise_invalid_object_ref_(term(), term()) -> no_return().
@@ -162,7 +163,7 @@ raise_invalid_object_ref_({shop, ID}, Ex) ->
 raise_invalid_object_ref_({contract, ID}, Ex) ->
     pm_claim_committer:raise_invalid_changeset(?cm_invalid_contract(ID, Ex), []).
 
-create_shop_account(#claim_management_ShopAccountParams{currency = Currency}) ->
+create_shop_account(#claimmgmt_ShopAccountParams{currency = Currency}) ->
     create_shop_account(Currency);
 create_shop_account(#domain_CurrencyRef{symbolic_code = SymbolicCode} = CurrencyRef) ->
     GuaranteeID = pm_accounting:create_account(SymbolicCode),

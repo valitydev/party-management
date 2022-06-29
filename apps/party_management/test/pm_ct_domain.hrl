@@ -57,14 +57,14 @@
 
 -define(share(P, Q, C),
     {share, #domain_CashVolumeShare{
-        parts = #'Rational'{p = P, q = Q},
+        parts = #base_Rational{p = P, q = Q},
         'of' = C
     }}
 ).
 
 -define(share(P, Q, C, RM),
     {share, #domain_CashVolumeShare{
-        parts = #'Rational'{p = P, q = Q},
+        parts = #base_Rational{p = P, q = Q},
         'of' = C,
         rounding_method = RM
     }}
