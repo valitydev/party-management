@@ -5,6 +5,7 @@
 
 -include_lib("damsel/include/dmsl_claimmgmt_thrift.hrl").
 -include_lib("damsel/include/dmsl_domain_thrift.hrl").
+-include_lib("damsel/include/dmsl_payproc_thrift.hrl").
 -include_lib("pm_proto/include/pm_state_thrift.hrl").
 
 -include("claim_management.hrl").
@@ -1187,7 +1188,7 @@ unwrap_state({_ID, _Dt, {_Changes, {FormatVsn, EncodedSt}}}) ->
 unwrap_state({_ID, _Dt, {_Changes, undefined}}) ->
     undefined.
 
--define(STATE_THRIFT_TYPE, {struct, struct, {dmsl_party_state_thrift, 'State'}}).
+-define(STATE_THRIFT_TYPE, {struct, struct, {pm_state_thrift, 'State'}}).
 
 encode_state(St) ->
     {?FORMAT_VERSION_THRIFT, {bin, pm_proto_utils:serialize(?STATE_THRIFT_TYPE, St)}}.
