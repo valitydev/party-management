@@ -1,8 +1,8 @@
-include "damsel/proto/base.thrift"
-include "damsel/proto/domain.thrift"
-include "damsel/proto/payment_processing.thrift"
+include "proto/base.thrift"
+include "proto/domain.thrift"
+include "proto/payment_processing.thrift"
 
-namespace erlang pm
+namespace erlang pm.state
 
 /**
  * Party state.
