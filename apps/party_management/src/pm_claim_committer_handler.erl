@@ -1,7 +1,7 @@
 -module(pm_claim_committer_handler).
 
--include_lib("damsel/include/dmsl_payment_processing_thrift.hrl").
--include_lib("damsel/include/dmsl_claim_management_thrift.hrl").
+-include_lib("damsel/include/dmsl_payproc_thrift.hrl").
+-include_lib("damsel/include/dmsl_claimmgmt_thrift.hrl").
 
 -behaviour(pm_woody_wrapper).
 
@@ -24,5 +24,5 @@ call(PartyID, FunctionName, Args) ->
         pm_party_machine:call(PartyID, claim_committer, {'ClaimCommitter', FunctionName}, Args)
     catch
         throw:#payproc_PartyNotFound{} ->
-            erlang:throw(#claim_management_PartyNotFound{})
+            erlang:throw(#claimmgmt_PartyNotFound{})
     end.

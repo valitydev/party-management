@@ -11,8 +11,9 @@
 
 -include("party_events.hrl").
 
--include_lib("damsel/include/dmsl_claim_management_thrift.hrl").
--include_lib("damsel/include/dmsl_payment_processing_thrift.hrl").
+-include_lib("damsel/include/dmsl_claimmgmt_thrift.hrl").
+-include_lib("damsel/include/dmsl_payproc_thrift.hrl").
+-include_lib("damsel/include/dmsl_domain_thrift.hrl").
 -include_lib("damsel/include/dmsl_accounter_thrift.hrl").
 
 %% Party support functions
@@ -68,7 +69,7 @@
 -type contract_template() :: dmsl_domain_thrift:'ContractTemplate'().
 -type shop() :: dmsl_domain_thrift:'Shop'().
 -type shop_id() :: dmsl_domain_thrift:'ShopID'().
--type shop_params() :: dmsl_payment_processing_thrift:'ShopParams'() | dmsl_claim_management_thrift:'ShopParams'().
+-type shop_params() :: dmsl_payproc_thrift:'ShopParams'() | dmsl_claimmgmt_thrift:'ShopParams'().
 -type wallet() :: dmsl_domain_thrift:'Wallet'().
 -type wallet_id() :: dmsl_domain_thrift:'WalletID'().
 
@@ -157,17 +158,17 @@ create_shop(ID, #payproc_ShopParams{} = ShopParams, Timestamp) ->
         contract_id = ShopParams#payproc_ShopParams.contract_id,
         payout_tool_id = ShopParams#payproc_ShopParams.payout_tool_id
     };
-create_shop(ID, #claim_management_ShopParams{} = ShopParams, Timestamp) ->
+create_shop(ID, #claimmgmt_ShopParams{} = ShopParams, Timestamp) ->
     #domain_Shop{
         id = ID,
         created_at = Timestamp,
         blocking = ?unblocked(Timestamp),
         suspension = ?active(Timestamp),
-        category = ShopParams#claim_management_ShopParams.category,
-        details = ShopParams#claim_management_ShopParams.details,
-        location = ShopParams#claim_management_ShopParams.location,
-        contract_id = ShopParams#claim_management_ShopParams.contract_id,
-        payout_tool_id = ShopParams#claim_management_ShopParams.payout_tool_id
+        category = ShopParams#claimmgmt_ShopParams.category,
+        details = ShopParams#claimmgmt_ShopParams.details,
+        location = ShopParams#claimmgmt_ShopParams.location,
+        contract_id = ShopParams#claimmgmt_ShopParams.contract_id,
+        payout_tool_id = ShopParams#claimmgmt_ShopParams.payout_tool_id
     }.
 
 -spec get_shop(shop_id(), party()) -> shop() | undefined.
@@ -203,7 +204,7 @@ get_shop_account(#domain_Shop{account = Account}) ->
     Account.
 
 -spec get_account_state(dmsl_accounter_thrift:'AccountID'(), party()) ->
-    dmsl_payment_processing_thrift:'AccountState'().
+    dmsl_payproc_thrift:'AccountState'().
 get_account_state(AccountID, Party) ->
     ok = ensure_account(AccountID, Party),
     Account = pm_accounting:get_account(AccountID),

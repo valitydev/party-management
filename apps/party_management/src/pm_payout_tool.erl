@@ -2,8 +2,9 @@
 
 -module(pm_payout_tool).
 
--include_lib("damsel/include/dmsl_claim_management_thrift.hrl").
--include_lib("damsel/include/dmsl_payment_processing_thrift.hrl").
+-include_lib("damsel/include/dmsl_claimmgmt_thrift.hrl").
+-include_lib("damsel/include/dmsl_payproc_thrift.hrl").
+-include_lib("damsel/include/dmsl_domain_thrift.hrl").
 
 %%
 
@@ -14,7 +15,7 @@
 -type payout_tool() :: dmsl_domain_thrift:'PayoutTool'().
 -type payout_tool_id() :: dmsl_domain_thrift:'PayoutToolID'().
 -type payout_tool_params() ::
-    dmsl_payment_processing_thrift:'PayoutToolParams'() | dmsl_claim_management_thrift:'PayoutToolParams'().
+    dmsl_payproc_thrift:'PayoutToolParams'() | dmsl_claimmgmt_thrift:'PayoutToolParams'().
 -type method() :: dmsl_domain_thrift:'PayoutMethodRef'().
 -type timestamp() :: dmsl_base_thrift:'Timestamp'().
 
@@ -37,7 +38,7 @@ create(
     };
 create(
     ID,
-    #claim_management_PayoutToolParams{
+    #claimmgmt_PayoutToolParams{
         currency = Currency,
         tool_info = ToolInfo
     },

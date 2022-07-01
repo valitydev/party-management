@@ -3,7 +3,8 @@
 -include("claim_management.hrl").
 -include("party_events.hrl").
 
--include_lib("damsel/include/dmsl_payment_processing_thrift.hrl").
+-include_lib("damsel/include/dmsl_payproc_thrift.hrl").
+-include_lib("damsel/include/dmsl_domain_thrift.hrl").
 
 %%
 
@@ -16,10 +17,10 @@
 -type wallet() :: dmsl_domain_thrift:'Wallet'().
 -type wallet_id() :: dmsl_domain_thrift:'WalletID'().
 -type wallet_params() ::
-    dmsl_payment_processing_thrift:'WalletParams'() | dmsl_claim_management_thrift:'WalletParams'().
+    dmsl_payproc_thrift:'WalletParams'() | dmsl_claimmgmt_thrift:'WalletParams'().
 -type wallet_account() :: dmsl_domain_thrift:'WalletAccount'().
 -type wallet_account_params() ::
-    dmsl_payment_processing_thrift:'WalletAccountParams'() | dmsl_claim_management_thrift:'WalletAccountParams'().
+    dmsl_payproc_thrift:'WalletAccountParams'() | dmsl_claimmgmt_thrift:'WalletAccountParams'().
 
 -spec create(wallet_id(), wallet_params(), pm_datetime:timestamp()) -> wallet().
 create(
@@ -40,7 +41,7 @@ create(
     };
 create(
     ID,
-    #claim_management_WalletParams{
+    #claimmgmt_WalletParams{
         name = Name,
         contract_id = ContractID
     },
@@ -65,7 +66,7 @@ create_account(#payproc_WalletAccountParams{currency = Currency}) ->
         settlement = SettlementID,
         payout = PayoutID
     };
-create_account(#claim_management_WalletAccountParams{currency = Currency}) ->
+create_account(#claimmgmt_WalletAccountParams{currency = Currency}) ->
     SymbolicCode = Currency#domain_CurrencyRef.symbolic_code,
     SettlementID = pm_accounting:create_account(SymbolicCode),
     PayoutID = pm_accounting:create_account(SymbolicCode),

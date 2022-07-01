@@ -1,6 +1,6 @@
 -module(pm_ct_domain).
 
--include_lib("damsel/include/dmsl_domain_config_thrift.hrl").
+-include_lib("damsel/include/dmsl_domain_conf_thrift.hrl").
 
 -export([upsert/2]).
 -export([reset/1]).
@@ -17,7 +17,7 @@
 upsert(Revision, NewObject) when not is_list(NewObject) ->
     upsert(Revision, [NewObject]);
 upsert(Revision, NewObjects) ->
-    Commit = #'Commit'{
+    Commit = #'domain_conf_Commit'{
         ops = lists:foldl(
             fun(NewObject = {Tag, {ObjectName, Ref, NewData}}, Ops) ->
                 case pm_domain:find(Revision, {Tag, Ref}) of
@@ -25,14 +25,14 @@ upsert(Revision, NewObjects) ->
                         Ops;
                     notfound ->
                         [
-                            {insert, #'InsertOp'{
+                            {insert, #'domain_conf_InsertOp'{
                                 object = NewObject
                             }}
                             | Ops
                         ];
                     OldData ->
                         [
-                            {update, #'UpdateOp'{
+                            {update, #'domain_conf_UpdateOp'{
                                 old_object = {Tag, {ObjectName, Ref, OldData}},
                                 new_object = NewObject
                             }}
@@ -49,7 +49,7 @@ upsert(Revision, NewObjects) ->
 
 -spec reset(revision()) -> revision() | no_return().
 reset(ToRevision) ->
-    #'Snapshot'{domain = Domain} = dmt_client:checkout(ToRevision),
+    #'domain_conf_Snapshot'{domain = Domain} = dmt_client:checkout(ToRevision),
     upsert(pm_domain:head(), maps:values(Domain)).
 
 -spec commit(revision(), dmt_client:commit()) -> ok | no_return().

@@ -5,8 +5,7 @@
 -type msgp() :: pm_msgpack_marshalling:msgpack_value().
 
 -type id() :: mg_proto_base_thrift:'ID'().
--type tag() :: {tag, mg_proto_base_thrift:'Tag'()}.
--type ref() :: id() | tag().
+-type ref() :: id().
 -type ns() :: mg_proto_base_thrift:'Namespace'().
 -type args() :: _.
 
@@ -60,7 +59,6 @@
 
 -export_type([id/0]).
 -export_type([ref/0]).
--export_type([tag/0]).
 -export_type([ns/0]).
 -export_type([args/0]).
 -export_type([event_id/0]).

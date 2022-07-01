@@ -1,7 +1,9 @@
 -module(pm_claim_committer).
 
--include_lib("damsel/include/dmsl_payment_processing_thrift.hrl").
--include_lib("damsel/include/dmsl_claim_management_thrift.hrl").
+-include_lib("damsel/include/dmsl_payproc_thrift.hrl").
+-include_lib("damsel/include/dmsl_claimmgmt_thrift.hrl").
+-include_lib("damsel/include/dmsl_domain_thrift.hrl").
+-include_lib("damsel/include/dmsl_base_thrift.hrl").
 
 -include("claim_management.hrl").
 -include("party_events.hrl").
@@ -13,10 +15,10 @@
 -export([raise_invalid_changeset/2]).
 
 -type party() :: pm_party:party().
--type changeset() :: dmsl_claim_management_thrift:'ClaimChangeset'().
+-type changeset() :: dmsl_claimmgmt_thrift:'ClaimChangeset'().
 -type timestamp() :: pm_datetime:timestamp().
 -type revision() :: pm_domain:revision().
--type modification() :: dmsl_claim_management_thrift:'PartyModification'().
+-type modification() :: dmsl_claimmgmt_thrift:'PartyModification'().
 -type modifications() :: [modification()].
 
 -export_type([modification/0]).
@@ -175,10 +177,10 @@ assert_shop_modification_applicable(
     _Revision,
     _PartyChange
 ) when Account /= undefined ->
-    throw(#'InvalidRequest'{errors = [<<"Can't change shop's account">>]});
+    throw(#base_InvalidRequest{errors = [<<"Can't change shop's account">>]});
 assert_shop_modification_applicable(
     _ID,
-    {contract_modification, #claim_management_ShopContractModification{contract_id = NewContractID}},
+    {contract_modification, #claimmgmt_ShopContractModification{contract_id = NewContractID}},
     #domain_Shop{contract_id = OldContractID},
     Party,
     Revision,
@@ -215,7 +217,7 @@ assert_wallet_modification_applicable(
     #domain_Wallet{account = Account},
     _PartyChange
 ) when Account /= undefined ->
-    throw(#'InvalidRequest'{errors = [<<"Can't change wallet's account">>]});
+    throw(#base_InvalidRequest{errors = [<<"Can't change wallet's account">>]});
 assert_wallet_modification_applicable(_, _, _, _) ->
     ok.
 
@@ -250,7 +252,7 @@ raise_invalid_payment_institution(ContractID, Ref, PartyChange) ->
     raise_invalid_changeset(
         ?cm_invalid_contract(
             ContractID,
-            {invalid_object_reference, #claim_management_InvalidObjectReference{
+            {invalid_object_reference, #claimmgmt_InvalidObjectReference{
                 ref = make_optional_domain_ref(payment_institution, Ref)
             }}
         ),
@@ -271,7 +273,7 @@ assert_modifications_acceptable(Modifications, Timestamp, Revision, Party0) ->
             erlang:raise(throw, build_invalid_party_changeset(Reason, Modifications), St)
     end.
 
--spec raise_invalid_changeset(dmsl_claim_management_thrift:'InvalidChangesetReason'(), modifications()) -> no_return().
+-spec raise_invalid_changeset(dmsl_claimmgmt_thrift:'InvalidChangesetReason'(), modifications()) -> no_return().
 raise_invalid_changeset(Reason, Modifications) ->
     throw(build_invalid_party_changeset(Reason, Modifications)).
 

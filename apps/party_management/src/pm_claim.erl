@@ -3,7 +3,8 @@
 -include("party_events.hrl").
 
 -include_lib("damsel/include/dmsl_domain_thrift.hrl").
--include_lib("damsel/include/dmsl_payment_processing_thrift.hrl").
+-include_lib("damsel/include/dmsl_payproc_thrift.hrl").
+-include_lib("damsel/include/dmsl_base_thrift.hrl").
 
 -export([create/5]).
 -export([update/5]).
@@ -30,11 +31,11 @@
 
 %% Types
 
--type claim() :: dmsl_payment_processing_thrift:'Claim'().
--type claim_id() :: dmsl_payment_processing_thrift:'ClaimID'().
--type claim_status() :: dmsl_payment_processing_thrift:'ClaimStatus'().
--type claim_revision() :: dmsl_payment_processing_thrift:'ClaimRevision'().
--type changeset() :: dmsl_payment_processing_thrift:'PartyChangeset'().
+-type claim() :: dmsl_payproc_thrift:'Claim'().
+-type claim_id() :: dmsl_payproc_thrift:'ClaimID'().
+-type claim_status() :: dmsl_payproc_thrift:'ClaimStatus'().
+-type claim_revision() :: dmsl_payproc_thrift:'ClaimRevision'().
+-type changeset() :: dmsl_payproc_thrift:'PartyChangeset'().
 
 -type party() :: pm_party:party().
 
@@ -396,7 +397,7 @@ apply_wallet_effect(ID, Effect, Party) ->
 update_wallet({account_created, Account}, Wallet) ->
     Wallet#domain_Wallet{account = Account}.
 
--spec raise_invalid_changeset(dmsl_payment_processing_thrift:'InvalidChangesetReason'()) -> no_return().
+-spec raise_invalid_changeset(dmsl_payproc_thrift:'InvalidChangesetReason'()) -> no_return().
 raise_invalid_changeset(Reason) ->
     throw(#payproc_InvalidChangeset{reason = Reason}).
 
@@ -489,7 +490,7 @@ assert_shop_change_applicable(
     _Party,
     _Revision
 ) when Account /= undefined ->
-    throw(#'InvalidRequest'{errors = [<<"Can't change shop's account">>]});
+    throw(#base_InvalidRequest{errors = [<<"Can't change shop's account">>]});
 assert_shop_change_applicable(
     _ID,
     {contract_modification, #payproc_ShopContractModification{contract_id = NewContractID}},
@@ -527,7 +528,7 @@ assert_wallet_change_applicable(
     {account_creation, _},
     #domain_Wallet{account = Account}
 ) when Account /= undefined ->
-    throw(#'InvalidRequest'{errors = [<<"Can't change wallet's account">>]});
+    throw(#base_InvalidRequest{errors = [<<"Can't change wallet's account">>]});
 assert_wallet_change_applicable(_, _, _) ->
     ok.
 

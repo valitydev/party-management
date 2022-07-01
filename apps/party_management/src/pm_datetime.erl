@@ -44,10 +44,10 @@ compare(T1, T2) when is_binary(T1) andalso is_binary(T2) ->
 between(Timestamp, Start, End) ->
     LB = to_interval_bound(Start, inclusive),
     UB = to_interval_bound(End, inclusive),
-    between(Timestamp, #'TimestampInterval'{lower_bound = LB, upper_bound = UB}).
+    between(Timestamp, #base_TimestampInterval{lower_bound = LB, upper_bound = UB}).
 
 -spec between(timestamp(), timestamp_interval()) -> boolean().
-between(Timestamp, #'TimestampInterval'{lower_bound = LB, upper_bound = UB}) ->
+between(Timestamp, #base_TimestampInterval{lower_bound = LB, upper_bound = UB}) ->
     check_bound(Timestamp, LB, later) andalso
         check_bound(Timestamp, UB, earlier).
 
@@ -80,7 +80,7 @@ to_integer(Timestamp) ->
 to_interval_bound(undefined, _) ->
     undefined;
 to_interval_bound(Timestamp, BoundType) ->
-    #'TimestampIntervalBound'{bound_type = BoundType, bound_time = Timestamp}.
+    #base_TimestampIntervalBound{bound_type = BoundType, bound_time = Timestamp}.
 
 compare_int(T1, T2) ->
     case T1 > T2 of
@@ -95,7 +95,7 @@ compare_int(T1, T2) ->
 -spec check_bound(timestamp(), timestamp_interval_bound(), later | earlier) -> boolean().
 check_bound(_, undefined, _) ->
     true;
-check_bound(Timestamp, #'TimestampIntervalBound'{bound_type = Type, bound_time = BoundTime}, Operator) ->
+check_bound(Timestamp, #base_TimestampIntervalBound{bound_type = Type, bound_time = BoundTime}, Operator) ->
     case compare(Timestamp, BoundTime) of
         Operator ->
             true;

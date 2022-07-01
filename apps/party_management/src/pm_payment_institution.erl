@@ -42,11 +42,6 @@ reduce_payment_institution(PaymentInstitution, VS, Revision) ->
             VS,
             Revision
         ),
-        withdrawal_providers = reduce_if_defined(
-            PaymentInstitution#domain_PaymentInstitution.withdrawal_providers,
-            VS,
-            Revision
-        ),
         providers = reduce_if_defined(
             PaymentInstitution#domain_PaymentInstitution.providers,
             VS,

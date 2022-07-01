@@ -66,7 +66,7 @@
 
 %%
 
--define(EVERY, {every, #'ScheduleEvery'{}}).
+-define(EVERY, {every, #'base_ScheduleEvery'{}}).
 
 %%
 
@@ -114,8 +114,6 @@ construct_payment_method(?pmt(crypto_currency, ?crypta(Name)) = Ref) ->
 construct_payment_method(?pmt(bank_card, ?token_bank_card(Name, _)) = Ref) ->
     construct_payment_method(Name, Ref);
 construct_payment_method(?pmt(bank_card, ?bank_card(Name)) = Ref) ->
-    construct_payment_method(Name, Ref);
-construct_payment_method(?pmt(_Type, Name) = Ref) when is_atom(Name) ->
     construct_payment_method(Name, Ref);
 construct_payment_method(?pmt(_Type, #domain_BankCardPaymentMethod{} = Card) = Ref) ->
     construct_payment_method(Card#domain_BankCardPaymentMethod.payment_system, Ref).
@@ -323,7 +321,7 @@ construct_business_schedule(Ref) ->
         ref = Ref,
         data = #domain_BusinessSchedule{
             name = <<"Every day at 7:40">>,
-            schedule = #'Schedule'{
+            schedule = #'base_Schedule'{
                 year = ?EVERY,
                 month = ?EVERY,
                 day_of_month = ?EVERY,
@@ -354,7 +352,7 @@ construct_term_set_hierarchy(Ref, ParentRef, TermSet) ->
             parent_terms = ParentRef,
             term_sets = [
                 #domain_TimedTermSet{
-                    action_time = #'TimestampInterval'{},
+                    action_time = #base_TimestampInterval{},
                     terms = TermSet
                 }
             ]

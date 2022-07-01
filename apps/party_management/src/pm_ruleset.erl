@@ -1,7 +1,7 @@
 -module(pm_ruleset).
 
 -include_lib("damsel/include/dmsl_domain_thrift.hrl").
--include_lib("damsel/include/dmsl_payment_processing_thrift.hrl").
+-include_lib("damsel/include/dmsl_payproc_thrift.hrl").
 
 %% API
 -export([reduce_payment_routing_ruleset/3]).

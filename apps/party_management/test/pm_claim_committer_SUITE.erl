@@ -3,7 +3,9 @@
 -include("claim_management.hrl").
 -include("pm_ct_domain.hrl").
 
--include_lib("damsel/include/dmsl_payment_processing_thrift.hrl").
+-include_lib("damsel/include/dmsl_payproc_thrift.hrl").
+-include_lib("damsel/include/dmsl_domain_thrift.hrl").
+-include_lib("damsel/include/dmsl_base_thrift.hrl").
 
 -export([all/0]).
 -export([init_per_suite/1]).
@@ -214,7 +216,7 @@ contract_adjustment_creation(C) ->
     PartyID = cfg(party_id, C),
     ContractID = ?REAL_CONTRACT_ID1,
     ID = <<"ADJ1">>,
-    AdjustmentParams = #claim_management_ContractAdjustmentParams{template = #domain_ContractTemplateRef{id = 2}},
+    AdjustmentParams = #claimmgmt_ContractAdjustmentParams{template = #domain_ContractTemplateRef{id = 2}},
     Modifications = [?cm_contract_modification(ContractID, ?cm_adjustment_creation(ID, AdjustmentParams))],
     Claim = claim(Modifications, PartyID),
     ok = accept_claim(Claim, C),
@@ -281,7 +283,7 @@ shop_creation(C) ->
     ContractID = ?REAL_CONTRACT_ID1,
     ShopID = ?REAL_SHOP_ID,
     PayoutToolID1 = ?REAL_PAYOUT_TOOL_ID1,
-    ShopParams = #claim_management_ShopParams{
+    ShopParams = #claimmgmt_ShopParams{
         category = Category,
         location = Location,
         details = Details,
@@ -289,7 +291,7 @@ shop_creation(C) ->
         payout_tool_id = PayoutToolID1
     },
     Schedule = ?bussched(1),
-    ScheduleParams = #claim_management_ScheduleModification{schedule = Schedule},
+    ScheduleParams = #claimmgmt_ScheduleModification{schedule = Schedule},
     Modifications = [
         ?cm_shop_creation(ShopID, ShopParams),
         ?cm_shop_account_creation(ShopID, ?cur(<<"RUB">>)),
@@ -321,8 +323,8 @@ shop_complex_modification(C) ->
     NewLocation = {url, <<"http://localhost">>},
     PayoutToolID2 = ?REAL_PAYOUT_TOOL_ID2,
     Schedule = ?bussched(2),
-    ScheduleParams = #claim_management_ScheduleModification{schedule = Schedule},
-    CashRegisterModificationUnit = #claim_management_CashRegisterModificationUnit{
+    ScheduleParams = #claimmgmt_ScheduleModification{schedule = Schedule},
+    CashRegisterModificationUnit = #claimmgmt_CashRegisterModificationUnit{
         id = <<"1">>,
         modification = ?cm_cash_register_unit_creation(1, #{})
     },
@@ -348,7 +350,7 @@ shop_complex_modification(C) ->
 -spec invalid_cash_register_modification(config()) -> _.
 invalid_cash_register_modification(C) ->
     PartyID = cfg(party_id, C),
-    CashRegisterModificationUnit = #claim_management_CashRegisterModificationUnit{
+    CashRegisterModificationUnit = #claimmgmt_CashRegisterModificationUnit{
         id = <<"1">>,
         modification = ?cm_cash_register_unit_creation(1, #{})
     },
@@ -374,7 +376,7 @@ invalid_shop_payout_tool_not_in_contract(C) ->
     Location = {url, <<"https://example.com">>},
     ContractID = ?REAL_CONTRACT_ID1,
     ShopID = ?REAL_SHOP_ID4,
-    ShopParams = #claim_management_ShopParams{
+    ShopParams = #claimmgmt_ShopParams{
         category = Category,
         location = Location,
         details = Details,
@@ -382,7 +384,7 @@ invalid_shop_payout_tool_not_in_contract(C) ->
         payout_tool_id = ?REAL_PAYOUT_TOOL_ID1
     },
     Schedule = ?bussched(1),
-    ScheduleParams = #claim_management_ScheduleModification{schedule = Schedule},
+    ScheduleParams = #claimmgmt_ScheduleModification{schedule = Schedule},
     Modifications = [
         ?cm_shop_creation(ShopID, ShopParams),
         ?cm_shop_account_creation(ShopID, ?cur(<<"USD">>)),
@@ -409,7 +411,7 @@ invalid_shop_payout_tool_currency_mismatch(C) ->
     Location = {url, <<"https://example.com">>},
     ContractID = ?REAL_CONTRACT_ID1,
     ShopID = ?REAL_SHOP_ID4,
-    ShopParams = #claim_management_ShopParams{
+    ShopParams = #claimmgmt_ShopParams{
         category = Category,
         location = Location,
         details = Details,
@@ -417,7 +419,7 @@ invalid_shop_payout_tool_currency_mismatch(C) ->
         payout_tool_id = ?REAL_PAYOUT_TOOL_ID4
     },
     Schedule = ?bussched(1),
-    ScheduleParams = #claim_management_ScheduleModification{schedule = Schedule},
+    ScheduleParams = #claimmgmt_ScheduleModification{schedule = Schedule},
     Modifications = [
         ?cm_shop_creation(ShopID, ShopParams),
         ?cm_shop_account_creation(ShopID, ?cur(<<"RUB">>)),
@@ -436,7 +438,7 @@ shop_contract_modification(C) ->
     ShopID = ?REAL_SHOP_ID,
     ContractID = ?REAL_CONTRACT_ID2,
     PayoutToolID = ?REAL_PAYOUT_TOOL_ID1,
-    ShopContractParams = #claim_management_ShopContractModification{
+    ShopContractParams = #claimmgmt_ShopContractModification{
         contract_id = ContractID,
         payout_tool_id = PayoutToolID
     },
@@ -453,7 +455,7 @@ shop_contract_modification(C) ->
 contract_termination(C) ->
     PartyID = cfg(party_id, C),
     ContractID = ?REAL_CONTRACT_ID1,
-    Reason = #claim_management_ContractTermination{reason = <<"Because!">>},
+    Reason = #claimmgmt_ContractTermination{reason = <<"Because!">>},
     Modifications = [?cm_contract_modification(ContractID, {termination, Reason})],
     Claim = claim(Modifications, PartyID),
     ok = accept_claim(Claim, C),
@@ -489,7 +491,7 @@ contract_already_exists(C) ->
 contract_already_terminated(C) ->
     ContractID = ?REAL_CONTRACT_ID1,
     PartyID = cfg(party_id, C),
-    Reason = #claim_management_ContractTermination{reason = <<"Because!">>},
+    Reason = #claimmgmt_ContractTermination{reason = <<"Because!">>},
     Mod = ?cm_contract_modification(ContractID, {termination, Reason}),
     Claim = claim([Mod], PartyID),
     {exception,
@@ -506,14 +508,14 @@ shop_already_exists(C) ->
     },
     ShopID = ?REAL_SHOP_ID,
     PartyID = cfg(party_id, C),
-    ShopParams = #claim_management_ShopParams{
+    ShopParams = #claimmgmt_ShopParams{
         category = ?cat(2),
         location = {url, <<"https://example.com">>},
         details = Details,
         contract_id = ?REAL_CONTRACT_ID1,
         payout_tool_id = ?REAL_PAYOUT_TOOL_ID1
     },
-    ScheduleParams = #claim_management_ScheduleModification{schedule = ?bussched(1)},
+    ScheduleParams = #claimmgmt_ScheduleModification{schedule = ?bussched(1)},
     Mod = ?cm_shop_modification(ShopID, {creation, ShopParams}),
 
     Modifications = [
@@ -550,16 +552,16 @@ wallet_account_creation(C) ->
 %%% Internal functions
 
 claim(PartyModifications, PartyID) ->
-    UserInfo = #claim_management_UserInfo{
+    UserInfo = #claimmgmt_UserInfo{
         id = <<"test">>,
         email = <<"test@localhost">>,
         username = <<"test">>,
-        type = {internal_user, #claim_management_InternalUser{}}
+        type = {internal_user, #claimmgmt_InternalUser{}}
     },
-    #claim_management_Claim{
+    #claimmgmt_Claim{
         id = id(),
         party_id = PartyID,
-        status = {pending, #claim_management_ClaimPending{}},
+        status = {pending, #claimmgmt_ClaimPending{}},
         changeset = [?cm_party_modification(id(), ts(), Mod, UserInfo) || Mod <- PartyModifications],
         revision = 1,
         created_at = ts()
@@ -616,14 +618,14 @@ make_contract_params(ContractorID, TemplateRef) ->
     make_contract_params(ContractorID, TemplateRef, ?pinst(2)).
 
 make_contract_params(ContractorID, TemplateRef, PaymentInstitutionRef) ->
-    #claim_management_ContractParams{
+    #claimmgmt_ContractParams{
         contractor_id = ContractorID,
         template = TemplateRef,
         payment_institution = PaymentInstitutionRef
     }.
 
 make_payout_tool_params() ->
-    #claim_management_PayoutToolParams{
+    #claimmgmt_PayoutToolParams{
         currency = ?cur(<<"RUB">>),
         tool_info =
             {russian_bank_account, #domain_RussianBankAccount{
@@ -834,7 +836,7 @@ construct_domain_fixture() ->
                 parent_terms = undefined,
                 term_sets = [
                     #domain_TimedTermSet{
-                        action_time = #'TimestampInterval'{},
+                        action_time = #base_TimestampInterval{},
                         terms = TestTermSet
                     }
                 ]
@@ -846,7 +848,7 @@ construct_domain_fixture() ->
                 parent_terms = undefined,
                 term_sets = [
                     #domain_TimedTermSet{
-                        action_time = #'TimestampInterval'{},
+                        action_time = #base_TimestampInterval{},
                         terms = DefaultTermSet
                     }
                 ]
@@ -858,7 +860,7 @@ construct_domain_fixture() ->
                 parent_terms = ?trms(2),
                 term_sets = [
                     #domain_TimedTermSet{
-                        action_time = #'TimestampInterval'{},
+                        action_time = #base_TimestampInterval{},
                         terms = TermSet
                     }
                 ]
@@ -870,7 +872,7 @@ construct_domain_fixture() ->
                 parent_terms = ?trms(3),
                 term_sets = [
                     #domain_TimedTermSet{
-                        action_time = #'TimestampInterval'{},
+                        action_time = #base_TimestampInterval{},
                         terms = #domain_TermSet{
                             payments = #domain_PaymentsServiceTerms{
                                 currencies =

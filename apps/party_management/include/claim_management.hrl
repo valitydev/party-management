@@ -1,9 +1,9 @@
 -ifndef(__pm_claim_management_hrl__).
 -define(__pm_claim_management_hrl__, included).
 
--include_lib("damsel/include/dmsl_claim_management_thrift.hrl").
+-include_lib("damsel/include/dmsl_claimmgmt_thrift.hrl").
 
--define(cm_modification_unit(ModID, Timestamp, Mod, UserInfo), #claim_management_ModificationUnit{
+-define(cm_modification_unit(ModID, Timestamp, Mod, UserInfo), #claimmgmt_ModificationUnit{
     modification_id = ModID,
     created_at = Timestamp,
     modification = Mod,
@@ -21,7 +21,7 @@
 %%% Contractor
 
 -define(cm_contractor_modification(ContractorID, Mod),
-    {contractor_modification, #claim_management_ContractorModificationUnit{
+    {contractor_modification, #claimmgmt_ContractorModificationUnit{
         id = ContractorID,
         modification = Mod
     }}
@@ -42,7 +42,7 @@
 %%% Contract
 
 -define(cm_contract_modification(ContractID, Mod),
-    {contract_modification, #claim_management_ContractModificationUnit{
+    {contract_modification, #claimmgmt_ContractModificationUnit{
         id = ContractID,
         modification = Mod
     }}
@@ -53,11 +53,11 @@
 ).
 
 -define(cm_contract_termination(Reason),
-    {termination, #claim_management_ContractTermination{reason = Reason}}
+    {termination, #claimmgmt_ContractTermination{reason = Reason}}
 ).
 
 -define(cm_payout_tool_modification(PayoutToolID, Mod),
-    {payout_tool_modification, #claim_management_PayoutToolModificationUnit{
+    {payout_tool_modification, #claimmgmt_PayoutToolModificationUnit{
         payout_tool_id = PayoutToolID,
         modification = Mod
     }}
@@ -72,13 +72,13 @@
 ).
 
 -define(cm_payout_schedule_modification(BusinessScheduleRef),
-    {payout_schedule_modification, #claim_management_ScheduleModification{
+    {payout_schedule_modification, #claimmgmt_ScheduleModification{
         schedule = BusinessScheduleRef
     }}
 ).
 
 -define(cm_cash_register_unit_creation(ID, Params),
-    {creation, #claim_management_CashRegisterParams{
+    {creation, #claimmgmt_CashRegisterParams{
         cash_register_provider_id = ID,
         cash_register_provider_params = Params
     }}
@@ -93,7 +93,7 @@
 ).
 
 -define(cm_adjustment_modification(ContractAdjustmentID, Mod),
-    {adjustment_modification, #claim_management_ContractAdjustmentModificationUnit{
+    {adjustment_modification, #claimmgmt_ContractAdjustmentModificationUnit{
         adjustment_id = ContractAdjustmentID,
         modification = Mod
     }}
@@ -109,14 +109,14 @@
 %%% Shop
 
 -define(cm_shop_modification(ShopID, Mod),
-    {shop_modification, #claim_management_ShopModificationUnit{
+    {shop_modification, #claimmgmt_ShopModificationUnit{
         id = ShopID,
         modification = Mod
     }}
 ).
 
 -define(cm_shop_contract_modification(ContractID, PayoutToolID),
-    {contract_modification, #claim_management_ShopContractModification{
+    {contract_modification, #claimmgmt_ShopContractModification{
         contract_id = ContractID,
         payout_tool_id = PayoutToolID
     }}
@@ -127,7 +127,7 @@
 ).
 
 -define(cm_shop_account_creation_params(CurrencyRef),
-    {shop_account_creation, #claim_management_ShopAccountParams{
+    {shop_account_creation, #claimmgmt_ShopAccountParams{
         currency = CurrencyRef
     }}
 ).
@@ -141,18 +141,18 @@
 
 %%% Wallet
 -define(cm_wallet_modification(ID, Modification),
-    {wallet_modification, #claim_management_WalletModificationUnit{id = ID, modification = Modification}}
+    {wallet_modification, #claimmgmt_WalletModificationUnit{id = ID, modification = Modification}}
 ).
 
 -define(cm_wallet_creation_params(Name, ContractID),
-    {creation, #claim_management_WalletParams{
+    {creation, #claimmgmt_WalletParams{
         name = Name,
         contract_id = ContractID
     }}
 ).
 
 -define(cm_wallet_account_creation_params(CurrencyRef),
-    {account_creation, #claim_management_WalletAccountParams{
+    {account_creation, #claimmgmt_WalletAccountParams{
         currency = CurrencyRef
     }}
 ).
@@ -173,31 +173,31 @@
 
 %%% Error
 
--define(cm_invalid_party_changeset(Reason, InvalidChangeset), #claim_management_InvalidChangeset{
+-define(cm_invalid_party_changeset(Reason, InvalidChangeset), #claimmgmt_InvalidChangeset{
     reason = {invalid_party_changeset, Reason},
     invalid_changeset = InvalidChangeset
 }).
 
 -define(cm_invalid_shop(ID, Reason),
-    {invalid_shop, #claim_management_InvalidShop{id = ID, reason = Reason}}
+    {invalid_shop, #claimmgmt_InvalidShop{id = ID, reason = Reason}}
 ).
 
 -define(cm_invalid_shop_account_not_exists(ID),
-    ?cm_invalid_shop(ID, {account_not_exists, #claim_management_InvalidClaimConcreteReason{}})
+    ?cm_invalid_shop(ID, {account_not_exists, #claimmgmt_InvalidClaimConcreteReason{}})
 ).
 
 -define(cm_invalid_shop_not_exists(ID),
-    ?cm_invalid_shop(ID, {not_exists, #claim_management_InvalidClaimConcreteReason{}})
+    ?cm_invalid_shop(ID, {not_exists, #claimmgmt_InvalidClaimConcreteReason{}})
 ).
 
 -define(cm_invalid_shop_already_exists(ID),
-    ?cm_invalid_shop(ID, {already_exists, #claim_management_InvalidClaimConcreteReason{}})
+    ?cm_invalid_shop(ID, {already_exists, #claimmgmt_InvalidClaimConcreteReason{}})
 ).
 
 -define(cm_invalid_shop_contract_terms_violated(ID, ContractID, Terms),
     ?cm_invalid_shop(
         ID,
-        {contract_terms_violated, #claim_management_ContractTermsViolated{
+        {contract_terms_violated, #claimmgmt_ContractTermsViolated{
             contract_id = ContractID,
             terms = Terms
         }}
@@ -211,7 +211,7 @@
 -define(cm_invalid_shop_payout_tool_not_set_for_payouts(ID, Schedule),
     ?cm_invalid_shop_payout_tool(
         ID,
-        {not_set_for_payouts, #claim_management_PayoutToolNotSetForPayouts{
+        {not_set_for_payouts, #claimmgmt_PayoutToolNotSetForPayouts{
             payout_schedule = Schedule
         }}
     )
@@ -220,7 +220,7 @@
 -define(cm_invalid_shop_payout_tool_currency_mismatch(ID, PayoutToolID, ShopAccountCurrency, PayoutToolCurrency),
     ?cm_invalid_shop_payout_tool(
         ID,
-        {currency_mismatch, #claim_management_PayoutToolCurrencyMismatch{
+        {currency_mismatch, #claimmgmt_PayoutToolCurrencyMismatch{
             shop_account_currency = ShopAccountCurrency,
             payout_tool_id = PayoutToolID,
             payout_tool_currency = PayoutToolCurrency
@@ -231,7 +231,7 @@
 -define(cm_invalid_shop_payout_tool_not_in_contract(ID, ContractID, PayoutToolID),
     ?cm_invalid_shop_payout_tool(
         ID,
-        {not_in_contract, #claim_management_PayoutToolNotInContract{
+        {not_in_contract, #claimmgmt_PayoutToolNotInContract{
             contract_id = ContractID,
             payout_tool_id = PayoutToolID
         }}
@@ -239,15 +239,15 @@
 ).
 
 -define(cm_invalid_contract(ID, Reason),
-    {invalid_contract, #claim_management_InvalidContract{id = ID, reason = Reason}}
+    {invalid_contract, #claimmgmt_InvalidContract{id = ID, reason = Reason}}
 ).
 
 -define(cm_invalid_contract_not_exists(ID),
-    ?cm_invalid_contract(ID, {not_exists, #claim_management_InvalidClaimConcreteReason{}})
+    ?cm_invalid_contract(ID, {not_exists, #claimmgmt_InvalidClaimConcreteReason{}})
 ).
 
 -define(cm_invalid_contract_already_exists(ID),
-    ?cm_invalid_contract(ID, {already_exists, #claim_management_InvalidClaimConcreteReason{}})
+    ?cm_invalid_contract(ID, {already_exists, #claimmgmt_InvalidClaimConcreteReason{}})
 ).
 
 -define(cm_invalid_contract_invalid_status_terminated(ID, T),
@@ -255,41 +255,41 @@
 ).
 
 -define(cm_invalid_contract_contractor_not_exists(ID, ContractorID),
-    ?cm_invalid_contract(ID, {contractor_not_exists, #claim_management_ContractorNotExists{id = ContractorID}})
+    ?cm_invalid_contract(ID, {contractor_not_exists, #claimmgmt_ContractorNotExists{id = ContractorID}})
 ).
 
 -define(cm_invalid_contractor(ID, Reason),
-    {invalid_contractor, #claim_management_InvalidContractor{id = ID, reason = Reason}}
+    {invalid_contractor, #claimmgmt_InvalidContractor{id = ID, reason = Reason}}
 ).
 
 -define(cm_invalid_contractor_not_exists(ID),
-    ?cm_invalid_contractor(ID, {not_exists, #claim_management_InvalidClaimConcreteReason{}})
+    ?cm_invalid_contractor(ID, {not_exists, #claimmgmt_InvalidClaimConcreteReason{}})
 ).
 
 -define(cm_invalid_contractor_already_exists(ID),
-    ?cm_invalid_contractor(ID, {already_exists, #claim_management_InvalidClaimConcreteReason{}})
+    ?cm_invalid_contractor(ID, {already_exists, #claimmgmt_InvalidClaimConcreteReason{}})
 ).
 
 -define(cm_invalid_wallet(ID, Reason),
-    {invalid_wallet, #claim_management_InvalidWallet{id = ID, reason = Reason}}
+    {invalid_wallet, #claimmgmt_InvalidWallet{id = ID, reason = Reason}}
 ).
 
 -define(cm_invalid_wallet_not_exists(ID),
-    ?cm_invalid_wallet(ID, {not_exists, #claim_management_InvalidClaimConcreteReason{}})
+    ?cm_invalid_wallet(ID, {not_exists, #claimmgmt_InvalidClaimConcreteReason{}})
 ).
 
 -define(cm_invalid_wallet_already_exists(ID),
-    ?cm_invalid_wallet(ID, {already_exists, #claim_management_InvalidClaimConcreteReason{}})
+    ?cm_invalid_wallet(ID, {already_exists, #claimmgmt_InvalidClaimConcreteReason{}})
 ).
 
 -define(cm_invalid_wallet_account_not_exists(ID),
-    ?cm_invalid_wallet(ID, {account_not_exists, #claim_management_InvalidClaimConcreteReason{}})
+    ?cm_invalid_wallet(ID, {account_not_exists, #claimmgmt_InvalidClaimConcreteReason{}})
 ).
 
 -define(cm_invalid_wallet_contract_terms_violated(ID, ContractID, Terms),
     ?cm_invalid_wallet(
         ID,
-        {contract_terms_violated, #claim_management_ContractTermsViolated{
+        {contract_terms_violated, #claimmgmt_ContractTermsViolated{
             contract_id = ContractID,
             terms = Terms
         }}
