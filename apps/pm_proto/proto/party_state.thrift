@@ -1,6 +1,6 @@
-include "proto/base.thrift"
-include "proto/domain.thrift"
-include "proto/payment_processing.thrift"
+include "damsel/proto/base.thrift"
+include "damsel/proto/domain.thrift"
+include "damsel/proto/payment_processing.thrift"
 
 namespace erlang pm.state
 
