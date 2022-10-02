@@ -1890,7 +1890,7 @@ compute_pred_w_partial_all_of(_) ->
         {all_of, [
             {constant, true},
             {condition, {currency_is, ?cur(<<"CNY">>)}},
-            Cond1 = {condition, {category_is, ?cat(<<"Chips">>)}},
+            Cond1 = {condition, {category_is, ?cat(42)}},
             Cond2 = {condition, {shop_location_is, {url, <<"https://thisiswhyimbroke.com">>}}}
         ]},
     ?assertMatch(
