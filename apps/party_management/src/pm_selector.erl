@@ -48,7 +48,6 @@
 }.
 
 -type predicate() :: dmsl_domain_thrift:'Predicate'().
--type criterion() :: dmsl_domain_thrift:'Criterion'().
 
 -export_type([varset/0]).
 
@@ -101,9 +100,7 @@ reduce_decisions([], _, _) ->
     [].
 
 -spec reduce_predicate(predicate(), varset(), pm_domain:revision()) ->
-    predicate()
-    % for a partially reduced criterion
-    | {criterion, criterion()}.
+    predicate().
 reduce_predicate(?const(B), _, _) ->
     ?const(B);
 reduce_predicate({condition, C0}, VS, Rev) ->
@@ -126,11 +123,14 @@ reduce_predicate({any_of, Ps}, VS, Rev) ->
     reduce_combination(any_of, true, Ps, VS, Rev, []);
 reduce_predicate({criterion, CriterionRef = #domain_CriterionRef{}}, VS, Rev) ->
     Criterion = pm_domain:get(Rev, {criterion, CriterionRef}),
-    case reduce_predicate(Criterion#domain_Criterion.predicate, VS, Rev) of
+    Predicate = Criterion#domain_Criterion.predicate,
+    case reduce_predicate(Predicate, VS, Rev) of
         ?const(B) ->
             ?const(B);
-        P1 ->
-            {criterion, Criterion#domain_Criterion{predicate = P1}}
+        Predicate ->
+            {criterion, CriterionRef};
+        NewPredicate ->
+            NewPredicate
     end.
 
 reduce_combination(Type, Fix, [P | Ps], VS, Rev, PAcc) ->

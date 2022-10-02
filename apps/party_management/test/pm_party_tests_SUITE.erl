@@ -1879,13 +1879,13 @@ compute_payment_routing_ruleset_not_found(C) ->
 %%
 
 compute_pred_w_irreducible_criterion(_) ->
-    CritRef = ?crit(1),
-    CritName = <<"HAHA GOT ME">>,
+    CriterionRef = ?crit(1),
+    CriterionName = <<"HAHA GOT ME">>,
     pm_ct_domain:with(
         [
             pm_ct_fixture:construct_criterion(
-                CritRef,
-                CritName,
+                CriterionRef,
+                CriterionName,
                 {all_of, [
                     {constant, true},
                     {is_not, {condition, {currency_is, ?cur(<<"KZT">>)}}}
@@ -1894,8 +1894,8 @@ compute_pred_w_irreducible_criterion(_) ->
         ],
         fun(Revision) ->
             ?assertMatch(
-                {criterion, #domain_Criterion{name = CritName, predicate = {all_of, [_]}}},
-                pm_selector:reduce_predicate({criterion, CritRef}, #{}, Revision)
+                {is_not, {condition, {currency_is, ?cur(<<"KZT">>)}}},
+                pm_selector:reduce_predicate({criterion, CriterionRef}, #{}, Revision)
             )
         end
     ).
