@@ -111,6 +111,7 @@
 -export([compute_payment_routing_ruleset_not_found/1]).
 
 -export([compute_pred_w_irreducible_criterion/1]).
+-export([compute_pred_w_partially_irreducible_criterion/1]).
 -export([compute_terms_w_criteria/1]).
 -export([check_all_payment_methods/1]).
 -export([check_all_withdrawal_methods/1]).
@@ -280,6 +281,7 @@ groups() ->
         {terms, [sequence], [
             party_creation,
             compute_pred_w_irreducible_criterion,
+            compute_pred_w_partially_irreducible_criterion,
             compute_terms_w_criteria,
             check_all_payment_methods,
             check_all_withdrawal_methods
@@ -512,6 +514,7 @@ end_per_testcase(_Name, _C) ->
 -spec compute_payment_routing_ruleset_not_found(config()) -> _ | no_return().
 
 -spec compute_pred_w_irreducible_criterion(config()) -> _ | no_return().
+-spec compute_pred_w_partially_irreducible_criterion(config()) -> _ | no_return().
 -spec compute_terms_w_criteria(config()) -> _ | no_return().
 
 party_creation(C) ->
@@ -1880,12 +1883,29 @@ compute_payment_routing_ruleset_not_found(C) ->
 
 compute_pred_w_irreducible_criterion(_) ->
     CriterionRef = ?crit(1),
-    CriterionName = <<"HAHA GOT ME">>,
     pm_ct_domain:with(
         [
             pm_ct_fixture:construct_criterion(
                 CriterionRef,
-                CriterionName,
+                <<"HAHA">>,
+                {condition, {currency_is, ?cur(<<"KZT">>)}}
+            )
+        ],
+        fun(Revision) ->
+            ?assertMatch(
+                {criterion, CriterionRef},
+                pm_selector:reduce_predicate({criterion, CriterionRef}, #{}, Revision)
+            )
+        end
+    ).
+
+compute_pred_w_partially_irreducible_criterion(_) ->
+    CriterionRef = ?crit(1),
+    pm_ct_domain:with(
+        [
+            pm_ct_fixture:construct_criterion(
+                CriterionRef,
+                <<"HAHA GOT ME">>,
                 {all_of, [
                     {constant, true},
                     {is_not, {condition, {currency_is, ?cur(<<"KZT">>)}}}
