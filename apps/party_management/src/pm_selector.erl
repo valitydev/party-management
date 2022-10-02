@@ -144,6 +144,8 @@ reduce_combination(Type, Fix, [P | Ps], VS, Rev, PAcc) ->
     end;
 reduce_combination(_, Fix, [], _, _, []) ->
     ?const(not Fix);
+reduce_combination(_, _, [], _, _, [P]) ->
+    P;
 reduce_combination(Type, _, [], _, _, PAcc) ->
     {Type, lists:reverse(PAcc)}.
 
