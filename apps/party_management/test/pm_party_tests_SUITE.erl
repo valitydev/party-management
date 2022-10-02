@@ -107,7 +107,7 @@
 -export([compute_provider_terminal_not_found/1]).
 -export([compute_globals_ok/1]).
 -export([compute_payment_routing_ruleset_ok/1]).
--export([compute_payment_routing_ruleset_unreducable/1]).
+-export([compute_payment_routing_ruleset_irreducible/1]).
 -export([compute_payment_routing_ruleset_not_found/1]).
 
 -export([compute_pred_w_irreducible_criterion/1]).
@@ -275,7 +275,7 @@ groups() ->
             compute_provider_terminal_not_found,
             compute_globals_ok,
             compute_payment_routing_ruleset_ok,
-            compute_payment_routing_ruleset_unreducable,
+            compute_payment_routing_ruleset_irreducible,
             compute_payment_routing_ruleset_not_found
         ]},
         {terms, [sequence], [
@@ -510,7 +510,7 @@ end_per_testcase(_Name, _C) ->
 -spec compute_provider_terminal_not_found(config()) -> _ | no_return().
 -spec compute_globals_ok(config()) -> _ | no_return().
 -spec compute_payment_routing_ruleset_ok(config()) -> _ | no_return().
--spec compute_payment_routing_ruleset_unreducable(config()) -> _ | no_return().
+-spec compute_payment_routing_ruleset_irreducible(config()) -> _ | no_return().
 -spec compute_payment_routing_ruleset_not_found(config()) -> _ | no_return().
 
 -spec compute_pred_w_irreducible_criterion(config()) -> _ | no_return().
@@ -1850,7 +1850,7 @@ compute_payment_routing_ruleset_ok(C) ->
             ]}
     } = pm_client_party:compute_routing_ruleset(?ruleset(1), DomainRevision, Varset, Client).
 
-compute_payment_routing_ruleset_unreducable(C) ->
+compute_payment_routing_ruleset_irreducible(C) ->
     Client = cfg(client, C),
     DomainRevision = pm_domain:head(),
     Varset = #payproc_Varset{},
