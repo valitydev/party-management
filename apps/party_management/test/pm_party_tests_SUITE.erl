@@ -110,6 +110,7 @@
 -export([compute_payment_routing_ruleset_irreducible/1]).
 -export([compute_payment_routing_ruleset_not_found/1]).
 
+-export([compute_pred_w_partial_all_of/1]).
 -export([compute_pred_w_irreducible_criterion/1]).
 -export([compute_pred_w_partially_irreducible_criterion/1]).
 -export([compute_terms_w_criteria/1]).
@@ -280,6 +281,7 @@ groups() ->
         ]},
         {terms, [sequence], [
             party_creation,
+            compute_pred_w_partial_all_of,
             compute_pred_w_irreducible_criterion,
             compute_pred_w_partially_irreducible_criterion,
             compute_terms_w_criteria,
@@ -513,6 +515,7 @@ end_per_testcase(_Name, _C) ->
 -spec compute_payment_routing_ruleset_irreducible(config()) -> _ | no_return().
 -spec compute_payment_routing_ruleset_not_found(config()) -> _ | no_return().
 
+-spec compute_pred_w_partial_all_of(config()) -> _ | no_return().
 -spec compute_pred_w_irreducible_criterion(config()) -> _ | no_return().
 -spec compute_pred_w_partially_irreducible_criterion(config()) -> _ | no_return().
 -spec compute_terms_w_criteria(config()) -> _ | no_return().
@@ -1880,6 +1883,24 @@ compute_payment_routing_ruleset_not_found(C) ->
         (catch pm_client_party:compute_routing_ruleset(?ruleset(5), DomainRevision, #payproc_Varset{}, Client)).
 
 %%
+
+compute_pred_w_partial_all_of(_) ->
+    Revision = pm_domain:head(),
+    Predicate =
+        {all_of, [
+            {constant, true},
+            {condition, {currency_is, ?cur(<<"CNY">>)}},
+            Cond1 = {condition, {category_is, ?cat(<<"Chips">>)}},
+            Cond2 = {condition, {shop_location_is, {url, <<"https://thisiswhyimbroke.com">>}}}
+        ]},
+    ?assertMatch(
+        {all_of, [Cond1, Cond2]},
+        pm_selector:reduce_predicate(
+            Predicate,
+            #{currency => ?cur(<<"CNY">>)},
+            Revision
+        )
+    ).
 
 compute_pred_w_irreducible_criterion(_) ->
     CriterionRef = ?crit(1),
