@@ -107,10 +107,12 @@
 -export([compute_provider_terminal_not_found/1]).
 -export([compute_globals_ok/1]).
 -export([compute_payment_routing_ruleset_ok/1]).
--export([compute_payment_routing_ruleset_unreducable/1]).
+-export([compute_payment_routing_ruleset_irreducible/1]).
 -export([compute_payment_routing_ruleset_not_found/1]).
 
+-export([compute_pred_w_partial_all_of/1]).
 -export([compute_pred_w_irreducible_criterion/1]).
+-export([compute_pred_w_partially_irreducible_criterion/1]).
 -export([compute_terms_w_criteria/1]).
 -export([check_all_payment_methods/1]).
 -export([check_all_withdrawal_methods/1]).
@@ -274,12 +276,14 @@ groups() ->
             compute_provider_terminal_not_found,
             compute_globals_ok,
             compute_payment_routing_ruleset_ok,
-            compute_payment_routing_ruleset_unreducable,
+            compute_payment_routing_ruleset_irreducible,
             compute_payment_routing_ruleset_not_found
         ]},
         {terms, [sequence], [
             party_creation,
+            compute_pred_w_partial_all_of,
             compute_pred_w_irreducible_criterion,
+            compute_pred_w_partially_irreducible_criterion,
             compute_terms_w_criteria,
             check_all_payment_methods,
             check_all_withdrawal_methods
@@ -508,10 +512,12 @@ end_per_testcase(_Name, _C) ->
 -spec compute_provider_terminal_not_found(config()) -> _ | no_return().
 -spec compute_globals_ok(config()) -> _ | no_return().
 -spec compute_payment_routing_ruleset_ok(config()) -> _ | no_return().
--spec compute_payment_routing_ruleset_unreducable(config()) -> _ | no_return().
+-spec compute_payment_routing_ruleset_irreducible(config()) -> _ | no_return().
 -spec compute_payment_routing_ruleset_not_found(config()) -> _ | no_return().
 
+-spec compute_pred_w_partial_all_of(config()) -> _ | no_return().
 -spec compute_pred_w_irreducible_criterion(config()) -> _ | no_return().
+-spec compute_pred_w_partially_irreducible_criterion(config()) -> _ | no_return().
 -spec compute_terms_w_criteria(config()) -> _ | no_return().
 
 party_creation(C) ->
@@ -1847,7 +1853,7 @@ compute_payment_routing_ruleset_ok(C) ->
             ]}
     } = pm_client_party:compute_routing_ruleset(?ruleset(1), DomainRevision, Varset, Client).
 
-compute_payment_routing_ruleset_unreducable(C) ->
+compute_payment_routing_ruleset_irreducible(C) ->
     Client = cfg(client, C),
     DomainRevision = pm_domain:head(),
     Varset = #payproc_Varset{},
@@ -1878,14 +1884,49 @@ compute_payment_routing_ruleset_not_found(C) ->
 
 %%
 
+compute_pred_w_partial_all_of(_) ->
+    Revision = pm_domain:head(),
+    Predicate =
+        {all_of, [
+            {constant, true},
+            {condition, {currency_is, ?cur(<<"CNY">>)}},
+            Cond1 = {condition, {category_is, ?cat(42)}},
+            Cond2 = {condition, {shop_location_is, {url, <<"https://thisiswhyimbroke.com">>}}}
+        ]},
+    ?assertMatch(
+        {all_of, [Cond1, Cond2]},
+        pm_selector:reduce_predicate(
+            Predicate,
+            #{currency => ?cur(<<"CNY">>)},
+            Revision
+        )
+    ).
+
 compute_pred_w_irreducible_criterion(_) ->
-    CritRef = ?crit(1),
-    CritName = <<"HAHA GOT ME">>,
+    CriterionRef = ?crit(1),
     pm_ct_domain:with(
         [
             pm_ct_fixture:construct_criterion(
-                CritRef,
-                CritName,
+                CriterionRef,
+                <<"HAHA">>,
+                {condition, {currency_is, ?cur(<<"KZT">>)}}
+            )
+        ],
+        fun(Revision) ->
+            ?assertMatch(
+                {criterion, CriterionRef},
+                pm_selector:reduce_predicate({criterion, CriterionRef}, #{}, Revision)
+            )
+        end
+    ).
+
+compute_pred_w_partially_irreducible_criterion(_) ->
+    CriterionRef = ?crit(1),
+    pm_ct_domain:with(
+        [
+            pm_ct_fixture:construct_criterion(
+                CriterionRef,
+                <<"HAHA GOT ME">>,
                 {all_of, [
                     {constant, true},
                     {is_not, {condition, {currency_is, ?cur(<<"KZT">>)}}}
@@ -1894,8 +1935,8 @@ compute_pred_w_irreducible_criterion(_) ->
         ],
         fun(Revision) ->
             ?assertMatch(
-                {criterion, #domain_Criterion{name = CritName, predicate = {all_of, [_]}}},
-                pm_selector:reduce_predicate({criterion, CritRef}, #{}, Revision)
+                {is_not, {condition, {currency_is, ?cur(<<"KZT">>)}}},
+                pm_selector:reduce_predicate({criterion, CriterionRef}, #{}, Revision)
             )
         end
     ).
