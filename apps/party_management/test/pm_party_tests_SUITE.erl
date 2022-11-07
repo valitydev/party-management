@@ -1648,6 +1648,7 @@ compute_provider_ok(C) ->
     #domain_Provider{
         terms = #domain_ProvisionTermSet{
             payments = #domain_PaymentsProvisionTerms{
+                allow = {constant, true},
                 cash_flow = {value, [CashFlow]}
             },
             recurrent_paytools = #domain_RecurrentPaytoolsProvisionTerms{
@@ -2740,6 +2741,7 @@ construct_domain_fixture() ->
                 accounts = pm_ct_fixture:construct_provider_account_set([?cur(<<"RUB">>)]),
                 terms = #domain_ProvisionTermSet{
                     payments = #domain_PaymentsProvisionTerms{
+                        allow = {constant, true},
                         currencies = {value, ?ordset([?cur(<<"RUB">>)])},
                         categories = {value, ?ordset([?cat(1)])},
                         payment_methods =
