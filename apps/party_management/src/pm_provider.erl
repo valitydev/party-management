@@ -34,6 +34,7 @@ reduce_withdrawal_terms(undefined = Terms, _VS, _Rev) ->
     Terms;
 reduce_withdrawal_terms(#domain_WithdrawalProvisionTerms{} = Terms, VS, Rev) ->
     Terms#domain_WithdrawalProvisionTerms{
+        allow = reduce_predicate_if_defined(Terms#domain_WithdrawalProvisionTerms.allow, VS, Rev),
         currencies = reduce_if_defined(Terms#domain_WithdrawalProvisionTerms.currencies, VS, Rev),
         payout_methods = reduce_if_defined(Terms#domain_WithdrawalProvisionTerms.payout_methods, VS, Rev),
         cash_limit = reduce_if_defined(Terms#domain_WithdrawalProvisionTerms.cash_limit, VS, Rev),
