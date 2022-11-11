@@ -34,6 +34,7 @@ reduce_withdrawal_terms(undefined = Terms, _VS, _Rev) ->
     Terms;
 reduce_withdrawal_terms(#domain_WithdrawalProvisionTerms{} = Terms, VS, Rev) ->
     Terms#domain_WithdrawalProvisionTerms{
+        allow = reduce_predicate_if_defined(Terms#domain_WithdrawalProvisionTerms.allow, VS, Rev),
         currencies = reduce_if_defined(Terms#domain_WithdrawalProvisionTerms.currencies, VS, Rev),
         payout_methods = reduce_if_defined(Terms#domain_WithdrawalProvisionTerms.payout_methods, VS, Rev),
         cash_limit = reduce_if_defined(Terms#domain_WithdrawalProvisionTerms.cash_limit, VS, Rev),
@@ -63,6 +64,7 @@ reduce_payment_terms(undefined = PaymentTerms, _VS, _DomainRevision) ->
     PaymentTerms;
 reduce_payment_terms(PaymentTerms, VS, DomainRevision) ->
     PaymentTerms#domain_PaymentsProvisionTerms{
+        allow = reduce_predicate_if_defined(PaymentTerms#domain_PaymentsProvisionTerms.allow, VS, DomainRevision),
         currencies = reduce_if_defined(PaymentTerms#domain_PaymentsProvisionTerms.currencies, VS, DomainRevision),
         categories = reduce_if_defined(PaymentTerms#domain_PaymentsProvisionTerms.categories, VS, DomainRevision),
         payment_methods = reduce_if_defined(
@@ -269,6 +271,9 @@ merge_withdrawal_terms(ProviderTerms, TerminalTerms) ->
 
 reduce_if_defined(Selector, VS, Rev) ->
     pm_maybe:apply(fun(X) -> pm_selector:reduce(X, VS, Rev) end, Selector).
+
+reduce_predicate_if_defined(Predicate, VS, Rev) ->
+    pm_maybe:apply(fun(X) -> pm_selector:reduce_predicate(X, VS, Rev) end, Predicate).
 
 -spec compute_proxy(provider(), terminal(), domain_revision()) ->
     dmsl_domain_thrift:'ProxyDefinition'().
