@@ -187,6 +187,7 @@ merge_provision_term_sets(ProviderTerms, TerminalTerms) ->
 
 merge_payment_terms(
     #domain_PaymentsProvisionTerms{
+        allow = PAllow,
         currencies = PCurrencies,
         categories = PCategories,
         payment_methods = PPaymentMethods,
@@ -199,6 +200,7 @@ merge_payment_terms(
         turnover_limits = PTurnoverLimits
     },
     #domain_PaymentsProvisionTerms{
+        allow = TAllow,
         currencies = TCurrencies,
         categories = TCategories,
         payment_methods = TPaymentMethods,
@@ -212,6 +214,7 @@ merge_payment_terms(
     }
 ) ->
     #domain_PaymentsProvisionTerms{
+        allow = pm_utils:select_defined(TAllow, PAllow),
         currencies = pm_utils:select_defined(TCurrencies, PCurrencies),
         categories = pm_utils:select_defined(TCategories, PCategories),
         payment_methods = pm_utils:select_defined(TPaymentMethods, PPaymentMethods),
@@ -245,6 +248,7 @@ merge_wallet_terms(ProviderTerms, TerminalTerms) ->
 
 merge_withdrawal_terms(
     #domain_WithdrawalProvisionTerms{
+        allow = PAllow,
         currencies = PCurrencies,
         payout_methods = PMethods,
         cash_limit = PLimit,
@@ -252,6 +256,7 @@ merge_withdrawal_terms(
         turnover_limit = PTurnoverLimit
     },
     #domain_WithdrawalProvisionTerms{
+        allow = TAllow,
         currencies = TCurrencies,
         payout_methods = TMethods,
         cash_limit = TLimit,
@@ -260,6 +265,7 @@ merge_withdrawal_terms(
     }
 ) ->
     #domain_WithdrawalProvisionTerms{
+        allow = pm_utils:select_defined(TAllow, PAllow),
         currencies = pm_utils:select_defined(TCurrencies, PCurrencies),
         payout_methods = pm_utils:select_defined(TMethods, PMethods),
         cash_limit = pm_utils:select_defined(TLimit, PLimit),
