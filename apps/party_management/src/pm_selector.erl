@@ -147,7 +147,7 @@ reduce_combination(_, Fix, [], _, _, []) ->
 reduce_combination(_, _, [], _, _, [P]) ->
     P;
 reduce_combination(Type, _, [], _, _, PAcc) ->
-    {Type, lists:reverse(PAcc)}.
+    {Type, ordsets:from_list(lists:reverse(PAcc))}.
 
 reduce_condition(C, VS, Rev) ->
     case pm_condition:test(C, VS, Rev) of
