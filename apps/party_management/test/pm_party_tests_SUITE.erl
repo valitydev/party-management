@@ -2397,7 +2397,33 @@ construct_domain_fixture() ->
                 cash_limit =
                     {decisions, [
                         #domain_CashLimitDecision{
-                            if_ = {condition, {currency_is, ?cur(<<"RUB">>)}},
+                            if_ =
+                                {any_of,
+                                    ordsets:from_list([
+                                        {any_of,
+                                            ordsets:from_list([
+                                                {condition, {currency_is, ?cur(<<"RUB">>)}},
+                                                {condition,
+                                                    {payment_tool,
+                                                        {bank_card, #domain_BankCardCondition{
+                                                            definition =
+                                                                {payment_system, #domain_PaymentSystemCondition{
+                                                                    payment_system_is = #domain_PaymentSystemRef{
+                                                                        id = <<"visa">>
+                                                                    }
+                                                                }}
+                                                        }}}}
+                                            ])},
+                                        {all_of,
+                                            ordsets:from_list([
+                                                {condition,
+                                                    {cost_in,
+                                                        ?cashrng(
+                                                            {inclusive, ?cash(424242, <<"USD">>)},
+                                                            {inclusive, ?cash(424242, <<"USD">>)}
+                                                        )}}
+                                            ])}
+                                    ])},
                             then_ =
                                 {value,
                                     ?cashrng(
