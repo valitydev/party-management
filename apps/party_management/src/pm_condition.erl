@@ -280,8 +280,8 @@ ternary_while_truth_table_test() ->
 
 -spec cash_is_multiple_of_condition_test() -> _.
 cash_is_multiple_of_condition_test() ->
-    Currency1 = ?currency(<<"RUB">>),
-    Currency2 = ?currency(<<"USD">>),
+    Currency1 = <<"RUB">>,
+    Currency2 = <<"USD">>,
     _ = [
         ?assertEqual(test_cash_is_multiple_of(?cash(10, Currency1), ?cash(5, Currency1)), true),
         ?assertEqual(test_cash_is_multiple_of(?cash(10, Currency1), ?cash(7, Currency1)), false),
