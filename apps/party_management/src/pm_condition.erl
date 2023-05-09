@@ -1,6 +1,7 @@
 -module(pm_condition).
 
 -include_lib("damsel/include/dmsl_domain_thrift.hrl").
+-include_lib("party_management/include/domain.hrl").
 
 %%
 
@@ -29,6 +30,8 @@ test({currency_is, V1}, #{currency := V2}, _) ->
     V1 =:= V2;
 test({cost_in, V}, #{cost := C}, _) ->
     pm_cash_range:is_inside(C, V) =:= within;
+test({cost_is_multiple_of, V}, #{cost := C}, _) ->
+    test_cash_is_multiple_of(V, C);
 test({payment_tool, C}, #{payment_tool := V}, Rev) ->
     pm_payment_tool:test_condition(C, V, Rev);
 test({shop_location_is, V}, #{shop := S}, _) ->
@@ -182,6 +185,14 @@ to_ternary_bool(Bool) when is_boolean(Bool) -> Bool;
 to_ternary_bool(undefined) -> undefined;
 to_ternary_bool(_) -> true.
 
+test_cash_is_multiple_of(
+    #domain_Cash{amount = A1, currency = C},
+    #domain_Cash{amount = A2, currency = C}
+) ->
+    A1 rem A2 =:= 0;
+test_cash_is_multiple_of(_, _) ->
+    false.
+
 -ifdef(TEST).
 -include_lib("eunit/include/eunit.hrl").
 
@@ -266,5 +277,15 @@ ternary_while_truth_table_test() ->
         end,
         Table
     ).
+
+-spec cash_is_multiple_of_condition_test() -> _.
+cash_is_multiple_of_condition_test() ->
+    Currency1 = <<"RUB">>,
+    Currency2 = <<"USD">>,
+    _ = [
+        ?assertEqual(test_cash_is_multiple_of(?cash(10, Currency1), ?cash(5, Currency1)), true),
+        ?assertEqual(test_cash_is_multiple_of(?cash(10, Currency1), ?cash(7, Currency1)), false),
+        ?assertEqual(test_cash_is_multiple_of(?cash(10, Currency1), ?cash(5, Currency2)), false)
+    ].
 
 -endif.
