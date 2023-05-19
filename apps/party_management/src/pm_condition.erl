@@ -31,7 +31,7 @@ test({currency_is, V1}, #{currency := V2}, _) ->
 test({cost_in, V}, #{cost := C}, _) ->
     pm_cash_range:is_inside(C, V) =:= within;
 test({cost_is_multiple_of, V}, #{cost := C}, _) ->
-    test_cash_is_multiple_of(V, C);
+    test_cash_is_multiple_of(C, V);
 test({payment_tool, C}, #{payment_tool := V}, Rev) ->
     pm_payment_tool:test_condition(C, V, Rev);
 test({shop_location_is, V}, #{shop := S}, _) ->
