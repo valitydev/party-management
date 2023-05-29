@@ -31,6 +31,10 @@ reduce_payment_routing_delegates([D | Delegates], VS, Rev) ->
     RuleSetRef = D#domain_RoutingDelegate.ruleset,
     case pm_selector:reduce_predicate(Predicate, VS, Rev) of
         ?const(false) ->
+            logger:info(
+                "Routing delegate rejected. Delegate: ~p~nPredicate: ~p~n Varset:~n~p",
+                [D, Predicate, VS]
+            ),
             reduce_payment_routing_delegates(Delegates, VS, Rev);
         ?const(true) ->
             #domain_RoutingRuleset{
@@ -52,6 +56,10 @@ reduce_payment_routing_candidates(Candidates, VS, Rev) ->
                 Predicate = C#domain_RoutingCandidate.allowed,
                 case pm_selector:reduce_predicate(Predicate, VS, Rev) of
                     ?const(false) ->
+                        logger:info(
+                            "Routing candidate rejected. Candidate: ~p~nPredicate: ~p~n Varset:~n~p",
+                            [C, Predicate, VS]
+                        ),
                         AccIn;
                     ?const(true) = ReducedPredicate ->
                         ReducedCandidate = C#domain_RoutingCandidate{

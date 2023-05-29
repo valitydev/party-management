@@ -11,6 +11,7 @@ rebar3.crashdump
 /.idea/
 *.beam
 tags
+*.iml
 
 # make stuff
 /.image.*
