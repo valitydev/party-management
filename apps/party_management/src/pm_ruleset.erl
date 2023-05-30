@@ -15,6 +15,12 @@
 -spec reduce_payment_routing_ruleset(payment_routing_ruleset(), varset(), domain_revision()) ->
     payment_routing_ruleset().
 reduce_payment_routing_ruleset(RuleSet, VS, DomainRevision) ->
+    logger:log(
+        info,
+        "Routing start reduce ruleset with varset: ~p",
+        [VS],
+        logger:get_process_metadata()
+    ),
     RuleSet#domain_RoutingRuleset{
         decisions = reduce_payment_routing_decisions(RuleSet#domain_RoutingRuleset.decisions, VS, DomainRevision)
     }.
@@ -31,9 +37,11 @@ reduce_payment_routing_delegates([D | Delegates], VS, Rev) ->
     RuleSetRef = D#domain_RoutingDelegate.ruleset,
     case pm_selector:reduce_predicate(Predicate, VS, Rev) of
         ?const(false) ->
-            logger:info(
-                "Routing delegate rejected. Delegate: ~p~nPredicate: ~p~n Varset:~n~p",
-                [D, Predicate, VS]
+            logger:log(
+                info,
+                "Routing delegate rejected. Delegate: ~p~nPredicate: ~p",
+                [D, Predicate],
+                logger:get_process_metadata()
             ),
             reduce_payment_routing_delegates(Delegates, VS, Rev);
         ?const(true) ->
@@ -56,9 +64,11 @@ reduce_payment_routing_candidates(Candidates, VS, Rev) ->
                 Predicate = C#domain_RoutingCandidate.allowed,
                 case pm_selector:reduce_predicate(Predicate, VS, Rev) of
                     ?const(false) ->
-                        logger:info(
-                            "Routing candidate rejected. Candidate: ~p~nPredicate: ~p~n Varset:~n~p",
-                            [C, Predicate, VS]
+                        logger:log(
+                            info,
+                            "Routing candidate rejected. Candidate: ~p~nPredicate: ~p",
+                            [C, Predicate],
+                            logger:get_process_metadata()
                         ),
                         AccIn;
                     ?const(true) = ReducedPredicate ->
