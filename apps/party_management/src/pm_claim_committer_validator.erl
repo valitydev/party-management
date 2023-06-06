@@ -107,6 +107,12 @@ assert_shop_contract_valid(
         payments = #domain_PaymentsServiceTerms{categories = CategorySelector}
     } = Terms,
     Categories = pm_selector:reduce_to_value(CategorySelector, #{}, Revision),
+    logger:log(
+        info,
+        "Assert shop contract valid, contract: ~p, category: ~p, categorySelector: ~p",
+        [pm_contract:get_id(Contract), CategoryRef, CategorySelector],
+        logger:get_process_metadata()
+    ),
     _ =
         ordsets:is_element(CategoryRef, Categories) orelse
             throw(
