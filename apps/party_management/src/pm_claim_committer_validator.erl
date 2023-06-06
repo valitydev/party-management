@@ -213,6 +213,12 @@ assert_currency_valid(
 
 assert_currency_valid(Prefix, ContractID, CurrencyRef, Selector, Terms, Revision) ->
     Currencies = pm_selector:reduce_to_value(Selector, #{}, Revision),
+    logger:log(
+        info,
+        "Assert currency valid, selector: ~p, currency: ~p, currencies: ~p",
+        [Selector, CurrencyRef, Currencies],
+        logger:get_process_metadata()
+    ),
     _ = ordsets:is_element(CurrencyRef, Currencies) orelse raise_contract_terms_violated(Prefix, ContractID, Terms).
 
 -spec raise_contract_terms_violated(
