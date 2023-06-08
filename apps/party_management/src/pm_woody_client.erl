@@ -24,7 +24,7 @@ new(Opts = #{url := _}) ->
     EventHandlerOpts = genlib_app:env(party_management, scoper_event_handler_options, #{}),
     maps:merge(
         #{
-            event_handler => {scoper_woody_event_handler, EventHandlerOpts}
+            event_handler => {pm_woody_event_handler, EventHandlerOpts}
         },
         maps:with([url, event_handler, transport_opts], Opts)
     );
