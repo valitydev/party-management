@@ -52,8 +52,14 @@ filter(V) ->
         #payproc_ProviderTerminal{
             ref = #domain_TerminalRef{id = 128},
             name = <<"TestTerm">>,
-            provider = #payproc_ProviderDetails{},
+            provider = #payproc_ProviderDetails{
+                ref = #domain_ProviderRef{id = 1},
+                name = <<"Provider1">>
+            },
             proxy = #domain_ProxyDefinition{
+                name = <<"Proxy">>,
+                description = <<"Desc">>,
+                url = <<"http://127.0.0.1">>,
                 options = #{<<"api-key">> => <<"secret">>, <<"secret-key">> => <<"secret">>}
             }
         }
@@ -65,8 +71,16 @@ filter(V) ->
         #payproc_ProviderTerminal{
             ref = #domain_TerminalRef{id = 128},
             name = <<"TestTerm">>,
-            provider = #payproc_ProviderDetails{},
-            proxy = #domain_ProxyDefinition{options = #{}}
+            provider = #payproc_ProviderDetails{
+                ref = #domain_ProviderRef{id = 1},
+                name = <<"Provider1">>
+            },
+            proxy = #domain_ProxyDefinition{
+                name = <<"Proxy">>,
+                description = <<"Desc">>,
+                url = <<"http://127.0.0.1">>,
+                options = #{}
+            }
         }
     }
 ).
