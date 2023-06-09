@@ -107,12 +107,6 @@ assert_shop_contract_valid(
         payments = #domain_PaymentsServiceTerms{categories = CategorySelector}
     } = Terms,
     Categories = pm_selector:reduce_to_value(CategorySelector, #{}, Revision),
-    logger:log(
-        info,
-        "Assert shop contract valid, contract: ~p, category: ~p, categorySelector: ~p",
-        [pm_contract:get_id(Contract), CategoryRef, CategorySelector],
-        logger:get_process_metadata()
-    ),
     _ =
         ordsets:is_element(CategoryRef, Categories) orelse
             throw(
@@ -213,12 +207,6 @@ assert_currency_valid(
 
 assert_currency_valid(Prefix, ContractID, CurrencyRef, Selector, Terms, Revision) ->
     Currencies = pm_selector:reduce_to_value(Selector, #{}, Revision),
-    logger:log(
-        info,
-        "Assert currency valid, selector: ~p, currency: ~p, currencies: ~p",
-        [Selector, CurrencyRef, Currencies],
-        logger:get_process_metadata()
-    ),
     _ = ordsets:is_element(CurrencyRef, Currencies) orelse raise_contract_terms_violated(Prefix, ContractID, Terms).
 
 -spec raise_contract_terms_violated(
