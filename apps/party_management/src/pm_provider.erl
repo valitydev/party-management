@@ -213,8 +213,9 @@ merge_payment_terms(
         turnover_limits = TTurnoverLimits
     }
 ) ->
+    AllowOrdset = ordsets:from_list(genlib_list:compact([PAllow, TAllow])),
     #domain_PaymentsProvisionTerms{
-        allow = pm_utils:select_defined(TAllow, PAllow),
+        allow = {all_of, AllowOrdset},
         currencies = pm_utils:select_defined(TCurrencies, PCurrencies),
         categories = pm_utils:select_defined(TCategories, PCategories),
         payment_methods = pm_utils:select_defined(TPaymentMethods, PPaymentMethods),

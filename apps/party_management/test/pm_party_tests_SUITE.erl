@@ -100,6 +100,7 @@
 -export([compute_provider_ok/1]).
 -export([compute_provider_not_found/1]).
 -export([compute_provider_terminal_terms_ok/1]).
+-export([compute_provider_terminal_terms_allow_merge_ok/1]).
 -export([compute_provider_terminal_terms_not_found/1]).
 -export([compute_provider_terminal_terms_undefined_terms/1]).
 -export([compute_provider_terminal_ok/1]).
@@ -269,6 +270,7 @@ groups() ->
             compute_provider_ok,
             compute_provider_not_found,
             compute_provider_terminal_terms_ok,
+            compute_provider_terminal_terms_allow_merge_ok,
             compute_provider_terminal_terms_not_found,
             compute_provider_terminal_terms_undefined_terms,
             compute_provider_terminal_ok,
@@ -505,6 +507,7 @@ end_per_testcase(_Name, _C) ->
 -spec compute_provider_ok(config()) -> _ | no_return().
 -spec compute_provider_not_found(config()) -> _ | no_return().
 -spec compute_provider_terminal_terms_ok(config()) -> _ | no_return().
+-spec compute_provider_terminal_terms_allow_merge_ok(config()) -> _ | no_return().
 -spec compute_provider_terminal_terms_not_found(config()) -> _ | no_return().
 -spec compute_provider_terminal_terms_undefined_terms(config()) -> _ | no_return().
 -spec compute_provider_terminal_ok(config()) -> _ | no_return().
@@ -1690,6 +1693,31 @@ compute_provider_terminal_terms_ok(C) ->
         }
     } = pm_client_party:compute_provider_terminal_terms(?prv(1), ?trm(1), DomainRevision, Varset, Client).
 
+compute_provider_terminal_terms_allow_merge_ok(C) ->
+    Client = cfg(client, C),
+    DomainRevision = pm_domain:head(),
+    Varset0 = #payproc_Varset{
+        amount = ?cash(100, <<"RUB">>),
+        party_id = <<"PARTYID1">>
+    },
+    #domain_ProvisionTermSet{
+        payments = #domain_PaymentsProvisionTerms{
+            allow = {constant, true}
+        }
+    } = pm_client_party:compute_provider_terminal_terms(?prv(3), ?trm(5), DomainRevision, Varset0, Client),
+    Varset1 = Varset0#payproc_Varset{party_id = <<"PARTYID2">>},
+    #domain_ProvisionTermSet{
+        payments = #domain_PaymentsProvisionTerms{
+            allow = {constant, false}
+        }
+    } = pm_client_party:compute_provider_terminal_terms(?prv(3), ?trm(5), DomainRevision, Varset1, Client),
+    Varset2 = Varset0#payproc_Varset{amount = ?cash(101, <<"RUB">>)},
+    #domain_ProvisionTermSet{
+        payments = #domain_PaymentsProvisionTerms{
+            allow = {constant, false}
+        }
+    } = pm_client_party:compute_provider_terminal_terms(?prv(3), ?trm(5), DomainRevision, Varset2, Client).
+
 compute_provider_terminal_terms_not_found(C) ->
     Client = cfg(client, C),
     DomainRevision = pm_domain:head(),
@@ -2863,6 +2891,25 @@ construct_domain_fixture() ->
             }
         }},
 
+        {provider, #domain_ProviderObject{
+            ref = ?prv(3),
+            data = #domain_Provider{
+                name = <<"Brovider">>,
+                description = <<"A provider but bro">>,
+                proxy = #domain_Proxy{
+                    ref = ?prx(1),
+                    additional = #{
+                        <<"pro">> => <<"vader">>
+                    }
+                },
+                terms = #domain_ProvisionTermSet{
+                    payments = #domain_PaymentsProvisionTerms{
+                        allow = ?partycond(<<"PARTYID1">>, undefined)
+                    }
+                }
+            }
+        }},
+
         {terminal, #domain_TerminalObject{
             ref = ?trm(1),
             data = #domain_Terminal{
@@ -2924,6 +2971,30 @@ construct_domain_fixture() ->
                 name = <<"Terminal 4">>,
                 description = <<"Terminal without terms">>,
                 provider_ref = ?prv(2)
+            }
+        }},
+
+        {terminal, #domain_TerminalObject{
+            ref = ?trm(5),
+            data = #domain_Terminal{
+                name = <<"Brominal 5">>,
+                description = <<"Brominal 5">>,
+                provider_ref = ?prv(3),
+                options = #{
+                    <<"term">> => <<"inal">>,
+                    <<"override_terminal">> => <<"terminal">>
+                },
+                terms = #domain_ProvisionTermSet{
+                    payments = #domain_PaymentsProvisionTerms{
+                        allow =
+                            {condition,
+                                {cost_in,
+                                    ?cashrng(
+                                        {inclusive, ?cash(100, <<"RUB">>)},
+                                        {inclusive, ?cash(100, <<"RUB">>)}
+                                    )}}
+                    }
+                }
             }
         }}
     ].
