@@ -27,7 +27,9 @@ reduce_provider(Provider, VS, Rev) ->
 reduce_provider_terminal_terms(Provider, Terminal, VS, Rev) ->
     ProviderTerms = Provider#domain_Provider.terms,
     TerminalTerms = Terminal#domain_Terminal.terms,
+    ct:log("ProviderTerms: ~p~nTerminalTerms: ~p~n", [ProviderTerms, TerminalTerms]),
     MergedTerms = merge_provision_term_sets(ProviderTerms, TerminalTerms),
+    ct:log("MergedTerms: ~p~n", [MergedTerms]),
     reduce_provision_term_set(MergedTerms, VS, Rev).
 
 reduce_withdrawal_terms(undefined = Terms, _VS, _Rev) ->
@@ -188,6 +190,7 @@ merge_provision_term_sets(ProviderTerms, TerminalTerms) ->
 merge_payment_terms(
     #domain_PaymentsProvisionTerms{
         allow = PAllow,
+        global_allow = PGAllow,
         currencies = PCurrencies,
         categories = PCategories,
         payment_methods = PPaymentMethods,
@@ -201,6 +204,7 @@ merge_payment_terms(
     },
     #domain_PaymentsProvisionTerms{
         allow = TAllow,
+        global_allow = TGAllow,
         currencies = TCurrencies,
         categories = TCategories,
         payment_methods = TPaymentMethods,
@@ -215,6 +219,7 @@ merge_payment_terms(
 ) ->
     #domain_PaymentsProvisionTerms{
         allow = pm_utils:select_defined(TAllow, PAllow),
+        global_allow = pm_utils:select_defined(TGAllow, PGAllow),
         currencies = pm_utils:select_defined(TCurrencies, PCurrencies),
         categories = pm_utils:select_defined(TCategories, PCategories),
         payment_methods = pm_utils:select_defined(TPaymentMethods, PPaymentMethods),
@@ -249,6 +254,7 @@ merge_wallet_terms(ProviderTerms, TerminalTerms) ->
 merge_withdrawal_terms(
     #domain_WithdrawalProvisionTerms{
         allow = PAllow,
+        global_allow = PGAllow,
         currencies = PCurrencies,
         payout_methods = PMethods,
         cash_limit = PLimit,
@@ -257,6 +263,7 @@ merge_withdrawal_terms(
     },
     #domain_WithdrawalProvisionTerms{
         allow = TAllow,
+        global_allow = TGAllow,
         currencies = TCurrencies,
         payout_methods = TMethods,
         cash_limit = TLimit,
@@ -266,6 +273,7 @@ merge_withdrawal_terms(
 ) ->
     #domain_WithdrawalProvisionTerms{
         allow = pm_utils:select_defined(TAllow, PAllow),
+        global_allow = pm_utils:select_defined(TGAllow, PGAllow),
         currencies = pm_utils:select_defined(TCurrencies, PCurrencies),
         payout_methods = pm_utils:select_defined(TMethods, PMethods),
         cash_limit = pm_utils:select_defined(TLimit, PLimit),

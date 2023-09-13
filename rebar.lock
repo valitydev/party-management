@@ -9,7 +9,7 @@
  {<<"cowlib">>,{pkg,<<"cowlib">>,<<"2.11.0">>},2},
  {<<"damsel">>,
   {git,"https://github.com/valitydev/damsel.git",
-       {ref,"bfedcb9dbb0bfdbd7a06a86417b49be6e807b98d"}},
+       {ref,"1b24f5fffd9be2580b2148b2ef6bc64c21d93140"}},
   0},
  {<<"dmt_client">>,
   {git,"https://github.com/valitydev/dmt_client.git",
