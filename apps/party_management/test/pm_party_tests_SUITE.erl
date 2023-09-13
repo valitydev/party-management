@@ -1701,26 +1701,35 @@ compute_provider_terminal_terms_global_allow_ok(C) ->
         amount = ?cash(100, <<"RUB">>),
         party_id = <<"PARTYID1">>
     },
-    #domain_ProvisionTermSet{
-        payments = #domain_PaymentsProvisionTerms{
-            allow = {constant, false},
-            global_allow = {constant, false}
-        }
-    } = pm_client_party:compute_provider_terminal_terms(?prv(3), ?trm(5), DomainRevision, Varset0, Client),
+    ?assertEqual(
+        #domain_ProvisionTermSet{
+            payments = #domain_PaymentsProvisionTerms{
+                allow = {constant, false},
+                global_allow = {constant, false}
+            }
+        },
+        pm_client_party:compute_provider_terminal_terms(?prv(3), ?trm(5), DomainRevision, Varset0, Client)
+    ),
     Varset1 = Varset0#payproc_Varset{party_id = <<"PARTYID2">>},
-    #domain_ProvisionTermSet{
-        payments = #domain_PaymentsProvisionTerms{
-            allow = {constant, true},
-            global_allow = {constant, false}
-        }
-    } = pm_client_party:compute_provider_terminal_terms(?prv(3), ?trm(5), DomainRevision, Varset1, Client),
+    ?assertEqual(
+        #domain_ProvisionTermSet{
+            payments = #domain_PaymentsProvisionTerms{
+                allow = {constant, true},
+                global_allow = {constant, false}
+            }
+        },
+        pm_client_party:compute_provider_terminal_terms(?prv(3), ?trm(5), DomainRevision, Varset1, Client)
+    ),
     Varset2 = Varset0#payproc_Varset{amount = ?cash(101, <<"RUB">>)},
-    #domain_ProvisionTermSet{
-        payments = #domain_PaymentsProvisionTerms{
-            allow = {constant, false},
-            global_allow = {constant, true}
-        }
-    } = pm_client_party:compute_provider_terminal_terms(?prv(3), ?trm(5), DomainRevision, Varset2, Client).
+    ?assertEqual(
+        #domain_ProvisionTermSet{
+            payments = #domain_PaymentsProvisionTerms{
+                allow = {constant, false},
+                global_allow = {constant, true}
+            }
+        },
+        pm_client_party:compute_provider_terminal_terms(?prv(3), ?trm(5), DomainRevision, Varset2, Client)
+    ).
 
 compute_provider_terminal_terms_not_found(C) ->
     Client = cfg(client, C),

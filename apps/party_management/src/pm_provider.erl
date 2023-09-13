@@ -27,9 +27,7 @@ reduce_provider(Provider, VS, Rev) ->
 reduce_provider_terminal_terms(Provider, Terminal, VS, Rev) ->
     ProviderTerms = Provider#domain_Provider.terms,
     TerminalTerms = Terminal#domain_Terminal.terms,
-    ct:log("ProviderTerms: ~p~nTerminalTerms: ~p~n", [ProviderTerms, TerminalTerms]),
     MergedTerms = merge_provision_term_sets(ProviderTerms, TerminalTerms),
-    ct:log("MergedTerms: ~p~n", [MergedTerms]),
     reduce_provision_term_set(MergedTerms, VS, Rev).
 
 reduce_withdrawal_terms(undefined = Terms, _VS, _Rev) ->
