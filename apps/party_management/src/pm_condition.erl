@@ -29,6 +29,7 @@ test({category_is, V1}, #{category := V2}, _) ->
 test({currency_is, V1}, #{currency := V2}, _) ->
     V1 =:= V2;
 test({cost_in, V}, #{cost := C}, _) ->
+    ct:log("cost_in: V: ~p~nC: ~p", [V, C]),
     pm_cash_range:is_inside(C, V) =:= within;
 test({cost_is_multiple_of, V}, #{cost := C}, _) ->
     test_cash_is_multiple_of(C, V);

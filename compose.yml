@@ -51,12 +51,13 @@ services:
       retries: 20
 
   shumway:
-    image: docker.io/rbkmoney/shumway:d5b74714437b1a1b11689a38297fd2a6c08e0db2
+    image: ghcr.io/valitydev/shumway:sha-658587c
     restart: unless-stopped
     depends_on:
       - shumway-db
     ports:
       - "8022"
+      - "8023"
     entrypoint:
       - java
       - -Xmx512m
@@ -65,15 +66,20 @@ services:
       - --spring.datasource.url=jdbc:postgresql://shumway-db:5432/shumway
       - --spring.datasource.username=postgres
       - --spring.datasource.password=postgres
-      - --management.metrics.export.statsd.enabled=false
+      - --management.endpoint.metrics.enabled=false
+      - --management.endpoint.prometheus.enabled=false
+      - --management.endpoint.health.show-details=always
+      - --management.endpoint.health.probes.enabled=true
+      - --management.server.port=8023
+      - --management.endpoints.web.exposure.include=health,info
     healthcheck:
-      test: curl http://localhost:8022/
+      test: curl http://shumway:8023/actuator/health/liveness
       interval: 5s
       timeout: 1s
       retries: 20
 
   shumway-db:
-    image: docker.io/library/postgres:9.6
+    image: docker.io/library/postgres:13.10
     ports:
       - "5432"
     environment:
