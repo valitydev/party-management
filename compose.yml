@@ -24,7 +24,7 @@ services:
     command: /sbin/init
 
   dominant:
-    image: ghcr.io/valitydev/dominant:sha-eb1cccb
+    image: ghcr.io/valitydev/dominant:sha-486d2ef
     depends_on:
       - machinegun
     ports:
