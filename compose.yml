@@ -18,13 +18,13 @@ services:
       dominant:
         condition: service_healthy
       shumway:
-        condition: service_healthy
+        condition: service_started
     ports:
       - "8022:8022"
     command: /sbin/init
 
   dominant:
-    image: ghcr.io/valitydev/dominant:sha-eb1cccb
+    image: ghcr.io/valitydev/dominant:sha-486d2ef
     depends_on:
       - machinegun
     ports:
@@ -51,7 +51,7 @@ services:
       retries: 20
 
   shumway:
-    image: docker.io/rbkmoney/shumway:d5b74714437b1a1b11689a38297fd2a6c08e0db2
+    image: ghcr.io/valitydev/shumway:sha-658587c
     restart: unless-stopped
     depends_on:
       - shumway-db
@@ -65,15 +65,13 @@ services:
       - --spring.datasource.url=jdbc:postgresql://shumway-db:5432/shumway
       - --spring.datasource.username=postgres
       - --spring.datasource.password=postgres
-      - --management.metrics.export.statsd.enabled=false
+      - --management.endpoint.metrics.enabled=false
+      - --management.endpoint.prometheus.enabled=false
     healthcheck:
-      test: curl http://localhost:8022/
-      interval: 5s
-      timeout: 1s
-      retries: 20
+      disable: true
 
   shumway-db:
-    image: docker.io/library/postgres:9.6
+    image: docker.io/library/postgres:13.10
     ports:
       - "5432"
     environment:

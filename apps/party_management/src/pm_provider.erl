@@ -35,6 +35,7 @@ reduce_withdrawal_terms(undefined = Terms, _VS, _Rev) ->
 reduce_withdrawal_terms(#domain_WithdrawalProvisionTerms{} = Terms, VS, Rev) ->
     Terms#domain_WithdrawalProvisionTerms{
         allow = reduce_predicate_if_defined(Terms#domain_WithdrawalProvisionTerms.allow, VS, Rev),
+        global_allow = reduce_predicate_if_defined(Terms#domain_WithdrawalProvisionTerms.global_allow, VS, Rev),
         currencies = reduce_if_defined(Terms#domain_WithdrawalProvisionTerms.currencies, VS, Rev),
         payout_methods = reduce_if_defined(Terms#domain_WithdrawalProvisionTerms.payout_methods, VS, Rev),
         cash_limit = reduce_if_defined(Terms#domain_WithdrawalProvisionTerms.cash_limit, VS, Rev),
@@ -65,6 +66,8 @@ reduce_payment_terms(undefined = PaymentTerms, _VS, _DomainRevision) ->
 reduce_payment_terms(PaymentTerms, VS, DomainRevision) ->
     PaymentTerms#domain_PaymentsProvisionTerms{
         allow = reduce_predicate_if_defined(PaymentTerms#domain_PaymentsProvisionTerms.allow, VS, DomainRevision),
+        global_allow =
+            reduce_predicate_if_defined(PaymentTerms#domain_PaymentsProvisionTerms.global_allow, VS, DomainRevision),
         currencies = reduce_if_defined(PaymentTerms#domain_PaymentsProvisionTerms.currencies, VS, DomainRevision),
         categories = reduce_if_defined(PaymentTerms#domain_PaymentsProvisionTerms.categories, VS, DomainRevision),
         payment_methods = reduce_if_defined(
@@ -188,6 +191,7 @@ merge_provision_term_sets(ProviderTerms, TerminalTerms) ->
 merge_payment_terms(
     #domain_PaymentsProvisionTerms{
         allow = PAllow,
+        global_allow = PGAllow,
         currencies = PCurrencies,
         categories = PCategories,
         payment_methods = PPaymentMethods,
@@ -201,6 +205,7 @@ merge_payment_terms(
     },
     #domain_PaymentsProvisionTerms{
         allow = TAllow,
+        global_allow = TGAllow,
         currencies = TCurrencies,
         categories = TCategories,
         payment_methods = TPaymentMethods,
@@ -215,6 +220,7 @@ merge_payment_terms(
 ) ->
     #domain_PaymentsProvisionTerms{
         allow = pm_utils:select_defined(TAllow, PAllow),
+        global_allow = pm_utils:select_defined(TGAllow, PGAllow),
         currencies = pm_utils:select_defined(TCurrencies, PCurrencies),
         categories = pm_utils:select_defined(TCategories, PCategories),
         payment_methods = pm_utils:select_defined(TPaymentMethods, PPaymentMethods),
@@ -249,6 +255,7 @@ merge_wallet_terms(ProviderTerms, TerminalTerms) ->
 merge_withdrawal_terms(
     #domain_WithdrawalProvisionTerms{
         allow = PAllow,
+        global_allow = PGAllow,
         currencies = PCurrencies,
         payout_methods = PMethods,
         cash_limit = PLimit,
@@ -257,6 +264,7 @@ merge_withdrawal_terms(
     },
     #domain_WithdrawalProvisionTerms{
         allow = TAllow,
+        global_allow = TGAllow,
         currencies = TCurrencies,
         payout_methods = TMethods,
         cash_limit = TLimit,
@@ -266,6 +274,7 @@ merge_withdrawal_terms(
 ) ->
     #domain_WithdrawalProvisionTerms{
         allow = pm_utils:select_defined(TAllow, PAllow),
+        global_allow = pm_utils:select_defined(TGAllow, PGAllow),
         currencies = pm_utils:select_defined(TCurrencies, PCurrencies),
         payout_methods = pm_utils:select_defined(TMethods, PMethods),
         cash_limit = pm_utils:select_defined(TLimit, PLimit),
