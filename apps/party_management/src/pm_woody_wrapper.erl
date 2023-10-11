@@ -73,7 +73,7 @@ call(ServiceName, Function, Args, Opts, Deadline) ->
         Request,
         Opts#{
             event_handler => {
-                scoper_woody_event_handler,
+                pm_woody_event_handler,
                 genlib_app:env(party_management, scoper_event_handler_options, #{})
             }
         },

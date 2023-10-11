@@ -67,7 +67,7 @@ start_app(dmt_client = AppName) ->
                 memory => 52428800
             }},
             {woody_event_handlers, [
-                {scoper_woody_event_handler, #{
+                {pm_woody_event_handler, #{
                     event_handler_opts => #{
                         formatter_opts => #{
                             max_length => 1000
