@@ -28,7 +28,7 @@ call(ServiceName, Function, Args, Context) ->
 get_opts(ServiceName) ->
     EventHandlerOpts = genlib_app:env(party_management, scoper_event_handler_options, #{}),
     Opts0 = #{
-        event_handler => {pm_woody_event_handler, EventHandlerOpts}
+        event_handler => {scoper_woody_event_handler, EventHandlerOpts}
     },
     case maps:get(ServiceName, genlib_app:env(party_management, services), undefined) of
         #{} = Opts ->
