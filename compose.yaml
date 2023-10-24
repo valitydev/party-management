@@ -24,12 +24,14 @@ services:
     command: /sbin/init
 
   dominant:
-    image: ghcr.io/valitydev/dominant:sha-486d2ef
+    image: ghcr.io/valitydev/dominant:sha-2150eea
     depends_on:
       - machinegun
     ports:
       - "8022"
     command: /opt/dominant/bin/dominant foreground
+    volumes:
+      - ./test/dominant/sys.config:/opt/dominant/releases/0.1/sys.config
     healthcheck:
       test: "/opt/dominant/bin/dominant ping"
       interval: 5s
@@ -37,9 +39,7 @@ services:
       retries: 20
 
   machinegun:
-    image: ghcr.io/valitydev/machinegun:sha-7f0a21a
-    ports:
-      - "8022"
+    image: ghcr.io/valitydev/machinegun:sha-5c0db56
     command: /opt/machinegun/bin/machinegun foreground
     volumes:
       - ./test/machinegun/config.yaml:/opt/machinegun/etc/config.yaml
@@ -48,7 +48,7 @@ services:
       test: "/opt/machinegun/bin/machinegun ping"
       interval: 5s
       timeout: 1s
-      retries: 20
+      retries: 10
 
   shumway:
     image: ghcr.io/valitydev/shumway:sha-658587c

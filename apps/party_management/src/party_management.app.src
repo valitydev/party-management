@@ -17,7 +17,10 @@
         dmt_client,
         payproc_errors,
         erl_health,
-        cache
+        cache,
+        opentelemetry_api,
+        opentelemetry_exporter,
+        opentelemetry
     ]},
     {env, []},
     {modules, []},
