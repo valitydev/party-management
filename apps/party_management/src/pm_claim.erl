@@ -386,7 +386,9 @@ update_shop({proxy_changed, _}, Shop) ->
 update_shop(?payout_schedule_changed(BusinessScheduleRef), Shop) ->
     Shop#domain_Shop{payout_schedule = BusinessScheduleRef};
 update_shop({account_created, Account}, Shop) ->
-    Shop#domain_Shop{account = Account}.
+    Shop#domain_Shop{account = Account};
+update_shop({turnover_limits_changed, TurnoverLimits}, Shop) ->
+    Shop#domain_Shop{turnover_limits = TurnoverLimits}.
 
 apply_wallet_effect(_, {created, Wallet}, Party) ->
     pm_party:set_wallet(Wallet, Party);
