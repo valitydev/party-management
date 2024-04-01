@@ -332,6 +332,7 @@ shop_complex_modification(C) ->
         #domain_TurnoverLimit{
             id = <<"ID">>,
             upper_boundary = 10000,
+            %% Only needs to be set when TurnoverLimit is in dominant config, otherwise skip it
             domain_revision = dmt_client:get_last_version()
         }
     ]),
