@@ -116,7 +116,9 @@ make_shop_effect(_, {shop_account_creation, Params}, _, _) ->
     {account_created, create_shop_account(Params)};
 make_shop_effect(ID, ?cm_payout_schedule_modification(PayoutScheduleRef), _, Revision) ->
     _ = assert_payout_schedule_valid(ID, PayoutScheduleRef, Revision),
-    ?payout_schedule_changed(PayoutScheduleRef).
+    ?payout_schedule_changed(PayoutScheduleRef);
+make_shop_effect(_, {turnover_limits_modification, TurnoverLimits}, _, _) ->
+    {turnover_limits_changed, TurnoverLimits}.
 
 make_wallet_effect(ID, {creation, Params}, Timestamp) ->
     {created, pm_wallet:create(ID, Params, Timestamp)};
@@ -259,7 +261,9 @@ update_shop({proxy_changed, _}, Shop) ->
 update_shop(?payout_schedule_changed(BusinessScheduleRef), Shop) ->
     Shop#domain_Shop{payout_schedule = BusinessScheduleRef};
 update_shop({account_created, Account}, Shop) ->
-    Shop#domain_Shop{account = Account}.
+    Shop#domain_Shop{account = Account};
+update_shop({turnover_limits_changed, TurnoverLimits}, Shop) ->
+    Shop#domain_Shop{turnover_limits = TurnoverLimits}.
 
 apply_wallet_effect(_, {created, Wallet}, Party) ->
     pm_party:set_wallet(Wallet, Party);

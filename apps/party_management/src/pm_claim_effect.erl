@@ -107,7 +107,9 @@ make_shop_effect(_, {shop_account_creation, Params}, _, _) ->
     {account_created, create_shop_account(Params)};
 make_shop_effect(ID, ?payout_schedule_modification(PayoutScheduleRef), _, Revision) ->
     _ = assert_payout_schedule_valid(ID, PayoutScheduleRef, Revision),
-    ?payout_schedule_changed(PayoutScheduleRef).
+    ?payout_schedule_changed(PayoutScheduleRef);
+make_shop_effect(_, {turnover_limits_modification, TurnoverLimits}, _, _) ->
+    {turnover_limits_changed, TurnoverLimits}.
 
 make_wallet_effect(ID, {creation, Params}, Timestamp) ->
     {created, pm_wallet:create(ID, Params, Timestamp)};

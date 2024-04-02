@@ -328,13 +328,22 @@ shop_complex_modification(C) ->
         id = <<"1">>,
         modification = ?cm_cash_register_unit_creation(1, #{})
     },
+    TurnoverLimits = ordsets:from_list([
+        #domain_TurnoverLimit{
+            id = <<"ID">>,
+            upper_boundary = 10000,
+            %% Only needs to be set when TurnoverLimit is in dominant config, otherwise skip it
+            domain_revision = dmt_client:get_last_version()
+        }
+    ]),
     Modifications = [
         ?cm_shop_modification(ShopID, {category_modification, NewCategory}),
         ?cm_shop_modification(ShopID, {details_modification, NewDetails}),
         ?cm_shop_modification(ShopID, {location_modification, NewLocation}),
         ?cm_shop_modification(ShopID, {payout_tool_modification, PayoutToolID2}),
         ?cm_shop_modification(ShopID, {payout_schedule_modification, ScheduleParams}),
-        ?cm_shop_modification(ShopID, {cash_register_modification_unit, CashRegisterModificationUnit})
+        ?cm_shop_modification(ShopID, {cash_register_modification_unit, CashRegisterModificationUnit}),
+        ?cm_shop_modification(ShopID, {turnover_limits_modification, TurnoverLimits})
     ],
     Claim = claim(Modifications, PartyID),
     ok = accept_claim(Claim, C),
@@ -344,7 +353,8 @@ shop_complex_modification(C) ->
         details = NewDetails,
         location = NewLocation,
         payout_tool_id = PayoutToolID2,
-        payout_schedule = Schedule
+        payout_schedule = Schedule,
+        turnover_limits = TurnoverLimits
     }} = get_shop(PartyID, ShopID, C).
 
 -spec invalid_cash_register_modification(config()) -> _.
