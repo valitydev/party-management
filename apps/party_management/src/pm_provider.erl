@@ -89,7 +89,9 @@ reduce_payment_terms(PaymentTerms, VS, DomainRevision) ->
             fun(X) -> reduce_payment_chargeback_terms(X, VS, DomainRevision) end,
             PaymentTerms#domain_PaymentsProvisionTerms.chargebacks
         ),
-        risk_coverage = reduce_if_defined(PaymentTerms#domain_PaymentsProvisionTerms.risk_coverage, VS, DomainRevision)
+        risk_coverage = reduce_if_defined(PaymentTerms#domain_PaymentsProvisionTerms.risk_coverage, VS, DomainRevision),
+        turnover_limits =
+            reduce_if_defined(PaymentTerms#domain_PaymentsProvisionTerms.turnover_limits, VS, DomainRevision)
     }.
 
 reduce_payment_hold_terms(PaymentHoldTerms, VS, DomainRevision) ->
