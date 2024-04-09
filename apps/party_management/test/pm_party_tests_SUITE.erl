@@ -1671,6 +1671,7 @@ compute_provider_terminal_terms_ok(C) ->
     Client = cfg(client, C),
     DomainRevision = pm_domain:head(),
     Varset = #payproc_Varset{
+        payment_tool = {bank_card, #domain_BankCard{token = <<>>, bin = <<>>, last_digits = <<>>}},
         currency = ?cur(<<"RUB">>)
     },
     CashFlow = ?cfpost(
@@ -1687,7 +1688,31 @@ compute_provider_terminal_terms_ok(C) ->
     #domain_ProvisionTermSet{
         payments = #domain_PaymentsProvisionTerms{
             cash_flow = {value, [CashFlow]},
-            payment_methods = {value, PaymentMethods}
+            payment_methods = {value, PaymentMethods},
+            turnover_limits =
+                {value, [
+                    %% In ordset fashion
+                    #domain_TurnoverLimit{
+                        id = <<"p_card_day_count">>,
+                        upper_boundary = 1,
+                        domain_revision = undefined
+                    },
+                    #domain_TurnoverLimit{
+                        id = <<"payment_card_month_amount_rub">>,
+                        upper_boundary = 7500000,
+                        domain_revision = undefined
+                    },
+                    #domain_TurnoverLimit{
+                        id = <<"payment_card_month_count">>,
+                        upper_boundary = 10,
+                        domain_revision = undefined
+                    },
+                    #domain_TurnoverLimit{
+                        id = <<"payment_day_amount_rub">>,
+                        upper_boundary = 5000000,
+                        domain_revision = undefined
+                    }
+                ]}
         },
         recurrent_paytools = #domain_RecurrentPaytoolsProvisionTerms{
             cash_value = {value, ?cash(1000, <<"RUB">>)}
@@ -2866,6 +2891,76 @@ construct_domain_fixture() ->
                                                         ])}}
                                             )
                                         ]}
+                                }
+                            ]},
+                        turnover_limits =
+                            {decisions, [
+                                #domain_TurnoverLimitDecision{
+                                    if_ =
+                                        {condition,
+                                            {payment_tool,
+                                                {bank_card, #domain_BankCardCondition{
+                                                    definition = {issuer_bank_is, #domain_BankRef{id = 1}}
+                                                }}}},
+                                    then_ =
+                                        {value,
+                                            ?ordset([
+                                                #domain_TurnoverLimit{
+                                                    id = <<"payment_card_month_count">>,
+                                                    upper_boundary = 5,
+                                                    domain_revision = undefined
+                                                },
+                                                %% Common limits
+                                                #domain_TurnoverLimit{
+                                                    id = <<"payment_card_month_amount_rub">>,
+                                                    upper_boundary = 7500000,
+                                                    domain_revision = undefined
+                                                },
+                                                #domain_TurnoverLimit{
+                                                    id = <<"payment_day_amount_rub">>,
+                                                    upper_boundary = 5000000,
+                                                    domain_revision = undefined
+                                                },
+                                                #domain_TurnoverLimit{
+                                                    id = <<"p_card_day_count">>,
+                                                    upper_boundary = 1,
+                                                    domain_revision = undefined
+                                                }
+                                            ])}
+                                },
+                                #domain_TurnoverLimitDecision{
+                                    if_ =
+                                        {is_not,
+                                            {condition,
+                                                {payment_tool,
+                                                    {bank_card, #domain_BankCardCondition{
+                                                        definition = {issuer_bank_is, #domain_BankRef{id = 1}}
+                                                    }}}}},
+                                    then_ =
+                                        {value,
+                                            ?ordset([
+                                                #domain_TurnoverLimit{
+                                                    id = <<"payment_card_month_count">>,
+                                                    upper_boundary = 10,
+                                                    domain_revision = undefined
+                                                },
+                                                %% Common limits
+                                                #domain_TurnoverLimit{
+                                                    id = <<"payment_card_month_amount_rub">>,
+                                                    upper_boundary = 7500000,
+                                                    domain_revision = undefined
+                                                },
+                                                #domain_TurnoverLimit{
+                                                    id = <<"payment_day_amount_rub">>,
+                                                    upper_boundary = 5000000,
+                                                    domain_revision = undefined
+                                                },
+                                                #domain_TurnoverLimit{
+                                                    id = <<"p_card_day_count">>,
+                                                    upper_boundary = 1,
+                                                    domain_revision = undefined
+                                                }
+                                            ])}
                                 }
                             ]}
                     },
