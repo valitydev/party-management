@@ -194,7 +194,7 @@ create_party_and_shop(Category, Currency, TemplateRef, PaymentInstitutionRef, Cl
 make_party_params() ->
     #payproc_PartyParams{
         contact_info = #domain_PartyContactInfo{
-            email = <<?MODULE_STRING>>
+            registration_email = <<?MODULE_STRING>>
         }
     }.
 
