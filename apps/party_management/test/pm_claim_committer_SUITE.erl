@@ -94,7 +94,7 @@ end_per_suite(C) ->
 -spec party_creation(config()) -> _.
 party_creation(C) ->
     PartyID = cfg(party_id, C),
-    ContactInfo = #domain_PartyContactInfo{email = <<?MODULE_STRING>>},
+    ContactInfo = #domain_PartyContactInfo{registration_email = <<?MODULE_STRING>>},
     ok = create_party(PartyID, ContactInfo, C),
     {ok, Party} = get_party(PartyID, C),
     #domain_Party{

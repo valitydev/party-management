@@ -527,7 +527,7 @@ end_per_testcase(_Name, _C) ->
 party_creation(C) ->
     Client = cfg(client, C),
     PartyID = cfg(party_id, C),
-    ContactInfo = #domain_PartyContactInfo{email = <<?MODULE_STRING>>},
+    ContactInfo = #domain_PartyContactInfo{registration_email = <<?MODULE_STRING>>},
     ok = pm_client_party:create(make_party_params(ContactInfo), Client),
     [
         ?party_created(PartyID, ContactInfo, _),
@@ -2175,7 +2175,7 @@ next_event(Client) ->
 %%
 
 make_party_params() ->
-    make_party_params(#domain_PartyContactInfo{email = <<?MODULE_STRING>>}).
+    make_party_params(#domain_PartyContactInfo{registration_email = <<?MODULE_STRING>>}).
 
 make_party_params(ContactInfo) ->
     #payproc_PartyParams{contact_info = ContactInfo}.
