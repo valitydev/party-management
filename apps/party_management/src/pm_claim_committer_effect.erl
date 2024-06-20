@@ -42,7 +42,13 @@ make(?cm_contract_modification(ID, Modification), Timestamp, Revision) ->
 make(?cm_shop_modification(ID, Modification), Timestamp, Revision) ->
     ?shop_effect(ID, make_shop_effect(ID, Modification, Timestamp, Revision));
 make(?cm_wallet_modification(ID, Modification), Timestamp, _Revision) ->
-    ?wallet_effect(ID, make_wallet_effect(ID, Modification, Timestamp)).
+    ?wallet_effect(ID, make_wallet_effect(ID, Modification, Timestamp));
+make(?cm_additional_info_party_name_modification(PartyName), _Timestamp, _Revision) ->
+    ?additional_info_effect(make_additional_info_effect(party_name, PartyName));
+make(?cm_additional_info_party_comment_modification(Comment), _Timestamp, _Revision) ->
+    ?additional_info_effect(make_additional_info_effect(party_comment, Comment));
+make(?cm_additional_info_emails_modification(Emails), _Timestamp, _Revision) ->
+    ?additional_info_effect(make_additional_info_effect(emails, Emails)).
 
 %% NOTE Заглушка для пропуска фазы создания счетов для магазинов и кошельков на этапе проверки (Accept)
 %% TODO Придумать имя получше/отрефакторить
@@ -125,6 +131,16 @@ make_wallet_effect(ID, {creation, Params}, Timestamp) ->
 make_wallet_effect(_, {account_creation, Params}, _) ->
     {account_created, pm_wallet:create_account(Params)}.
 
+make_additional_info_effect(party_name, PartyName) ->
+    {party_name, PartyName};
+make_additional_info_effect(party_comment, Comment) ->
+    {party_comment, Comment};
+make_additional_info_effect(emails, Emails) ->
+    {contact_info, #domain_PartyContactInfo{
+        manager_contact_emails = Emails,
+        registration_email = <<"ignored_value">>
+    }}.
+
 assert_report_schedule_valid(_, #domain_ReportPreferences{service_acceptance_act_preferences = undefined}, _) ->
     ok;
 assert_report_schedule_valid(
@@ -191,7 +207,9 @@ apply_claim_effect(?contract_effect(ID, Effect), Timestamp, Party) ->
 apply_claim_effect(?shop_effect(ID, Effect), _, Party) ->
     apply_shop_effect(ID, Effect, Party);
 apply_claim_effect(?wallet_effect(ID, Effect), _, Party) ->
-    apply_wallet_effect(ID, Effect, Party).
+    apply_wallet_effect(ID, Effect, Party);
+apply_claim_effect(?additional_info_effect(Effect), _, Party) ->
+    apply_additional_info_effect(Effect, Party).
 
 apply_contractor_effect(_, {created, PartyContractor}, Party) ->
     pm_party:set_contractor(PartyContractor, Party);
@@ -270,6 +288,17 @@ apply_wallet_effect(_, {created, Wallet}, Party) ->
 apply_wallet_effect(ID, Effect, Party) ->
     Wallet = pm_party:get_wallet(ID, Party),
     pm_party:set_wallet(update_wallet(Effect, Wallet), Party).
+
+apply_additional_info_effect({party_name, PartyName}, Party) ->
+    pm_party:set_party_name(PartyName, Party);
+apply_additional_info_effect({party_comment, Comment}, Party) ->
+    pm_party:set_party_comment(Comment, Party);
+apply_additional_info_effect({contact_info, #domain_PartyContactInfo{manager_contact_emails = Emails}}, Party) ->
+    ContactInfo = pm_party:get_contact_info(Party),
+    pm_party:set_contact_info(
+        ContactInfo#domain_PartyContactInfo{manager_contact_emails = Emails},
+        Party
+    ).
 
 update_wallet({account_created, Account}, Wallet) ->
     Wallet#domain_Wallet{account = Account}.
@@ -361,13 +390,21 @@ make_modifications_safe_effects(Modifications, Timestamp, Revision) ->
 
 make_effects(Modifications, Timestamp, Revision, Fun) ->
     squash_effects(
-        lists:filtermap(
+        lists:foldr(
             fun
-                (?cm_shop_cash_register_modification_unit(_, _)) ->
-                    false;
-                (Change) ->
-                    {true, Fun(Change, Timestamp, Revision)}
+                (?cm_shop_cash_register_modification_unit(_, _), Acc) ->
+                    Acc;
+                (?cm_additional_info_modification(PartyName, Comment, Emails), Acc) ->
+                    [
+                        Fun(?cm_additional_info_party_name_modification(PartyName), Timestamp, Revision),
+                        Fun(?cm_additional_info_party_comment_modification(Comment), Timestamp, Revision),
+                        Fun(?cm_additional_info_emails_modification(Emails), Timestamp, Revision)
+                        | Acc
+                    ];
+                (Change, Acc) ->
+                    [Fun(Change, Timestamp, Revision) | Acc]
             end,
+            [],
             Modifications
         )
     ).

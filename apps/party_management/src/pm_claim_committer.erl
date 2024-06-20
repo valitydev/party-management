@@ -95,6 +95,13 @@ assert_modifications_applicable(
     Party
 ) ->
     assert_modifications_applicable(Others, Timestamp, Revision, Party);
+assert_modifications_applicable(
+    [?cm_additional_info_modification(_PartyName, _Comment, _Emails) | Others],
+    Timestamp,
+    Revision,
+    Party
+) ->
+    assert_modifications_applicable(Others, Timestamp, Revision, Party);
 assert_modifications_applicable([PartyChange | Others], Timestamp, Revision, Party) ->
     case PartyChange of
         ?cm_contract_modification(ID, Modification) ->

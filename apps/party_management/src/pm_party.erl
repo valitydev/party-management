@@ -48,6 +48,12 @@
 -export([wallet_suspension/3]).
 -export([set_wallet/2]).
 
+-export([get_contact_info/1]).
+-export([set_contact_info/2]).
+
+-export([set_party_name/2]).
+-export([set_party_comment/2]).
+
 -export_type([party/0]).
 -export_type([party_revision/0]).
 -export_type([party_status/0]).
@@ -244,6 +250,22 @@ wallet_blocking(ID, Blocking, Party) ->
 wallet_suspension(ID, Suspension, Party) ->
     Wallet = get_wallet(ID, Party),
     set_wallet(Wallet#domain_Wallet{suspension = Suspension}, Party).
+
+-spec get_contact_info(party()) -> dmsl_domain_thrift:'PartyContactInfo'().
+get_contact_info(#domain_Party{contact_info = ContactInfo}) ->
+    ContactInfo.
+
+-spec set_contact_info(dmsl_domain_thrift:'PartyContactInfo'(), party()) -> party().
+set_contact_info(ContactInfo, Party) ->
+    Party#domain_Party{contact_info = ContactInfo}.
+
+-spec set_party_name(binary() | undefined, party()) -> party().
+set_party_name(PartyName, Party) ->
+    Party#domain_Party{party_name = PartyName}.
+
+-spec set_party_comment(binary() | undefined, party()) -> party().
+set_party_comment(Comment, Party) ->
+    Party#domain_Party{comment = Comment}.
 
 %% Internals
 

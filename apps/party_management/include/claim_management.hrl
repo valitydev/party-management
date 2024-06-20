@@ -171,6 +171,25 @@
     )
 ).
 
+%%% Additional info
+-define(cm_additional_info_modification(PartyName, Comment, Emails),
+    {additional_info_modification, #claimmgmt_AdditionalInfoModificationUnit{
+        party_name = PartyName,
+        comment = Comment,
+        manager_contact_emails = Emails
+    }}
+).
+
+-define(cm_additional_info_party_name_modification(PartyName),
+    {additional_info_party_name_modification, PartyName}
+).
+-define(cm_additional_info_party_comment_modification(PartyComment),
+    {additional_info_party_comment_modification, PartyComment}
+).
+-define(cm_additional_info_emails_modification(Emails),
+    {additional_info_emails_modification, Emails}
+).
+
 %%% Error
 
 -define(cm_invalid_party_changeset(Reason, InvalidChangeset), #claimmgmt_InvalidChangeset{

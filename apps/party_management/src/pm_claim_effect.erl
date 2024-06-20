@@ -32,7 +32,13 @@ make(?contract_modification(ID, Modification), Timestamp, Revision) ->
 make(?shop_modification(ID, Modification), Timestamp, Revision) ->
     ?shop_effect(ID, make_shop_effect(ID, Modification, Timestamp, Revision));
 make(?wallet_modification(ID, Modification), Timestamp, _Revision) ->
-    ?wallet_effect(ID, make_wallet_effect(ID, Modification, Timestamp)).
+    ?wallet_effect(ID, make_wallet_effect(ID, Modification, Timestamp));
+make(?pm_additional_info_party_name_modification(PartyName), _Timestamp, _Revision) ->
+    ?additional_info_effect(make_additional_info_effect(party_name, PartyName));
+make(?pm_additional_info_party_comment_modification(Comment), _Timestamp, _Revision) ->
+    ?additional_info_effect(make_additional_info_effect(party_comment, Comment));
+make(?pm_additional_info_emails_modification(Emails), _Timestamp, _Revision) ->
+    ?additional_info_effect(make_additional_info_effect(emails, Emails)).
 
 -spec make_safe(change(), timestamp(), revision()) -> effect() | no_return().
 make_safe(
@@ -115,6 +121,16 @@ make_wallet_effect(ID, {creation, Params}, Timestamp) ->
     {created, pm_wallet:create(ID, Params, Timestamp)};
 make_wallet_effect(_, {account_creation, Params}, _) ->
     {account_created, pm_wallet:create_account(Params)}.
+
+make_additional_info_effect(party_name, PartyName) ->
+    {party_name, PartyName};
+make_additional_info_effect(party_comment, Comment) ->
+    {party_comment, Comment};
+make_additional_info_effect(emails, Emails) ->
+    {contact_info, #domain_PartyContactInfo{
+        manager_contact_emails = Emails,
+        registration_email = <<"ignored_value">>
+    }}.
 
 assert_report_schedule_valid(_, #domain_ReportPreferences{service_acceptance_act_preferences = undefined}, _) ->
     ok;

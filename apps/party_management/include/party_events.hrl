@@ -138,6 +138,28 @@
     {wallet_effect, #payproc_WalletEffectUnit{id = ID, effect = Effect}}
 ).
 
+-define(additional_info_modification(PartyName, Comment, Emails),
+    {additional_info_modification, #'payproc_AdditionalInfoModificationUnit'{
+        party_name = PartyName,
+        comment = Comment,
+        manager_contact_emails = Emails
+    }}
+).
+
+-define(pm_additional_info_party_name_modification(PartyName),
+    {additional_info_party_name_modification, PartyName}
+).
+-define(pm_additional_info_party_comment_modification(PartyComment),
+    {additional_info_party_comment_modification, PartyComment}
+).
+-define(pm_additional_info_emails_modification(Emails),
+    {additional_info_emails_modification, Emails}
+).
+
+-define(additional_info_effect(Effect),
+    {additional_info_effect, #payproc_AdditionalInfoEffectUnit{effect = Effect}}
+).
+
 -define(claim_created(Claim),
     {claim_created, Claim}
 ).

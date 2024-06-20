@@ -527,7 +527,7 @@ end_per_testcase(_Name, _C) ->
 party_creation(C) ->
     Client = cfg(client, C),
     PartyID = cfg(party_id, C),
-    ContactInfo = #domain_PartyContactInfo{email = <<?MODULE_STRING>>},
+    ContactInfo = #domain_PartyContactInfo{registration_email = <<?MODULE_STRING>>},
     ok = pm_client_party:create(make_party_params(ContactInfo), Client),
     [
         ?party_created(PartyID, ContactInfo, _),
@@ -1310,12 +1310,16 @@ complex_claim_acceptance(C) ->
         contract_id = ContractID,
         payout_tool_id = <<"1">>
     },
+    PartyName = <<"PartyName">>,
+    PartyComment = <<"PartyComment">>,
+    Emails = [],
     ShopAccountParams = #payproc_ShopAccountParams{currency = ?cur(<<"RUB">>)},
     Claim1 = assert_claim_pending(
         pm_client_party:create_claim(
             [
                 ?shop_modification(ShopID1, {creation, Params1}),
-                ?shop_modification(ShopID1, {shop_account_creation, ShopAccountParams})
+                ?shop_modification(ShopID1, {shop_account_creation, ShopAccountParams}),
+                ?additional_info_modification(PartyName, PartyComment, Emails)
             ],
             Client
         ),
@@ -1331,7 +1335,8 @@ complex_claim_acceptance(C) ->
         pm_client_party:create_claim(
             [
                 ?shop_modification(ShopID2, {creation, Params2}),
-                ?shop_modification(ShopID2, {shop_account_creation, ShopAccountParams})
+                ?shop_modification(ShopID2, {shop_account_creation, ShopAccountParams}),
+                ?additional_info_modification(PartyName, PartyComment, Emails)
             ],
             Client
         ),
@@ -1343,6 +1348,11 @@ complex_claim_acceptance(C) ->
     true = Claim1#payproc_Claim.revision =/= Claim1_1#payproc_Claim.revision,
     ok = accept_claim(Claim2, Client),
     ok = accept_claim(Claim1_1, Client),
+    #domain_Party{
+        party_name = PartyName,
+        comment = PartyComment,
+        contact_info = #domain_PartyContactInfo{manager_contact_emails = Emails}
+    } = pm_client_party:get(Client),
     #domain_Shop{details = Details1, category = ?cat(3)} = pm_client_party:get_shop(ShopID1, Client),
     #domain_Shop{details = Details2} = pm_client_party:get_shop(ShopID2, Client).
 
@@ -2175,7 +2185,7 @@ next_event(Client) ->
 %%
 
 make_party_params() ->
-    make_party_params(#domain_PartyContactInfo{email = <<?MODULE_STRING>>}).
+    make_party_params(#domain_PartyContactInfo{registration_email = <<?MODULE_STRING>>}).
 
 make_party_params(ContactInfo) ->
     #payproc_PartyParams{contact_info = ContactInfo}.
