@@ -410,10 +410,16 @@ update_wallet({account_created, Account}, Wallet) ->
 raise_invalid_changeset(Reason) ->
     throw(#payproc_InvalidChangeset{reason = Reason}).
 
+apply_additional_info_effect({party_name, undefined}, Party) ->
+    Party;
 apply_additional_info_effect({party_name, PartyName}, Party) ->
     pm_party:set_party_name(PartyName, Party);
+apply_additional_info_effect({party_comment, undefined}, Party) ->
+    Party;
 apply_additional_info_effect({party_comment, Comment}, Party) ->
     pm_party:set_party_comment(Comment, Party);
+apply_additional_info_effect({contact_info, #domain_PartyContactInfo{manager_contact_emails = undefined}}, Party) ->
+    Party;
 apply_additional_info_effect({contact_info, #domain_PartyContactInfo{manager_contact_emails = Emails}}, Party) ->
     ContactInfo = pm_party:get_contact_info(Party),
     pm_party:set_contact_info(
