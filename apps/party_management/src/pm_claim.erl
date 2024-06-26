@@ -224,19 +224,56 @@ make_changeset_effects(Changeset, Timestamp, Revision, Fun) ->
     squash_effects(
         lists:foldr(
             fun
-                (?additional_info_modification(PartyName, Comment, Emails), Acc) ->
-                    [
-                        Fun(?pm_additional_info_party_name_modification(PartyName), Timestamp, Revision),
-                        Fun(?pm_additional_info_party_comment_modification(Comment), Timestamp, Revision),
-                        Fun(?pm_additional_info_emails_modification(Emails), Timestamp, Revision)
-                        | Acc
-                    ];
+                (?additional_info_modification(_PartyName, _Comment, _Emails) = Mod, Acc) ->
+                    AdditionalInfoEffects = make_additional_info_effects(Mod, Timestamp, Revision, Fun),
+                    AdditionalInfoEffects ++ Acc;
                 (Change, Acc) ->
                     [Fun(Change, Timestamp, Revision) | Acc]
             end,
             [],
             Changeset
         )
+    ).
+
+make_additional_info_effects(?additional_info_modification(PartyName, Comment, Emails), Timestamp, Revision, Fun) ->
+    AdditionalInfoMods = [
+        {party_name, PartyName},
+        {party_comment, Comment},
+        {emails, Emails}
+    ],
+    make_additional_info_effects(AdditionalInfoMods, Timestamp, Revision, Fun, []).
+
+make_additional_info_effects([], _Timestamp, _Revision, _Fun, Acc) ->
+    Acc;
+make_additional_info_effects([{party_name, undefined} | Tail], Timestamp, Revision, Fun, Acc) ->
+    make_additional_info_effects(Tail, Timestamp, Revision, Fun, Acc);
+make_additional_info_effects([{party_name, PartyName} | Tail], Timestamp, Revision, Fun, Acc) ->
+    make_additional_info_effects(
+        Tail,
+        Timestamp,
+        Revision,
+        Fun,
+        [Fun(?pm_additional_info_party_name_modification(PartyName), Timestamp, Revision) | Acc]
+    );
+make_additional_info_effects([{party_comment, undefined} | Tail], Timestamp, Revision, Fun, Acc) ->
+    make_additional_info_effects(Tail, Timestamp, Revision, Fun, Acc);
+make_additional_info_effects([{party_comment, Comment} | Tail], Timestamp, Revision, Fun, Acc) ->
+    make_additional_info_effects(
+        Tail,
+        Timestamp,
+        Revision,
+        Fun,
+        [Fun(?pm_additional_info_party_comment_modification(Comment), Timestamp, Revision) | Acc]
+    );
+make_additional_info_effects([{emails, undefined} | Tail], Timestamp, Revision, Fun, Acc) ->
+    make_additional_info_effects(Tail, Timestamp, Revision, Fun, Acc);
+make_additional_info_effects([{emails, Emails} | Tail], Timestamp, Revision, Fun, Acc) ->
+    make_additional_info_effects(
+        Tail,
+        Timestamp,
+        Revision,
+        Fun,
+        [Fun(?pm_additional_info_emails_modification(Emails), Timestamp, Revision) | Acc]
     ).
 
 squash_effects(Effects) ->
@@ -410,16 +447,10 @@ update_wallet({account_created, Account}, Wallet) ->
 raise_invalid_changeset(Reason) ->
     throw(#payproc_InvalidChangeset{reason = Reason}).
 
-apply_additional_info_effect({party_name, undefined}, Party) ->
-    Party;
 apply_additional_info_effect({party_name, PartyName}, Party) ->
     pm_party:set_party_name(PartyName, Party);
-apply_additional_info_effect({party_comment, undefined}, Party) ->
-    Party;
 apply_additional_info_effect({party_comment, Comment}, Party) ->
     pm_party:set_party_comment(Comment, Party);
-apply_additional_info_effect({contact_info, #domain_PartyContactInfo{manager_contact_emails = undefined}}, Party) ->
-    Party;
 apply_additional_info_effect({contact_info, #domain_PartyContactInfo{manager_contact_emails = Emails}}, Party) ->
     ContactInfo = pm_party:get_contact_info(Party),
     pm_party:set_contact_info(

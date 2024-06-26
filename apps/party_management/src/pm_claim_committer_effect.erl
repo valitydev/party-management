@@ -289,16 +289,10 @@ apply_wallet_effect(ID, Effect, Party) ->
     Wallet = pm_party:get_wallet(ID, Party),
     pm_party:set_wallet(update_wallet(Effect, Wallet), Party).
 
-apply_additional_info_effect({party_name, undefined}, Party) ->
-    Party;
 apply_additional_info_effect({party_name, PartyName}, Party) ->
     pm_party:set_party_name(PartyName, Party);
-apply_additional_info_effect({party_comment, undefined}, Party) ->
-    Party;
 apply_additional_info_effect({party_comment, Comment}, Party) ->
     pm_party:set_party_comment(Comment, Party);
-apply_additional_info_effect({contact_info, #domain_PartyContactInfo{manager_contact_emails = undefined}}, Party) ->
-    Party;
 apply_additional_info_effect({contact_info, #domain_PartyContactInfo{manager_contact_emails = Emails}}, Party) ->
     ContactInfo = pm_party:get_contact_info(Party),
     pm_party:set_contact_info(
@@ -400,17 +394,54 @@ make_effects(Modifications, Timestamp, Revision, Fun) ->
             fun
                 (?cm_shop_cash_register_modification_unit(_, _), Acc) ->
                     Acc;
-                (?cm_additional_info_modification(PartyName, Comment, Emails), Acc) ->
-                    [
-                        Fun(?cm_additional_info_party_name_modification(PartyName), Timestamp, Revision),
-                        Fun(?cm_additional_info_party_comment_modification(Comment), Timestamp, Revision),
-                        Fun(?cm_additional_info_emails_modification(Emails), Timestamp, Revision)
-                        | Acc
-                    ];
+                (?cm_additional_info_modification(_PartyName, _Comment, _Emails) = Mod, Acc) ->
+                    AdditionalInfoEffects = make_additional_info_effects(Mod, Timestamp, Revision, Fun),
+                    AdditionalInfoEffects ++ Acc;
                 (Change, Acc) ->
                     [Fun(Change, Timestamp, Revision) | Acc]
             end,
             [],
             Modifications
         )
+    ).
+
+make_additional_info_effects(?cm_additional_info_modification(PartyName, Comment, Emails), Timestamp, Revision, Fun) ->
+    AdditionalInfoMods = [
+        {party_name, PartyName},
+        {party_comment, Comment},
+        {emails, Emails}
+    ],
+    make_additional_info_effects(AdditionalInfoMods, Timestamp, Revision, Fun, []).
+
+make_additional_info_effects([], _Timestamp, _Revision, _Fun, Acc) ->
+    Acc;
+make_additional_info_effects([{party_name, undefined} | Tail], Timestamp, Revision, Fun, Acc) ->
+    make_additional_info_effects(Tail, Timestamp, Revision, Fun, Acc);
+make_additional_info_effects([{party_name, PartyName} | Tail], Timestamp, Revision, Fun, Acc) ->
+    make_additional_info_effects(
+        Tail,
+        Timestamp,
+        Revision,
+        Fun,
+        [Fun(?cm_additional_info_party_name_modification(PartyName), Timestamp, Revision) | Acc]
+    );
+make_additional_info_effects([{party_comment, undefined} | Tail], Timestamp, Revision, Fun, Acc) ->
+    make_additional_info_effects(Tail, Timestamp, Revision, Fun, Acc);
+make_additional_info_effects([{party_comment, Comment} | Tail], Timestamp, Revision, Fun, Acc) ->
+    make_additional_info_effects(
+        Tail,
+        Timestamp,
+        Revision,
+        Fun,
+        [Fun(?cm_additional_info_party_comment_modification(Comment), Timestamp, Revision) | Acc]
+    );
+make_additional_info_effects([{emails, undefined} | Tail], Timestamp, Revision, Fun, Acc) ->
+    make_additional_info_effects(Tail, Timestamp, Revision, Fun, Acc);
+make_additional_info_effects([{emails, Emails} | Tail], Timestamp, Revision, Fun, Acc) ->
+    make_additional_info_effects(
+        Tail,
+        Timestamp,
+        Revision,
+        Fun,
+        [Fun(?cm_additional_info_emails_modification(Emails), Timestamp, Revision) | Acc]
     ).
