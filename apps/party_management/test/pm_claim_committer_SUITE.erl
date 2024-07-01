@@ -33,6 +33,7 @@
 -export([invalid_shop_payout_tool_not_in_contract/1]).
 -export([invalid_shop_payout_tool_currency_mismatch/1]).
 -export([wallet_account_creation/1]).
+-export([additional_info_modification/1]).
 
 -type config() :: pm_ct_helper:config().
 -type test_case_name() :: pm_ct_helper:test_case_name().
@@ -73,7 +74,8 @@ all() ->
         shop_already_exists,
         invalid_shop_payout_tool_not_in_contract,
         invalid_shop_payout_tool_currency_mismatch,
-        wallet_account_creation
+        wallet_account_creation,
+        additional_info_modification
     ].
 
 -spec init_per_suite(config()) -> config().
@@ -94,7 +96,7 @@ end_per_suite(C) ->
 -spec party_creation(config()) -> _.
 party_creation(C) ->
     PartyID = cfg(party_id, C),
-    ContactInfo = #domain_PartyContactInfo{email = <<?MODULE_STRING>>},
+    ContactInfo = #domain_PartyContactInfo{registration_email = <<?MODULE_STRING>>},
     ok = create_party(PartyID, ContactInfo, C),
     {ok, Party} = get_party(PartyID, C),
     #domain_Party{
@@ -558,6 +560,32 @@ wallet_account_creation(C) ->
             currency = WalletCurrency
         }
     } = pm_party:get_wallet(WalletID, Party).
+
+-spec additional_info_modification(config()) -> _.
+additional_info_modification(C) ->
+    PartyName = <<"PartyName">>,
+    Comment = <<"PartyComment">>,
+    Emails = [
+        <<"Email1">>,
+        <<"Email2">>,
+        <<"Email3">>
+    ],
+    Modifications = [
+        ?cm_additional_info_modification(PartyName, Comment, Emails)
+    ],
+    PartyID = cfg(party_id, C),
+    Claim = claim(Modifications, PartyID),
+    ok = accept_claim(Claim, C),
+    ok = commit_claim(Claim, C),
+    {ok, Party} = get_party(PartyID, C),
+    #domain_Party{
+        party_name = PartyName,
+        contact_info = #domain_PartyContactInfo{
+            registration_email = <<?MODULE_STRING>>,
+            manager_contact_emails = Emails
+        },
+        comment = Comment
+    } = Party.
 
 %%% Internal functions
 
