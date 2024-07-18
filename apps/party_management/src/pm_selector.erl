@@ -42,7 +42,6 @@
     shop_id => dmsl_domain_thrift:'ShopID'(),
     risk_score => dmsl_domain_thrift:'RiskScore'(),
     flow => instant | {hold, dmsl_domain_thrift:'HoldLifetime'()},
-    payout_method => dmsl_domain_thrift:'PayoutMethodRef'(),
     wallet_id => dmsl_domain_thrift:'WalletID'(),
     identification_level => dmsl_domain_thrift:'ContractorIdentificationLevel'()
 }.

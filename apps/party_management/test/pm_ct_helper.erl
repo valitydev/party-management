@@ -14,12 +14,10 @@
 -export([create_contract/3]).
 -export([get_first_contract_id/1]).
 -export([get_first_battle_ready_contract_id/1]).
--export([get_first_payout_tool_id/2]).
 -export([adjust_contract/3]).
 
 -export([make_battle_ready_contract_params/2]).
 -export([make_battle_ready_contractor/0]).
--export([make_battle_ready_payout_tool_params/0]).
 
 -export([make_shop_details/1]).
 -export([make_shop_details/2]).
@@ -30,7 +28,6 @@
 
 -include("pm_ct_domain.hrl").
 
--include_lib("damsel/include/dmsl_base_thrift.hrl").
 -include_lib("damsel/include/dmsl_domain_thrift.hrl").
 
 -export_type([config/0]).
@@ -203,29 +200,18 @@ make_party_params() ->
 create_battle_ready_shop(Category, Currency, TemplateRef, PaymentInstitutionRef, Client) ->
     ContractID = pm_utils:unique_id(),
     ContractParams = make_battle_ready_contract_params(TemplateRef, PaymentInstitutionRef),
-    PayoutToolID = pm_utils:unique_id(),
-    PayoutToolParams = make_battle_ready_payout_tool_params(),
     ShopID = pm_utils:unique_id(),
     ShopParams = #payproc_ShopParams{
         category = Category,
         location = {url, <<>>},
         details = make_shop_details(<<"Battle Ready Shop">>),
-        contract_id = ContractID,
-        payout_tool_id = PayoutToolID
+        contract_id = ContractID
     },
     ShopAccountParams = #payproc_ShopAccountParams{currency = ?cur(Currency)},
     Changeset = [
         {contract_modification, #payproc_ContractModificationUnit{
             id = ContractID,
             modification = {creation, ContractParams}
-        }},
-        {contract_modification, #payproc_ContractModificationUnit{
-            id = ContractID,
-            modification =
-                {payout_tool_modification, #payproc_PayoutToolModificationUnit{
-                    payout_tool_id = PayoutToolID,
-                    modification = {creation, PayoutToolParams}
-                }}
         }},
         ?shop_modification(ShopID, {creation, ShopParams}),
         ?shop_modification(ShopID, {shop_account_creation, ShopAccountParams})
@@ -259,8 +245,7 @@ get_first_battle_ready_contract_id(Client) ->
         fun({ID, Contract}, Acc) ->
             case Contract of
                 #domain_Contract{
-                    contractor = {legal_entity, _},
-                    payout_tools = [#domain_PayoutTool{} | _]
+                    contractor = {legal_entity, _}
                 } ->
                     [ID | Acc];
                 _ ->
@@ -307,16 +292,6 @@ ensure_claim_accepted(#payproc_Claim{id = ClaimID, revision = ClaimRevision, sta
             ok = pm_client_party:accept_claim(ClaimID, ClaimRevision, Client)
     end.
 
--spec get_first_payout_tool_id(contract_id(), Client :: pid()) -> dmsl_domain_thrift:'PayoutToolID'().
-get_first_payout_tool_id(ContractID, Client) ->
-    #domain_Contract{payout_tools = PayoutTools} = pm_client_party:get_contract(ContractID, Client),
-    case PayoutTools of
-        [Tool | _] ->
-            Tool#domain_PayoutTool.id;
-        [] ->
-            error(not_found)
-    end.
-
 -spec make_battle_ready_contract_params(
     dmsl_domain_thrift:'ContractTemplateRef'() | undefined,
     dmsl_domain_thrift:'PaymentInstitutionRef'()
@@ -348,19 +323,6 @@ make_battle_ready_contractor() ->
             representative_document = <<"100$ banknote">>,
             russian_bank_account = BankAccount
         }}}.
-
--spec make_battle_ready_payout_tool_params() -> dmsl_payproc_thrift:'PayoutToolParams'().
-make_battle_ready_payout_tool_params() ->
-    #payproc_PayoutToolParams{
-        currency = ?cur(<<"RUB">>),
-        tool_info =
-            {russian_bank_account, #domain_RussianBankAccount{
-                account = <<"4276300010908312893">>,
-                bank_name = <<"SomeBank">>,
-                bank_post_account = <<"123129876">>,
-                bank_bik = <<"66642666">>
-            }}
-    }.
 
 -spec make_shop_details(binary()) -> dmsl_domain_thrift:'ShopDetails'().
 make_shop_details(Name) ->

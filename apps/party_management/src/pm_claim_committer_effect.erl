@@ -59,8 +59,7 @@ make_safe(?cm_shop_account_creation(ID, Currency), _Timestamp, _Revision) ->
         {account_created, #domain_ShopAccount{
             currency = Currency,
             settlement = 0,
-            guarantee = 0,
-            payout = 0
+            guarantee = 0
         }}
     );
 make_safe(?cm_wallet_account_creation(ID, Currency), _, _) ->
@@ -68,8 +67,7 @@ make_safe(?cm_wallet_account_creation(ID, Currency), _, _) ->
         ID,
         {account_created, #domain_WalletAccount{
             currency = Currency,
-            settlement = 0,
-            payout = 0
+            settlement = 0
         }}
     );
 make_safe(Change, Timestamp, Revision) ->
@@ -88,13 +86,6 @@ make_contract_effect(_, ?cm_contract_termination(_), Timestamp, _) ->
     {status_changed, {terminated, #domain_ContractTerminated{terminated_at = Timestamp}}};
 make_contract_effect(_, ?cm_adjustment_creation(AdjustmentID, Params), Timestamp, Revision) ->
     {adjustment_created, pm_contract:create_adjustment(AdjustmentID, Params, Timestamp, Revision)};
-make_contract_effect(_, ?cm_payout_tool_creation(PayoutToolID, Params), Timestamp, _) ->
-    {payout_tool_created, pm_payout_tool:create(PayoutToolID, Params, Timestamp)};
-make_contract_effect(_, ?cm_payout_tool_info_modification(PayoutToolID, Info), _, _) ->
-    {payout_tool_info_changed, #payproc_PayoutToolInfoChanged{
-        payout_tool_id = PayoutToolID,
-        info = Info
-    }};
 make_contract_effect(_, {legal_agreement_binding, LegalAgreement}, _, _) ->
     {legal_agreement_bound, LegalAgreement};
 make_contract_effect(ID, {report_preferences_modification, ReportPreferences}, _, Revision) ->
@@ -109,20 +100,14 @@ make_shop_effect(_, {category_modification, Category}, _, _) ->
     {category_changed, Category};
 make_shop_effect(_, {details_modification, Details}, _, _) ->
     {details_changed, Details};
-make_shop_effect(_, ?cm_shop_contract_modification(ContractID, PayoutToolID), _, _) ->
+make_shop_effect(_, ?cm_shop_contract_modification(ContractID), _, _) ->
     {contract_changed, #payproc_ShopContractChanged{
-        contract_id = ContractID,
-        payout_tool_id = PayoutToolID
+        contract_id = ContractID
     }};
-make_shop_effect(_, {payout_tool_modification, PayoutToolID}, _, _) ->
-    {payout_tool_changed, PayoutToolID};
 make_shop_effect(_, {location_modification, Location}, _, _) ->
     {location_changed, Location};
 make_shop_effect(_, {shop_account_creation, Params}, _, _) ->
     {account_created, create_shop_account(Params)};
-make_shop_effect(ID, ?cm_payout_schedule_modification(PayoutScheduleRef), _, Revision) ->
-    _ = assert_payout_schedule_valid(ID, PayoutScheduleRef, Revision),
-    ?payout_schedule_changed(PayoutScheduleRef);
 make_shop_effect(_, {turnover_limits_modification, TurnoverLimits}, _, _) ->
     {turnover_limits_changed, TurnoverLimits}.
 
@@ -154,11 +139,6 @@ assert_report_schedule_valid(
 ) ->
     assert_valid_object_ref({contract, ID}, {business_schedule, BusinessScheduleRef}, Revision).
 
-assert_payout_schedule_valid(ID, #domain_BusinessScheduleRef{} = BusinessScheduleRef, Revision) ->
-    assert_valid_object_ref({shop, ID}, {business_schedule, BusinessScheduleRef}, Revision);
-assert_payout_schedule_valid(_, undefined, _) ->
-    ok.
-
 assert_valid_object_ref(Prefix, Ref, Revision) ->
     case pm_domain:exists(Revision, Ref) of
         true ->
@@ -186,12 +166,10 @@ create_shop_account(#claimmgmt_ShopAccountParams{currency = Currency}) ->
 create_shop_account(#domain_CurrencyRef{symbolic_code = SymbolicCode} = CurrencyRef) ->
     GuaranteeID = pm_accounting:create_account(SymbolicCode),
     SettlementID = pm_accounting:create_account(SymbolicCode),
-    PayoutID = pm_accounting:create_account(SymbolicCode),
     #domain_ShopAccount{
         currency = CurrencyRef,
         settlement = SettlementID,
-        guarantee = GuaranteeID,
-        payout = PayoutID
+        guarantee = GuaranteeID
     }.
 
 make_optional_domain_ref(_, undefined) ->
@@ -238,15 +216,6 @@ update_contract({status_changed, Status}, Contract) ->
 update_contract({adjustment_created, Adjustment}, Contract) ->
     Adjustments = Contract#domain_Contract.adjustments ++ [Adjustment],
     Contract#domain_Contract{adjustments = Adjustments};
-update_contract({payout_tool_created, PayoutTool}, Contract) ->
-    PayoutTools = Contract#domain_Contract.payout_tools ++ [PayoutTool],
-    Contract#domain_Contract{payout_tools = PayoutTools};
-update_contract(
-    {payout_tool_info_changed, #payproc_PayoutToolInfoChanged{payout_tool_id = PayoutToolID, info = Info}},
-    Contract
-) ->
-    PayoutTool = pm_contract:get_payout_tool(PayoutToolID, Contract),
-    pm_contract:set_payout_tool(PayoutTool#domain_PayoutTool{payout_tool_info = Info}, Contract);
 update_contract({legal_agreement_bound, LegalAgreement}, Contract) ->
     Contract#domain_Contract{legal_agreement = LegalAgreement};
 update_contract({report_preferences_changed, ReportPreferences}, Contract) ->
@@ -265,19 +234,15 @@ update_shop({category_changed, Category}, Shop) ->
 update_shop({details_changed, Details}, Shop) ->
     Shop#domain_Shop{details = Details};
 update_shop(
-    {contract_changed, #payproc_ShopContractChanged{contract_id = ContractID, payout_tool_id = PayoutToolID}},
+    {contract_changed, #payproc_ShopContractChanged{contract_id = ContractID}},
     Shop
 ) ->
-    Shop#domain_Shop{contract_id = ContractID, payout_tool_id = PayoutToolID};
-update_shop({payout_tool_changed, PayoutToolID}, Shop) ->
-    Shop#domain_Shop{payout_tool_id = PayoutToolID};
+    Shop#domain_Shop{contract_id = ContractID};
 update_shop({location_changed, Location}, Shop) ->
     Shop#domain_Shop{location = Location};
 update_shop({proxy_changed, _}, Shop) ->
     % deprecated
     Shop;
-update_shop(?payout_schedule_changed(BusinessScheduleRef), Shop) ->
-    Shop#domain_Shop{payout_schedule = BusinessScheduleRef};
 update_shop({account_created, Account}, Shop) ->
     Shop#domain_Shop{account = Account};
 update_shop({turnover_limits_changed, TurnoverLimits}, Shop) ->

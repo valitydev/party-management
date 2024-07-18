@@ -161,8 +161,7 @@ create_shop(ID, #payproc_ShopParams{} = ShopParams, Timestamp) ->
         category = ShopParams#payproc_ShopParams.category,
         details = ShopParams#payproc_ShopParams.details,
         location = ShopParams#payproc_ShopParams.location,
-        contract_id = ShopParams#payproc_ShopParams.contract_id,
-        payout_tool_id = ShopParams#payproc_ShopParams.payout_tool_id
+        contract_id = ShopParams#payproc_ShopParams.contract_id
     };
 create_shop(ID, #claimmgmt_ShopParams{} = ShopParams, Timestamp) ->
     #domain_Shop{
@@ -173,8 +172,7 @@ create_shop(ID, #claimmgmt_ShopParams{} = ShopParams, Timestamp) ->
         category = ShopParams#claimmgmt_ShopParams.category,
         details = ShopParams#claimmgmt_ShopParams.details,
         location = ShopParams#claimmgmt_ShopParams.location,
-        contract_id = ShopParams#claimmgmt_ShopParams.contract_id,
-        payout_tool_id = ShopParams#claimmgmt_ShopParams.payout_tool_id
+        contract_id = ShopParams#claimmgmt_ShopParams.contract_id
     }.
 
 -spec get_shop(shop_id(), party()) -> shop() | undefined.
@@ -306,7 +304,6 @@ is_terms({struct, struct, {dmsl_domain_thrift, Struct}}, Terms) when
     Struct =:= 'PartialRefundsServiceTerms';
     Struct =:= 'PaymentChargebackServiceTerms';
     Struct =:= 'PartialCaptureServiceTerms';
-    Struct =:= 'PayoutsServiceTerms';
     Struct =:= 'ReportsServiceTerms';
     Struct =:= 'ServiceAcceptanceActsTerms';
     Struct =:= 'WalletServiceTerms';
@@ -431,8 +428,6 @@ find_shop_account(ID, [{_, #domain_Shop{account = Account}} | Rest]) ->
             Account;
         #domain_ShopAccount{guarantee = ID} ->
             Account;
-        #domain_ShopAccount{payout = ID} ->
-            Account;
         _ ->
             find_shop_account(ID, Rest)
     end.
@@ -497,7 +492,6 @@ assert_shop_valid(#domain_Shop{contract_id = ContractID} = Shop, Timestamp, Revi
     case get_contract(ContractID, Party) of
         #domain_Contract{} = Contract ->
             _ = assert_shop_contract_valid(Shop, Contract, Timestamp, Revision),
-            _ = assert_shop_payout_tool_valid(Shop, Contract),
             ok;
         undefined ->
             pm_claim:raise_invalid_changeset(?invalid_contract(ContractID, {not_exists, ContractID}))
@@ -519,34 +513,6 @@ assert_shop_contract_valid(
     end,
     _ = assert_category_valid({shop, ID}, pm_contract:get_id(Contract), CategoryRef, Terms, Revision),
     ok.
-
-assert_shop_payout_tool_valid(#domain_Shop{payout_tool_id = undefined, payout_schedule = undefined}, _) ->
-    % automatic payouts disabled for this shop and it's ok
-    ok;
-assert_shop_payout_tool_valid(#domain_Shop{id = ID, payout_tool_id = undefined, payout_schedule = _Schedule}, _) ->
-    % automatic payouts enabled for this shop but no payout tool specified
-    pm_claim:raise_invalid_changeset(?invalid_shop(ID, {payout_tool_invalid, #payproc_ShopPayoutToolInvalid{}}));
-assert_shop_payout_tool_valid(#domain_Shop{id = ID, payout_tool_id = PayoutToolID} = Shop, Contract) ->
-    ShopCurrency = (Shop#domain_Shop.account)#domain_ShopAccount.currency,
-    case pm_contract:get_payout_tool(PayoutToolID, Contract) of
-        #domain_PayoutTool{currency = ShopCurrency} ->
-            ok;
-        #domain_PayoutTool{} ->
-            % currency missmatch
-            pm_claim:raise_invalid_changeset(
-                ?invalid_shop(
-                    ID,
-                    {payout_tool_invalid, #payproc_ShopPayoutToolInvalid{payout_tool_id = PayoutToolID}}
-                )
-            );
-        undefined ->
-            pm_claim:raise_invalid_changeset(
-                ?invalid_shop(
-                    ID,
-                    {payout_tool_invalid, #payproc_ShopPayoutToolInvalid{payout_tool_id = PayoutToolID}}
-                )
-            )
-    end.
 
 assert_wallet_valid(#domain_Wallet{contract = ContractID} = Wallet, Timestamp, Revision, Party) ->
     case get_contract(ContractID, Party) of

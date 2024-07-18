@@ -1436,22 +1436,6 @@ transmute_party_modification(
         {creation, transmute_contractor(V1, V2, Contractor)}
     );
 transmute_party_modification(
-    V1,
-    V2,
-    ?legacy_contract_modification(
-        ContractID,
-        ?legacy_payout_tool_creation(
-            ID,
-            ?legacy_payout_tool_params(Currency, ToolInfo)
-        )
-    )
-) when V1 =:= 1; V1 =:= 2; V1 =:= 5 ->
-    PayoutToolParams = #payproc_PayoutToolParams{
-        currency = Currency,
-        tool_info = transmute_payout_tool_info(V1, V2, ToolInfo)
-    },
-    ?contract_modification(ContractID, ?payout_tool_creation(ID, PayoutToolParams));
-transmute_party_modification(
     3,
     4,
     ?legacy_contract_modification(
@@ -1460,20 +1444,6 @@ transmute_party_modification(
     )
 ) ->
     ?contract_modification(ID, {legal_agreement_binding, transmute_legal_agreement(3, 4, LegalAgreement)});
-transmute_party_modification(
-    3,
-    4,
-    ?legacy_shop_modification(
-        ID,
-        {payout_schedule_modification, ?legacy_schedule_modification(PayoutScheduleRef)}
-    )
-) ->
-    ?shop_modification(
-        ID,
-        {payout_schedule_modification, #payproc_ScheduleModification{
-            schedule = transmute_payout_schedule_ref(3, 4, PayoutScheduleRef)
-        }}
-    );
 transmute_party_modification(V1, _, C) when V1 >= 1, V1 < ?TOP_VERSION ->
     C.
 
@@ -1492,7 +1462,7 @@ transmute_claim_effect(
                 Status,
                 Terms,
                 Adjustments,
-                PayoutTools,
+                _PayoutTools,
                 LegalAgreement
             )}
     )
@@ -1507,7 +1477,7 @@ transmute_claim_effect(
         Status,
         Terms,
         Adjustments,
-        [transmute_payout_tool(1, 2, P) || P <- PayoutTools],
+        [],
         LegalAgreement
     ),
     ?legacy_contract_effect(ID, {created, Contract});
@@ -1527,7 +1497,7 @@ transmute_claim_effect(
                 Status,
                 Terms,
                 Adjustments,
-                PayoutTools,
+                _PayoutTools,
                 LegalAgreement
             )}
     )
@@ -1542,7 +1512,7 @@ transmute_claim_effect(
         Status,
         Terms,
         Adjustments,
-        [transmute_payout_tool(2, 3, P) || P <- PayoutTools],
+        [],
         LegalAgreement
     ),
     ?legacy_contract_effect(ID, {created, Contract});
@@ -1598,7 +1568,7 @@ transmute_claim_effect(
                 Status,
                 Terms,
                 Adjustments,
-                PayoutTools,
+                _PayoutTools,
                 LegalAgreement,
                 ReportPreferences
             )}
@@ -1614,25 +1584,10 @@ transmute_claim_effect(
         status = Status,
         terms = Terms,
         adjustments = Adjustments,
-        payout_tools = PayoutTools,
         legal_agreement = LegalAgreement,
         report_preferences = ReportPreferences
     },
     ?contract_effect(ID, {created, Contract});
-transmute_claim_effect(
-    5,
-    6,
-    ?contract_effect(
-        ID,
-        {created, Contract = #domain_Contract{payout_tools = PayoutTools}}
-    )
-) ->
-    ?contract_effect(
-        ID,
-        {created, Contract#domain_Contract{
-            payout_tools = [transmute_payout_tool(5, 6, P) || P <- PayoutTools]
-        }}
-    );
 transmute_claim_effect(
     6 = V1,
     7 = V2,
@@ -1660,18 +1615,6 @@ transmute_claim_effect(
         {created, transmute_party_contractor(V1, V2, PartyContractor)}
     );
 transmute_claim_effect(
-    V1,
-    V2,
-    ?legacy_contract_effect(
-        ContractID,
-        {payout_tool_created, PayoutTool}
-    )
-) when V1 =:= 1; V1 =:= 2; V1 =:= 5 ->
-    ?contract_effect(
-        ContractID,
-        {payout_tool_created, transmute_payout_tool(V1, V2, PayoutTool)}
-    );
-transmute_claim_effect(
     3,
     4,
     ?legacy_contract_effect(
@@ -1696,7 +1639,7 @@ transmute_claim_effect(
                 Category,
                 Account,
                 ContractID,
-                PayoutToolID
+                _PayoutToolID
             )}
     )
 ) ->
@@ -1709,8 +1652,7 @@ transmute_claim_effect(
         location = Location,
         category = Category,
         account = Account,
-        contract_id = ContractID,
-        payout_tool_id = PayoutToolID
+        contract_id = ContractID
     },
     ?shop_effect(ID, {created, Shop});
 transmute_claim_effect(
@@ -1729,8 +1671,8 @@ transmute_claim_effect(
                 Category,
                 Account,
                 ContractID,
-                PayoutToolID,
-                PayoutSchedule
+                _PayoutToolID,
+                _PayoutSchedule
             )}
     )
 ) ->
@@ -1743,25 +1685,9 @@ transmute_claim_effect(
         location = Location,
         category = Category,
         account = Account,
-        contract_id = ContractID,
-        payout_tool_id = PayoutToolID,
-        payout_schedule = transmute_payout_schedule_ref(3, 4, PayoutSchedule)
+        contract_id = ContractID
     },
     ?shop_effect(ID, {created, Shop});
-transmute_claim_effect(
-    3,
-    4,
-    ?legacy_shop_effect(
-        ID,
-        {payout_schedule_changed, ?legacy_schedule_changed(PayoutSchedule)}
-    )
-) ->
-    ?shop_effect(
-        ID,
-        {payout_schedule_changed, #payproc_ScheduleChanged{
-            schedule = transmute_payout_schedule_ref(3, 4, PayoutSchedule)
-        }}
-    );
 transmute_claim_effect(V1, _, C) when V1 >= 1, V1 < ?TOP_VERSION ->
     C.
 
@@ -1839,75 +1765,6 @@ transmute_contractor(
 transmute_contractor(V1, _, Contractor) when V1 =:= 1; V1 =:= 2; V1 =:= 6 ->
     Contractor.
 
-transmute_payout_tool(
-    V1,
-    V2,
-    ?legacy_payout_tool(
-        ID,
-        CreatedAt,
-        Currency,
-        ToolInfo
-    )
-) when V1 =:= 1; V1 =:= 2 ->
-    #domain_PayoutTool{
-        id = ID,
-        created_at = CreatedAt,
-        currency = Currency,
-        payout_tool_info = transmute_payout_tool_info(V1, V2, ToolInfo)
-    };
-transmute_payout_tool(V1, _, PayoutTool) when V1 =:= 1; V1 =:= 2 ->
-    PayoutTool;
-transmute_payout_tool(V1, V2, PayoutTool = #domain_PayoutTool{payout_tool_info = ToolInfo}) when V1 =:= 5 ->
-    PayoutTool#domain_PayoutTool{payout_tool_info = transmute_payout_tool_info(V1, V2, ToolInfo)}.
-
-transmute_payout_tool_info(1, 2, {bank_account, BankAccount}) ->
-    {russian_bank_account, transmute_bank_account(1, 2, BankAccount)};
-transmute_payout_tool_info(
-    2,
-    3,
-    {international_bank_account,
-        ?legacy_international_bank_account(
-            AccountHolder,
-            BankName,
-            BankAddress,
-            Iban,
-            Bic
-        )}
-) ->
-    {international_bank_account,
-        ?legacy_international_bank_account_v3_4_5(
-            AccountHolder,
-            BankName,
-            BankAddress,
-            Iban,
-            Bic,
-            undefined
-        )};
-transmute_payout_tool_info(
-    5,
-    6,
-    {international_bank_account,
-        ?legacy_international_bank_account_v3_4_5(
-            AccountHolder,
-            BankName,
-            BankAddress,
-            Iban,
-            Bic,
-            _LocalBankCode
-        )}
-) ->
-    {international_bank_account, #domain_InternationalBankAccount{
-        bank = #domain_InternationalBankDetails{
-            bic = Bic,
-            name = BankName,
-            address = BankAddress
-        },
-        iban = Iban,
-        account_holder = AccountHolder
-    }};
-transmute_payout_tool_info(V1, _, ToolInfo) when V1 =:= 1; V1 =:= 2; V1 =:= 5 ->
-    ToolInfo.
-
 transmute_bank_account(1, 2, ?legacy_bank_account(Account, BankName, BankPostAccount, BankBik)) ->
     #domain_RussianBankAccount{
         account = Account,
@@ -1924,10 +1781,6 @@ transmute_legal_agreement(3, 4, ?legacy_legal_agreement(SignedAt, LegalAgreement
 transmute_legal_agreement(3, 4, undefined) ->
     undefined.
 
-transmute_payout_schedule_ref(3, 4, ?legacy_payout_schedule_ref(ID)) ->
-    #domain_BusinessScheduleRef{id = ID};
-transmute_payout_schedule_ref(3, 4, undefined) ->
-    undefined.
 
 %%
 
