@@ -1781,7 +1781,6 @@ transmute_legal_agreement(3, 4, ?legacy_legal_agreement(SignedAt, LegalAgreement
 transmute_legal_agreement(3, 4, undefined) ->
     undefined.
 
-
 %%
 
 -ifdef(TEST).
