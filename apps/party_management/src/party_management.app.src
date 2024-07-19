@@ -11,6 +11,8 @@
         genlib,
         pm_proto,
         cowboy,
+        prometheus,
+        prometheus_cowboy,
         woody,
         scoper,  % should be before any scoper event handler usage
         gproc,
