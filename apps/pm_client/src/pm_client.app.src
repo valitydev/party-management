@@ -5,6 +5,8 @@
     {applications, [
         kernel,
         stdlib,
+        prometheus,
+        prometheus_cowboy,
         woody,
         pm_proto
     ]}

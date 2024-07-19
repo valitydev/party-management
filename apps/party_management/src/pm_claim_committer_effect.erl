@@ -156,8 +156,6 @@ raise_invalid_object_ref(Prefix, Ref) ->
     raise_invalid_object_ref_(Prefix, Ex).
 
 -spec raise_invalid_object_ref_(term(), term()) -> no_return().
-raise_invalid_object_ref_({shop, ID}, Ex) ->
-    pm_claim_committer:raise_invalid_changeset(?cm_invalid_shop(ID, Ex), []);
 raise_invalid_object_ref_({contract, ID}, Ex) ->
     pm_claim_committer:raise_invalid_changeset(?cm_invalid_contract(ID, Ex), []).
 
