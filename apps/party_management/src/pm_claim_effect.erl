@@ -51,7 +51,8 @@ make_safe(
         {account_created, #domain_ShopAccount{
             currency = Currency,
             settlement = 0,
-            guarantee = 0
+            guarantee = 0,
+            payout = 0
         }}
     );
 make_safe(?wallet_modification(ID, {account_creation, Params}), _, _) ->
@@ -159,7 +160,8 @@ create_shop_account(#domain_CurrencyRef{symbolic_code = SymbolicCode} = Currency
     #domain_ShopAccount{
         currency = CurrencyRef,
         settlement = SettlementID,
-        guarantee = GuaranteeID
+        guarantee = GuaranteeID,
+        payout = 0
     }.
 
 make_optional_domain_ref(_, undefined) ->

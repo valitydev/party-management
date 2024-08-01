@@ -3,10 +3,6 @@ erlang:
     secret_cookie_file: "/opt/machinegun/etc/cookie"
 namespaces:
     party:
-        event_sinks:
-            machine:
-                type: machine
-                machine_id: payproc
         processor:
             url: http://party-management:8022/v1/stateproc/party
             pool_size: 300
@@ -25,9 +21,3 @@ woody_server:
 logging:
     out_type: stdout
     level: info
-
-opentelemetry:
-    service_name: machinegun
-    exporter:
-        protocol: http/protobuf
-        endpoint: http://jaeger:4318

@@ -1584,6 +1584,7 @@ transmute_claim_effect(
         status = Status,
         terms = Terms,
         adjustments = Adjustments,
+        payout_tools = [],
         legal_agreement = LegalAgreement,
         report_preferences = ReportPreferences
     },

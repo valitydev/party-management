@@ -62,7 +62,8 @@ create(ID, #payproc_ContractParams{} = Params, Timestamp, Revision) ->
         valid_until = instantiate_contract_lifetime_bound(ValidUntil, Timestamp),
         status = {active, #domain_ContractActive{}},
         terms = TermSetHierarchyRef,
-        adjustments = []
+        adjustments = [],
+        payout_tools = []
     };
 create(ID, #claimmgmt_ContractParams{} = Params, Timestamp, Revision) ->
     #claimmgmt_ContractParams{
@@ -84,7 +85,8 @@ create(ID, #claimmgmt_ContractParams{} = Params, Timestamp, Revision) ->
         valid_until = instantiate_contract_lifetime_bound(ValidUntil, Timestamp),
         status = {active, #domain_ContractActive{}},
         terms = TermSetHierarchyRef,
-        adjustments = []
+        adjustments = [],
+        payout_tools = []
     }.
 
 -spec update_status(contract(), timestamp()) -> contract().

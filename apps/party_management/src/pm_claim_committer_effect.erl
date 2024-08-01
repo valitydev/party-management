@@ -59,7 +59,8 @@ make_safe(?cm_shop_account_creation(ID, Currency), _Timestamp, _Revision) ->
         {account_created, #domain_ShopAccount{
             currency = Currency,
             settlement = 0,
-            guarantee = 0
+            guarantee = 0,
+            payout = 0
         }}
     );
 make_safe(?cm_wallet_account_creation(ID, Currency), _, _) ->
@@ -67,7 +68,8 @@ make_safe(?cm_wallet_account_creation(ID, Currency), _, _) ->
         ID,
         {account_created, #domain_WalletAccount{
             currency = Currency,
-            settlement = 0
+            settlement = 0,
+            payout = 0
         }}
     );
 make_safe(Change, Timestamp, Revision) ->
@@ -167,7 +169,8 @@ create_shop_account(#domain_CurrencyRef{symbolic_code = SymbolicCode} = Currency
     #domain_ShopAccount{
         currency = CurrencyRef,
         settlement = SettlementID,
-        guarantee = GuaranteeID
+        guarantee = GuaranteeID,
+        payout = 0
     }.
 
 make_optional_domain_ref(_, undefined) ->
