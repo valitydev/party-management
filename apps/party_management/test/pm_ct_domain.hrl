@@ -11,7 +11,6 @@
 -define(pmt(C, T), #domain_PaymentMethodRef{id = {C, T}}).
 -define(pmt_sys(ID), #domain_PaymentSystemRef{id = ID}).
 -define(pmt_srv(ID), #domain_PaymentServiceRef{id = ID}).
--define(pomt(M), #domain_PayoutMethodRef{id = M}).
 -define(cat(ID), #domain_CategoryRef{id = ID}).
 -define(prx(ID), #domain_ProxyRef{id = ID}).
 -define(prv(ID), #domain_ProviderRef{id = ID}).

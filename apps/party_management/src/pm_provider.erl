@@ -37,7 +37,6 @@ reduce_withdrawal_terms(#domain_WithdrawalProvisionTerms{} = Terms, VS, Rev) ->
         allow = reduce_predicate_if_defined(Terms#domain_WithdrawalProvisionTerms.allow, VS, Rev),
         global_allow = reduce_predicate_if_defined(Terms#domain_WithdrawalProvisionTerms.global_allow, VS, Rev),
         currencies = reduce_if_defined(Terms#domain_WithdrawalProvisionTerms.currencies, VS, Rev),
-        payout_methods = reduce_if_defined(Terms#domain_WithdrawalProvisionTerms.payout_methods, VS, Rev),
         cash_limit = reduce_if_defined(Terms#domain_WithdrawalProvisionTerms.cash_limit, VS, Rev),
         cash_flow = reduce_if_defined(Terms#domain_WithdrawalProvisionTerms.cash_flow, VS, Rev),
         turnover_limit = reduce_if_defined(Terms#domain_WithdrawalProvisionTerms.turnover_limit, VS, Rev)
@@ -259,7 +258,6 @@ merge_withdrawal_terms(
         allow = PAllow,
         global_allow = PGAllow,
         currencies = PCurrencies,
-        payout_methods = PMethods,
         cash_limit = PLimit,
         cash_flow = PCashflow,
         turnover_limit = PTurnoverLimit
@@ -268,7 +266,6 @@ merge_withdrawal_terms(
         allow = TAllow,
         global_allow = TGAllow,
         currencies = TCurrencies,
-        payout_methods = TMethods,
         cash_limit = TLimit,
         cash_flow = TCashflow,
         turnover_limit = TTurnoverLimit
@@ -278,7 +275,6 @@ merge_withdrawal_terms(
         allow = pm_utils:select_defined(TAllow, PAllow),
         global_allow = pm_utils:select_defined(TGAllow, PGAllow),
         currencies = pm_utils:select_defined(TCurrencies, PCurrencies),
-        payout_methods = pm_utils:select_defined(TMethods, PMethods),
         cash_limit = pm_utils:select_defined(TLimit, PLimit),
         cash_flow = pm_utils:select_defined(TCashflow, PCashflow),
         turnover_limit = pm_utils:select_defined(TTurnoverLimit, PTurnoverLimit)

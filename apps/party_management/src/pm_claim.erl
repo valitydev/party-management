@@ -389,15 +389,6 @@ update_contract({status_changed, Status}, Contract) ->
 update_contract({adjustment_created, Adjustment}, Contract) ->
     Adjustments = Contract#domain_Contract.adjustments ++ [Adjustment],
     Contract#domain_Contract{adjustments = Adjustments};
-update_contract({payout_tool_created, PayoutTool}, Contract) ->
-    PayoutTools = Contract#domain_Contract.payout_tools ++ [PayoutTool],
-    Contract#domain_Contract{payout_tools = PayoutTools};
-update_contract(
-    {payout_tool_info_changed, #payproc_PayoutToolInfoChanged{payout_tool_id = PayoutToolID, info = Info}},
-    Contract
-) ->
-    PayoutTool = pm_contract:get_payout_tool(PayoutToolID, Contract),
-    pm_contract:set_payout_tool(PayoutTool#domain_PayoutTool{payout_tool_info = Info}, Contract);
 update_contract({legal_agreement_bound, LegalAgreement}, Contract) ->
     Contract#domain_Contract{legal_agreement = LegalAgreement};
 update_contract({report_preferences_changed, ReportPreferences}, Contract) ->
@@ -416,19 +407,15 @@ update_shop({category_changed, Category}, Shop) ->
 update_shop({details_changed, Details}, Shop) ->
     Shop#domain_Shop{details = Details};
 update_shop(
-    {contract_changed, #payproc_ShopContractChanged{contract_id = ContractID, payout_tool_id = PayoutToolID}},
+    {contract_changed, #payproc_ShopContractChanged{contract_id = ContractID}},
     Shop
 ) ->
-    Shop#domain_Shop{contract_id = ContractID, payout_tool_id = PayoutToolID};
-update_shop({payout_tool_changed, PayoutToolID}, Shop) ->
-    Shop#domain_Shop{payout_tool_id = PayoutToolID};
+    Shop#domain_Shop{contract_id = ContractID};
 update_shop({location_changed, Location}, Shop) ->
     Shop#domain_Shop{location = Location};
 update_shop({proxy_changed, _}, Shop) ->
     % deprecated
     Shop;
-update_shop(?payout_schedule_changed(BusinessScheduleRef), Shop) ->
-    Shop#domain_Shop{payout_schedule = BusinessScheduleRef};
 update_shop({account_created, Account}, Shop) ->
     Shop#domain_Shop{account = Account};
 update_shop({turnover_limits_changed, TurnoverLimits}, Shop) ->
@@ -523,20 +510,6 @@ assert_contract_change_applicable(ID, ?adjustment_creation(AdjustmentID, _), Con
             ok;
         _ ->
             raise_invalid_changeset(?invalid_contract(ID, {contract_adjustment_already_exists, AdjustmentID}))
-    end;
-assert_contract_change_applicable(ID, ?payout_tool_creation(PayoutToolID, _), Contract) ->
-    case pm_contract:get_payout_tool(PayoutToolID, Contract) of
-        undefined ->
-            ok;
-        _ ->
-            raise_invalid_changeset(?invalid_contract(ID, {payout_tool_already_exists, PayoutToolID}))
-    end;
-assert_contract_change_applicable(ID, ?payout_tool_info_modification(PayoutToolID, _), Contract) ->
-    case pm_contract:get_payout_tool(PayoutToolID, Contract) of
-        undefined ->
-            raise_invalid_changeset(?invalid_contract(ID, {payout_tool_not_exists, PayoutToolID}));
-        _ ->
-            ok
     end;
 assert_contract_change_applicable(_, _, _) ->
     ok.

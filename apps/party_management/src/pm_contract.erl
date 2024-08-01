@@ -12,8 +12,6 @@
 
 -export([get_categories/3]).
 -export([get_adjustment/2]).
--export([get_payout_tool/2]).
--export([set_payout_tool/2]).
 
 -export([is_active/1]).
 -export([is_live/2]).
@@ -31,8 +29,6 @@
 -type adjustment_params() ::
     dmsl_payproc_thrift:'ContractAdjustmentParams'()
     | dmsl_claimmgmt_thrift:'ContractAdjustmentParams'().
--type payout_tool() :: dmsl_domain_thrift:'PayoutTool'().
--type payout_tool_id() :: dmsl_domain_thrift:'PayoutToolID'().
 -type category() :: dmsl_domain_thrift:'CategoryRef'().
 -type contract_template_ref() :: dmsl_domain_thrift:'ContractTemplateRef'().
 -type payment_inst_ref() :: dmsl_domain_thrift:'PaymentInstitutionRef'().
@@ -172,21 +168,6 @@ get_adjustment(AdjustmentID, #domain_Contract{adjustments = Adjustments}) ->
         false ->
             undefined
     end.
-
--spec get_payout_tool(payout_tool_id(), contract()) -> payout_tool() | undefined.
-get_payout_tool(PayoutToolID, #domain_Contract{payout_tools = PayoutTools}) ->
-    case lists:keysearch(PayoutToolID, #domain_PayoutTool.id, PayoutTools) of
-        {value, PayoutTool} ->
-            PayoutTool;
-        false ->
-            undefined
-    end.
-
--spec set_payout_tool(payout_tool(), contract()) -> contract().
-set_payout_tool(PayoutTool, Contract = #domain_Contract{payout_tools = PayoutTools}) ->
-    Contract#domain_Contract{
-        payout_tools = lists:keystore(PayoutTool#domain_PayoutTool.id, #domain_PayoutTool.id, PayoutTools, PayoutTool)
-    }.
 
 -spec is_active(contract()) -> boolean().
 is_active(#domain_Contract{status = {active, _}}) ->

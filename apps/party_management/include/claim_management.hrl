@@ -56,27 +56,6 @@
     {termination, #claimmgmt_ContractTermination{reason = Reason}}
 ).
 
--define(cm_payout_tool_modification(PayoutToolID, Mod),
-    {payout_tool_modification, #claimmgmt_PayoutToolModificationUnit{
-        payout_tool_id = PayoutToolID,
-        modification = Mod
-    }}
-).
-
--define(cm_payout_tool_creation(PayoutToolID, PayoutToolParams),
-    ?cm_payout_tool_modification(PayoutToolID, {creation, PayoutToolParams})
-).
-
--define(cm_payout_tool_info_modification(PayoutToolID, Info),
-    ?cm_payout_tool_modification(PayoutToolID, {info_modification, Info})
-).
-
--define(cm_payout_schedule_modification(BusinessScheduleRef),
-    {payout_schedule_modification, #claimmgmt_ScheduleModification{
-        schedule = BusinessScheduleRef
-    }}
-).
-
 -define(cm_cash_register_unit_creation(ID, Params),
     {creation, #claimmgmt_CashRegisterParams{
         cash_register_provider_id = ID,
@@ -115,10 +94,9 @@
     }}
 ).
 
--define(cm_shop_contract_modification(ContractID, PayoutToolID),
+-define(cm_shop_contract_modification(ContractID),
     {contract_modification, #claimmgmt_ShopContractModification{
-        contract_id = ContractID,
-        payout_tool_id = PayoutToolID
+        contract_id = ContractID
     }}
 ).
 
@@ -219,40 +197,6 @@
         {contract_terms_violated, #claimmgmt_ContractTermsViolated{
             contract_id = ContractID,
             terms = Terms
-        }}
-    )
-).
-
--define(cm_invalid_shop_payout_tool(ID, Reason),
-    ?cm_invalid_shop(ID, {payout_tool_invalid, Reason})
-).
-
--define(cm_invalid_shop_payout_tool_not_set_for_payouts(ID, Schedule),
-    ?cm_invalid_shop_payout_tool(
-        ID,
-        {not_set_for_payouts, #claimmgmt_PayoutToolNotSetForPayouts{
-            payout_schedule = Schedule
-        }}
-    )
-).
-
--define(cm_invalid_shop_payout_tool_currency_mismatch(ID, PayoutToolID, ShopAccountCurrency, PayoutToolCurrency),
-    ?cm_invalid_shop_payout_tool(
-        ID,
-        {currency_mismatch, #claimmgmt_PayoutToolCurrencyMismatch{
-            shop_account_currency = ShopAccountCurrency,
-            payout_tool_id = PayoutToolID,
-            payout_tool_currency = PayoutToolCurrency
-        }}
-    )
-).
-
--define(cm_invalid_shop_payout_tool_not_in_contract(ID, ContractID, PayoutToolID),
-    ?cm_invalid_shop_payout_tool(
-        ID,
-        {not_in_contract, #claimmgmt_PayoutToolNotInContract{
-            contract_id = ContractID,
-            payout_tool_id = PayoutToolID
         }}
     )
 ).

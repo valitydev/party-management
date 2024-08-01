@@ -229,36 +229,7 @@ handle_function_('ComputePaymentInstitution', Args, _Opts) ->
     {PaymentInstitutionRef, DomainRevision, Varset} = Args,
     PaymentInstitution = get_payment_institution(PaymentInstitutionRef, DomainRevision),
     VS = pm_varset:decode_varset(Varset),
-    pm_payment_institution:reduce_payment_institution(PaymentInstitution, VS, DomainRevision);
-%% Payouts adhocs
-
-handle_function_(
-    'ComputePayoutCashFlow',
-    {PartyID, #payproc_PayoutParams{id = ShopID, amount = Amount, timestamp = Timestamp} = PayoutParams},
-    _Opts
-) ->
-    _ = set_party_mgmt_meta(PartyID),
-    Party = checkout_party(PartyID, {timestamp, Timestamp}),
-    Shop = ensure_shop(pm_party:get_shop(ShopID, Party)),
-    Contract = pm_party:get_contract(Shop#domain_Shop.contract_id, Party),
-    Currency = Amount#domain_Cash.currency,
-    ok = pm_currency:validate_currency(Currency, Shop),
-    PayoutTool = get_payout_tool(Shop, Contract, PayoutParams),
-    VS = #{
-        party_id => PartyID,
-        shop_id => ShopID,
-        category => Shop#domain_Shop.category,
-        currency => Currency,
-        cost => Amount,
-        payout_method => pm_payout_tool:get_method(PayoutTool)
-    },
-    Revision = pm_domain:head(),
-    case pm_party:get_terms(Contract, Timestamp, Revision) of
-        #domain_TermSet{payouts = PayoutsTerms} when PayoutsTerms /= undefined ->
-            compute_payout_cash_flow(Amount, PayoutsTerms, Shop, Contract, VS, Revision);
-        #domain_TermSet{payouts = undefined} ->
-            throw(#payproc_OperationNotPermitted{})
-    end.
+    pm_payment_institution:reduce_payment_institution(PaymentInstitution, VS, DomainRevision).
 
 %%
 
@@ -271,16 +242,6 @@ call(PartyID, FunctionName, Args) ->
     ).
 
 %%
-
-get_payout_tool(_Shop, Contract, #payproc_PayoutParams{payout_tool_id = ToolID}) when ToolID =/= undefined ->
-    case pm_contract:get_payout_tool(ToolID, Contract) of
-        undefined ->
-            throw(#payproc_PayoutToolNotFound{});
-        PayoutTool ->
-            PayoutTool
-    end;
-get_payout_tool(Shop, Contract, _PayoutParams) ->
-    pm_contract:get_payout_tool(Shop#domain_Shop.payout_tool_id, Contract).
 
 assert_provider_reduced(#domain_Provider{terms = Terms}) ->
     assert_provider_terms_reduced(Terms).
@@ -358,37 +319,6 @@ get_payment_routing_ruleset(RuleSetRef, DomainRevision) ->
 get_default_contract_template(#domain_PaymentInstitution{default_contract_template = ContractSelector}, VS, Revision) ->
     ContractTemplateRef = pm_selector:reduce_to_value(ContractSelector, VS, Revision),
     pm_domain:get(Revision, {contract_template, ContractTemplateRef}).
-
-compute_payout_cash_flow(
-    Amount,
-    #domain_PayoutsServiceTerms{fees = CashFlowSelector},
-    Shop,
-    Contract,
-    VS,
-    Revision
-) ->
-    Cashflow = pm_selector:reduce_to_value(CashFlowSelector, VS, Revision),
-    CashFlowContext = #{operation_amount => Amount},
-    Currency = Amount#domain_Cash.currency,
-    AccountMap = collect_payout_account_map(Currency, Shop, Contract, VS, Revision),
-    pm_cashflow:finalize(Cashflow, CashFlowContext, AccountMap).
-
-collect_payout_account_map(
-    Currency,
-    #domain_Shop{account = ShopAccount},
-    #domain_Contract{payment_institution = PaymentInstitutionRef},
-    VS,
-    Revision
-) ->
-    PaymentInstitution = get_payment_institution(PaymentInstitutionRef, Revision),
-    SystemAccount = pm_payment_institution:get_system_account(Currency, VS, Revision, PaymentInstitution),
-    #{
-        {merchant, settlement} => ShopAccount#domain_ShopAccount.settlement,
-        {merchant, guarantee} => ShopAccount#domain_ShopAccount.guarantee,
-        {merchant, payout} => ShopAccount#domain_ShopAccount.payout,
-        {system, settlement} => SystemAccount#domain_SystemAccount.settlement,
-        {system, subagent} => SystemAccount#domain_SystemAccount.subagent
-    }.
 
 get_identification_level(#domain_Contract{contractor_id = undefined, contractor = Contractor}, _) ->
     %% TODO legacy, remove after migration

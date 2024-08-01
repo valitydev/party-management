@@ -148,25 +148,6 @@ assert_contract_modification_applicable(ID, ?cm_adjustment_creation(AdjustmentID
                 PartyChange
             ])
     end;
-assert_contract_modification_applicable(ID, ?cm_payout_tool_creation(PayoutToolID, _), Contract, PartyChange) ->
-    case pm_contract:get_payout_tool(PayoutToolID, Contract) of
-        undefined ->
-            ok;
-        _ ->
-            raise_invalid_changeset(?cm_invalid_contract(ID, {payout_tool_already_exists, PayoutToolID}), [PartyChange])
-    end;
-assert_contract_modification_applicable(
-    ID,
-    ?cm_payout_tool_info_modification(PayoutToolID, _),
-    Contract,
-    PartyChange
-) ->
-    case pm_contract:get_payout_tool(PayoutToolID, Contract) of
-        undefined ->
-            raise_invalid_changeset(?cm_invalid_contract(ID, {payout_tool_not_exists, PayoutToolID}), [PartyChange]);
-        _ ->
-            ok
-    end;
 assert_contract_modification_applicable(_, _, _, _) ->
     ok.
 

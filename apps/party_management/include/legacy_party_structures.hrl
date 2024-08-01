@@ -36,14 +36,6 @@
     {payproc_ContractParams, Contractor, TemplateRef, PaymentInstitutionRef}
 ).
 
--define(legacy_payout_tool_creation(ID, Params),
-    {payout_tool_modification, {payproc_PayoutToolModificationUnit, ID, {creation, Params}}}
-).
-
--define(legacy_payout_tool_params(Currency, PayoutToolInfo),
-    {payproc_PayoutToolParams, Currency, PayoutToolInfo}
-).
-
 -define(legacy_russian_legal_entity(
     RegisteredName,
     RegisteredNumber,
@@ -89,10 +81,6 @@
     {shop_modification, {payproc_ShopModificationUnit, ID, Modification}}
 ).
 
--define(legacy_schedule_modification(PayoutScheduleRef),
-    {payproc_ScheduleModification, PayoutScheduleRef}
-).
-
 -define(legacy_shop_effect(ID, Effect),
     {shop_effect, {payproc_ShopEffectUnit, ID, Effect}}
 ).
@@ -127,14 +115,6 @@
 ),
     {domain_Shop, ID, CreatedAt, Blocking, Suspension, Details, Location, Category, Account, ContractID, PayoutToolID,
         PayoutScheduleRef}
-).
-
--define(legacy_payout_schedule_ref(ID),
-    {domain_PayoutScheduleRef, ID}
-).
-
--define(legacy_schedule_changed(PayoutScheduleRef),
-    {payproc_ScheduleChanged, PayoutScheduleRef}
 ).
 
 -define(legacy_contract_effect(ID, Effect),
@@ -190,15 +170,6 @@
 ),
     {domain_Contract, ID, Contractor, PaymentInstitutionRef, CreatedAt, ValidSince, ValidUntil, Status, Terms,
         Adjustments, PayoutTools, LegalAgreement, ReportPreferences}
-).
-
--define(legacy_payout_tool(
-    ID,
-    CreatedAt,
-    Currency,
-    PayoutToolInfo
-),
-    {domain_PayoutTool, ID, CreatedAt, Currency, PayoutToolInfo}
 ).
 
 -define(legacy_legal_agreement(

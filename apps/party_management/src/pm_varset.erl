@@ -14,7 +14,6 @@
     currency => dmsl_domain_thrift:'CurrencyRef'(),
     cost => dmsl_domain_thrift:'Cash'(),
     payment_method => dmsl_domain_thrift:'PaymentMethodRef'(),
-    payout_method => dmsl_domain_thrift:'PayoutMethodRef'(),
     wallet_id => dmsl_domain_thrift:'WalletID'(),
     shop_id => dmsl_domain_thrift:'ShopID'(),
     identification_level => dmsl_domain_thrift:'ContractorIdentificationLevel'(),
@@ -34,7 +33,6 @@ encode_varset(Varset) ->
         currency = genlib_map:get(currency, Varset),
         amount = genlib_map:get(cost, Varset),
         payment_method = genlib_map:get(payment_method, Varset),
-        payout_method = genlib_map:get(payout_method, Varset),
         wallet_id = genlib_map:get(wallet_id, Varset),
         shop_id = genlib_map:get(shop_id, Varset),
         identification_level = genlib_map:get(identification_level, Varset),
@@ -53,7 +51,6 @@ decode_varset(#payproc_Varset{} = Varset, VS) ->
         currency => Varset#payproc_Varset.currency,
         cost => Varset#payproc_Varset.amount,
         payment_method => Varset#payproc_Varset.payment_method,
-        payout_method => Varset#payproc_Varset.payout_method,
         wallet_id => Varset#payproc_Varset.wallet_id,
         shop_id => Varset#payproc_Varset.shop_id,
         identification_level => Varset#payproc_Varset.identification_level,
@@ -67,7 +64,6 @@ decode_varset(#payproc_Varset{} = Varset, VS) ->
 decode_varset(#payproc_ComputeShopTermsVarset{} = Varset, VS) ->
     genlib_map:compact(VS#{
         cost => Varset#payproc_ComputeShopTermsVarset.amount,
-        payout_method => Varset#payproc_ComputeShopTermsVarset.payout_method,
         payment_tool => Varset#payproc_ComputeShopTermsVarset.payment_tool
     });
 decode_varset(#payproc_ComputeContractTermsVarset{} = Varset, VS) ->
@@ -75,7 +71,6 @@ decode_varset(#payproc_ComputeContractTermsVarset{} = Varset, VS) ->
         currency => Varset#payproc_ComputeContractTermsVarset.currency,
         cost => Varset#payproc_ComputeContractTermsVarset.amount,
         shop_id => Varset#payproc_ComputeContractTermsVarset.shop_id,
-        payout_method => Varset#payproc_ComputeContractTermsVarset.payout_method,
         payment_tool => Varset#payproc_ComputeContractTermsVarset.payment_tool,
         wallet_id => Varset#payproc_ComputeContractTermsVarset.wallet_id,
         bin_data => Varset#payproc_ComputeContractTermsVarset.bin_data
@@ -108,7 +103,6 @@ encode_decode_test() ->
                     payment_system = #domain_PaymentSystemRef{id = <<"visa">>}
                 }}
         },
-        payout_method => #domain_PayoutMethodRef{id = russian_bank_account},
         wallet_id => <<"wallet_id">>,
         shop_id => <<"shop_id">>,
         identification_level => full,

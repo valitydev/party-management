@@ -30,8 +30,6 @@
 -export([contract_already_exists/1]).
 -export([contract_already_terminated/1]).
 -export([shop_already_exists/1]).
--export([invalid_shop_payout_tool_not_in_contract/1]).
--export([invalid_shop_payout_tool_currency_mismatch/1]).
 -export([wallet_account_creation/1]).
 -export([additional_info_modification/1]).
 
@@ -42,11 +40,7 @@
 -define(REAL_CONTRACTOR_ID2, <<"CONTRACTOR3">>).
 -define(REAL_CONTRACT_ID1, <<"CONTRACT2">>).
 -define(REAL_CONTRACT_ID2, <<"CONTRACT3">>).
--define(REAL_PAYOUT_TOOL_ID1, <<"PAYOUTTOOL2">>).
--define(REAL_PAYOUT_TOOL_ID2, <<"PAYOUTTOOL3">>).
--define(REAL_PAYOUT_TOOL_ID4, <<"PAYOUTTOOL4">>).
 -define(REAL_SHOP_ID, <<"SHOP2">>).
--define(REAL_SHOP_ID4, <<"SHOP4">>).
 
 %%% CT
 
@@ -72,8 +66,6 @@ all() ->
         contract_already_exists,
         contract_already_terminated,
         shop_already_exists,
-        invalid_shop_payout_tool_not_in_contract,
-        invalid_shop_payout_tool_currency_mismatch,
         wallet_account_creation,
         additional_info_modification
     ].
@@ -157,45 +149,32 @@ contractor_modification(C) ->
 -spec contract_one_creation(config()) -> _.
 contract_one_creation(C) ->
     ContractParams = make_contract_params(?REAL_CONTRACTOR_ID1),
-    PayoutToolParams = make_payout_tool_params(),
     ContractID = ?REAL_CONTRACT_ID1,
-    PayoutToolID1 = ?REAL_PAYOUT_TOOL_ID1,
-    PayoutToolID2 = ?REAL_PAYOUT_TOOL_ID2,
     Modifications = [
-        ?cm_contract_creation(ContractID, ContractParams),
-        ?cm_contract_modification(ContractID, ?cm_payout_tool_creation(PayoutToolID1, PayoutToolParams)),
-        ?cm_contract_modification(ContractID, ?cm_payout_tool_creation(PayoutToolID2, PayoutToolParams))
+        ?cm_contract_creation(ContractID, ContractParams)
     ],
     PartyID = cfg(party_id, C),
     Claim = claim(Modifications, PartyID),
     ok = accept_claim(Claim, C),
     ok = commit_claim(Claim, C),
     {ok, #domain_Contract{
-        id = ContractID,
-        payout_tools = PayoutTools
-    }} = get_contract(PartyID, ContractID, C),
-    true = lists:keymember(PayoutToolID1, #domain_PayoutTool.id, PayoutTools),
-    true = lists:keymember(PayoutToolID2, #domain_PayoutTool.id, PayoutTools).
+        id = ContractID
+    }} = get_contract(PartyID, ContractID, C).
 
 -spec contract_two_creation(config()) -> _.
 contract_two_creation(C) ->
     ContractParams = make_contract_params(?REAL_CONTRACTOR_ID1),
-    PayoutToolParams = make_payout_tool_params(),
     ContractID = ?REAL_CONTRACT_ID2,
-    PayoutToolID1 = ?REAL_PAYOUT_TOOL_ID1,
     Modifications = [
-        ?cm_contract_creation(ContractID, ContractParams),
-        ?cm_contract_modification(ContractID, ?cm_payout_tool_creation(PayoutToolID1, PayoutToolParams))
+        ?cm_contract_creation(ContractID, ContractParams)
     ],
     PartyID = cfg(party_id, C),
     Claim = claim(Modifications, PartyID),
     ok = accept_claim(Claim, C),
     ok = commit_claim(Claim, C),
     {ok, #domain_Contract{
-        id = ContractID,
-        payout_tools = PayoutTools
-    }} = get_contract(PartyID, ContractID, C),
-    true = lists:keymember(PayoutToolID1, #domain_PayoutTool.id, PayoutTools).
+        id = ContractID
+    }} = get_contract(PartyID, ContractID, C).
 
 -spec contract_contractor_modification(config()) -> _.
 contract_contractor_modification(C) ->
@@ -284,20 +263,15 @@ shop_creation(C) ->
     Location = {url, <<"https://example.com">>},
     ContractID = ?REAL_CONTRACT_ID1,
     ShopID = ?REAL_SHOP_ID,
-    PayoutToolID1 = ?REAL_PAYOUT_TOOL_ID1,
     ShopParams = #claimmgmt_ShopParams{
         category = Category,
         location = Location,
         details = Details,
-        contract_id = ContractID,
-        payout_tool_id = PayoutToolID1
+        contract_id = ContractID
     },
-    Schedule = ?bussched(1),
-    ScheduleParams = #claimmgmt_ScheduleModification{schedule = Schedule},
     Modifications = [
         ?cm_shop_creation(ShopID, ShopParams),
-        ?cm_shop_account_creation(ShopID, ?cur(<<"RUB">>)),
-        ?cm_shop_modification(ShopID, {payout_schedule_modification, ScheduleParams})
+        ?cm_shop_account_creation(ShopID, ?cur(<<"RUB">>))
     ],
     Claim = claim(Modifications, PartyID),
     ok = accept_claim(Claim, C),
@@ -308,9 +282,7 @@ shop_creation(C) ->
         location = Location,
         category = Category,
         account = #domain_ShopAccount{currency = ?cur(<<"RUB">>)},
-        contract_id = ContractID,
-        payout_tool_id = PayoutToolID1,
-        payout_schedule = Schedule
+        contract_id = ContractID
     }} = get_shop(PartyID, ShopID, C).
 
 -spec shop_complex_modification(config()) -> _.
@@ -323,9 +295,6 @@ shop_complex_modification(C) ->
         description = <<"Updated shop description.">>
     },
     NewLocation = {url, <<"http://localhost">>},
-    PayoutToolID2 = ?REAL_PAYOUT_TOOL_ID2,
-    Schedule = ?bussched(2),
-    ScheduleParams = #claimmgmt_ScheduleModification{schedule = Schedule},
     CashRegisterModificationUnit = #claimmgmt_CashRegisterModificationUnit{
         id = <<"1">>,
         modification = ?cm_cash_register_unit_creation(1, #{})
@@ -342,8 +311,6 @@ shop_complex_modification(C) ->
         ?cm_shop_modification(ShopID, {category_modification, NewCategory}),
         ?cm_shop_modification(ShopID, {details_modification, NewDetails}),
         ?cm_shop_modification(ShopID, {location_modification, NewLocation}),
-        ?cm_shop_modification(ShopID, {payout_tool_modification, PayoutToolID2}),
-        ?cm_shop_modification(ShopID, {payout_schedule_modification, ScheduleParams}),
         ?cm_shop_modification(ShopID, {cash_register_modification_unit, CashRegisterModificationUnit}),
         ?cm_shop_modification(ShopID, {turnover_limits_modification, TurnoverLimits})
     ],
@@ -354,8 +321,6 @@ shop_complex_modification(C) ->
         category = NewCategory,
         details = NewDetails,
         location = NewLocation,
-        payout_tool_id = PayoutToolID2,
-        payout_schedule = Schedule,
         turnover_limits = TurnoverLimits
     }} = get_shop(PartyID, ShopID, C).
 
@@ -377,90 +342,20 @@ invalid_cash_register_modification(C) ->
     {exception, ?cm_invalid_party_changeset(?cm_invalid_shop_not_exists(AnotherShopID), [{party_modification, Mod}])} =
         accept_claim(Claim, C).
 
--spec invalid_shop_payout_tool_not_in_contract(config()) -> _.
-invalid_shop_payout_tool_not_in_contract(C) ->
-    PartyID = cfg(party_id, C),
-    Details = #domain_ShopDetails{
-        name = <<"SOME SHOP NAME">>,
-        description = <<"Very meaningfull description of the shop.">>
-    },
-    Category = ?cat(2),
-    Location = {url, <<"https://example.com">>},
-    ContractID = ?REAL_CONTRACT_ID1,
-    ShopID = ?REAL_SHOP_ID4,
-    ShopParams = #claimmgmt_ShopParams{
-        category = Category,
-        location = Location,
-        details = Details,
-        contract_id = ContractID,
-        payout_tool_id = ?REAL_PAYOUT_TOOL_ID1
-    },
-    Schedule = ?bussched(1),
-    ScheduleParams = #claimmgmt_ScheduleModification{schedule = Schedule},
-    Modifications = [
-        ?cm_shop_creation(ShopID, ShopParams),
-        ?cm_shop_account_creation(ShopID, ?cur(<<"USD">>)),
-        ?cm_shop_modification(ShopID, {payout_schedule_modification, ScheduleParams})
-    ],
-    Claim = claim(Modifications, PartyID),
-    {exception,
-        ?cm_invalid_party_changeset(
-            ?cm_invalid_shop_payout_tool_currency_mismatch(
-                ShopID, ?REAL_PAYOUT_TOOL_ID1, ?cur(<<"USD">>), ?cur(<<"RUB">>)
-            ),
-            _
-        )} =
-        accept_claim(Claim, C).
-
--spec invalid_shop_payout_tool_currency_mismatch(config()) -> _.
-invalid_shop_payout_tool_currency_mismatch(C) ->
-    PartyID = cfg(party_id, C),
-    Details = #domain_ShopDetails{
-        name = <<"SOME SHOP NAME">>,
-        description = <<"Very meaningfull description of the shop.">>
-    },
-    Category = ?cat(2),
-    Location = {url, <<"https://example.com">>},
-    ContractID = ?REAL_CONTRACT_ID1,
-    ShopID = ?REAL_SHOP_ID4,
-    ShopParams = #claimmgmt_ShopParams{
-        category = Category,
-        location = Location,
-        details = Details,
-        contract_id = ContractID,
-        payout_tool_id = ?REAL_PAYOUT_TOOL_ID4
-    },
-    Schedule = ?bussched(1),
-    ScheduleParams = #claimmgmt_ScheduleModification{schedule = Schedule},
-    Modifications = [
-        ?cm_shop_creation(ShopID, ShopParams),
-        ?cm_shop_account_creation(ShopID, ?cur(<<"RUB">>)),
-        ?cm_shop_modification(ShopID, {payout_schedule_modification, ScheduleParams})
-    ],
-    Claim = claim(Modifications, PartyID),
-    {exception,
-        ?cm_invalid_party_changeset(
-            ?cm_invalid_shop_payout_tool_not_in_contract(ShopID, ContractID, ?REAL_PAYOUT_TOOL_ID4), _
-        )} =
-        accept_claim(Claim, C).
-
 -spec shop_contract_modification(config()) -> _.
 shop_contract_modification(C) ->
     PartyID = cfg(party_id, C),
     ShopID = ?REAL_SHOP_ID,
     ContractID = ?REAL_CONTRACT_ID2,
-    PayoutToolID = ?REAL_PAYOUT_TOOL_ID1,
     ShopContractParams = #claimmgmt_ShopContractModification{
-        contract_id = ContractID,
-        payout_tool_id = PayoutToolID
+        contract_id = ContractID
     },
     Modifications = [?cm_shop_modification(ShopID, {contract_modification, ShopContractParams})],
     Claim = claim(Modifications, PartyID),
     ok = accept_claim(Claim, C),
     ok = commit_claim(Claim, C),
     {ok, #domain_Shop{
-        contract_id = ContractID,
-        payout_tool_id = PayoutToolID
+        contract_id = ContractID
     }} = get_shop(PartyID, ShopID, C).
 
 -spec contract_termination(config()) -> _.
@@ -524,16 +419,13 @@ shop_already_exists(C) ->
         category = ?cat(2),
         location = {url, <<"https://example.com">>},
         details = Details,
-        contract_id = ?REAL_CONTRACT_ID1,
-        payout_tool_id = ?REAL_PAYOUT_TOOL_ID1
+        contract_id = ?REAL_CONTRACT_ID1
     },
-    ScheduleParams = #claimmgmt_ScheduleModification{schedule = ?bussched(1)},
     Mod = ?cm_shop_modification(ShopID, {creation, ShopParams}),
 
     Modifications = [
         Mod,
-        ?cm_shop_account_creation(ShopID, ?cur(<<"RUB">>)),
-        ?cm_shop_modification(ShopID, {payout_schedule_modification, ScheduleParams})
+        ?cm_shop_account_creation(ShopID, ?cur(<<"RUB">>))
     ],
     Claim = claim(Modifications, PartyID),
     {exception, ?cm_invalid_party_changeset(?cm_invalid_shop_already_exists(ShopID), [{party_modification, Mod}])} =
@@ -662,18 +554,6 @@ make_contract_params(ContractorID, TemplateRef, PaymentInstitutionRef) ->
         payment_institution = PaymentInstitutionRef
     }.
 
-make_payout_tool_params() ->
-    #claimmgmt_PayoutToolParams{
-        currency = ?cur(<<"RUB">>),
-        tool_info =
-            {russian_bank_account, #domain_RussianBankAccount{
-                account = <<"4276300010908312893">>,
-                bank_name = <<"SomeBank">>,
-                bank_post_account = <<"123129876">>,
-                bank_bik = <<"66642666">>
-            }}
-    }.
-
 -spec construct_domain_fixture() -> [pm_domain:object()].
 construct_domain_fixture() ->
     TestTermSet = #domain_TermSet{
@@ -719,55 +599,6 @@ construct_domain_fixture() ->
                     )
                 ]}
         },
-        payouts = #domain_PayoutsServiceTerms{
-            payout_methods =
-                {decisions, [
-                    #domain_PayoutMethodDecision{
-                        if_ =
-                            {condition,
-                                {payment_tool,
-                                    {bank_card, #domain_BankCardCondition{
-                                        definition = {issuer_bank_is, ?bank(1)}
-                                    }}}},
-                        then_ =
-                            {value, ordsets:from_list([?pomt(russian_bank_account), ?pomt(international_bank_account)])}
-                    },
-                    #domain_PayoutMethodDecision{
-                        if_ =
-                            {condition,
-                                {payment_tool,
-                                    {bank_card, #domain_BankCardCondition{
-                                        definition = {empty_cvv_is, true}
-                                    }}}},
-                        then_ = {value, ordsets:from_list([])}
-                    },
-                    #domain_PayoutMethodDecision{
-                        if_ = {condition, {payment_tool, {bank_card, #domain_BankCardCondition{}}}},
-                        then_ = {value, ordsets:from_list([?pomt(russian_bank_account)])}
-                    },
-                    #domain_PayoutMethodDecision{
-                        if_ = {condition, {payment_tool, {payment_terminal, #domain_PaymentTerminalCondition{}}}},
-                        then_ = {value, ordsets:from_list([?pomt(international_bank_account)])}
-                    },
-                    #domain_PayoutMethodDecision{
-                        if_ = {constant, true},
-                        then_ = {value, ordsets:from_list([])}
-                    }
-                ]},
-            fees =
-                {value, [
-                    ?cfpost(
-                        {merchant, settlement},
-                        {merchant, payout},
-                        ?share(750, 1000, operation_amount)
-                    ),
-                    ?cfpost(
-                        {merchant, settlement},
-                        {system, settlement},
-                        ?share(250, 1000, operation_amount)
-                    )
-                ]}
-        },
         wallets = #domain_WalletServiceTerms{
             currencies = {value, ordsets:from_list([?cur(<<"RUB">>)])}
         }
@@ -785,9 +616,6 @@ construct_domain_fixture() ->
         pm_ct_fixture:construct_payment_method(?pmt(bank_card, ?bank_card(<<"maestro">>))),
         pm_ct_fixture:construct_payment_method(?pmt(payment_terminal, ?pmt_srv(<<"euroset">>))),
         pm_ct_fixture:construct_payment_method(?pmt(bank_card, ?bank_card_no_cvv(<<"visa">>))),
-
-        pm_ct_fixture:construct_payout_method(?pomt(russian_bank_account)),
-        pm_ct_fixture:construct_payout_method(?pomt(international_bank_account)),
 
         pm_ct_fixture:construct_proxy(?prx(1), <<"Dummy proxy">>),
         pm_ct_fixture:construct_inspector(?insp(1), <<"Dummy Inspector">>, ?prx(1)),
