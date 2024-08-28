@@ -82,26 +82,12 @@
     }}
 ).
 
--define(payout_tool_creation(ID, Params),
-    {payout_tool_modification, #payproc_PayoutToolModificationUnit{
-        payout_tool_id = ID,
-        modification = {creation, Params}
-    }}
-).
-
--define(payout_tool_info_modification(ID, Info),
-    {payout_tool_modification, #payproc_PayoutToolModificationUnit{
-        payout_tool_id = ID,
-        modification = {info_modification, Info}
-    }}
-).
-
 -define(shop_modification(ID, Modification),
     {shop_modification, #payproc_ShopModificationUnit{id = ID, modification = Modification}}
 ).
 
--define(shop_contract_modification(ContractID, PayoutToolID),
-    {contract_modification, #payproc_ShopContractModification{contract_id = ContractID, payout_tool_id = PayoutToolID}}
+-define(shop_contract_modification(ContractID),
+    {contract_modification, #payproc_ShopContractModification{contract_id = ContractID}}
 ).
 
 -define(shop_account_creation_params(CurrencyRef),
@@ -114,20 +100,12 @@
     {proxy_modification, #payproc_ProxyModification{proxy = Proxy}}
 ).
 
--define(payout_schedule_modification(BusinessScheduleRef),
-    {payout_schedule_modification, #payproc_ScheduleModification{schedule = BusinessScheduleRef}}
-).
-
 -define(contract_effect(ID, Effect),
     {contract_effect, #payproc_ContractEffectUnit{contract_id = ID, effect = Effect}}
 ).
 
 -define(shop_effect(ID, Effect),
     {shop_effect, #payproc_ShopEffectUnit{shop_id = ID, effect = Effect}}
-).
-
--define(payout_schedule_changed(BusinessScheduleRef),
-    {payout_schedule_changed, #payproc_ScheduleChanged{schedule = BusinessScheduleRef}}
 ).
 
 -define(wallet_modification(ID, Modification),

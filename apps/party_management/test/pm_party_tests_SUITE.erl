@@ -83,16 +83,12 @@
 -export([contract_expiration/1]).
 -export([contract_legal_agreement_binding/1]).
 -export([contract_report_preferences_modification/1]).
--export([contract_payout_tool_creation/1]).
--export([contract_payout_tool_modification/1]).
 -export([contract_adjustment_creation/1]).
 -export([contract_adjustment_expiration/1]).
 -export([contract_w2w_terms/1]).
 
 -export([compute_payment_institution_terms/1]).
 -export([compute_payment_institution/1]).
--export([compute_payout_cash_flow/1]).
--export([compute_payout_cash_flow_payout_tool/1]).
 
 -export([contractor_creation/1]).
 -export([contractor_modification/1]).
@@ -206,8 +202,6 @@ groups() ->
             contract_report_preferences_modification,
             contract_adjustment_creation,
             contract_adjustment_expiration,
-            contract_payout_tool_creation,
-            contract_payout_tool_modification,
             compute_payment_institution_terms,
             compute_payment_institution,
             contract_w2w_terms
@@ -223,8 +217,6 @@ groups() ->
             shop_terms_retrieval,
             shop_already_exists,
             shop_update,
-            compute_payout_cash_flow,
-            compute_payout_cash_flow_payout_tool,
             {group, shop_blocking_suspension}
         ]},
         {shop_blocking_suspension, [sequence], [
@@ -492,14 +484,10 @@ end_per_testcase(_Name, _C) ->
 -spec contract_expiration(config()) -> _ | no_return().
 -spec contract_legal_agreement_binding(config()) -> _ | no_return().
 -spec contract_report_preferences_modification(config()) -> _ | no_return().
--spec contract_payout_tool_creation(config()) -> _ | no_return().
--spec contract_payout_tool_modification(config()) -> _ | no_return().
 -spec contract_adjustment_creation(config()) -> _ | no_return().
 -spec contract_adjustment_expiration(config()) -> _ | no_return().
 -spec compute_payment_institution_terms(config()) -> _ | no_return().
 -spec compute_payment_institution(config()) -> _ | no_return().
--spec compute_payout_cash_flow(config()) -> _ | no_return().
--spec compute_payout_cash_flow_payout_tool(config()) -> _ | no_return().
 -spec contract_w2w_terms(config()) -> _ | no_return().
 -spec contractor_creation(config()) -> _ | no_return().
 -spec contractor_modification(config()) -> _ | no_return().
@@ -608,13 +596,10 @@ party_get_revision(C) ->
 
 create_change_set(ID) ->
     ContractParams = make_contract_params(),
-    PayoutToolParams = pm_ct_helper:make_battle_ready_payout_tool_params(),
     BinaryID = erlang:integer_to_binary(ID),
     ContractID = <<?REAL_CONTRACT_ID/binary, BinaryID/binary>>,
-    PayoutToolID = <<"1">>,
     [
-        ?contract_modification(ContractID, {creation, ContractParams}),
-        ?contract_modification(ContractID, ?payout_tool_creation(PayoutToolID, PayoutToolParams))
+        ?contract_modification(ContractID, {creation, ContractParams})
     ].
 
 contract_not_found(C) ->
@@ -623,17 +608,13 @@ contract_not_found(C) ->
 contract_creation(C) ->
     Client = cfg(client, C),
     ContractParams = make_contract_params(),
-    PayoutToolParams = pm_ct_helper:make_battle_ready_payout_tool_params(),
     ContractID = ?REAL_CONTRACT_ID,
-    PayoutToolID = <<"1">>,
     Changeset = [
-        ?contract_modification(ContractID, {creation, ContractParams}),
-        ?contract_modification(ContractID, ?payout_tool_creation(PayoutToolID, PayoutToolParams))
+        ?contract_modification(ContractID, {creation, ContractParams})
     ],
     Claim = assert_claim_pending(pm_client_party:create_claim(Changeset, Client), Client),
     ok = accept_claim(Claim, Client),
-    #domain_Contract{id = ContractID, payout_tools = PayoutTools} = pm_client_party:get_contract(ContractID, Client),
-    true = lists:keymember(PayoutToolID, #domain_PayoutTool.id, PayoutTools).
+    #domain_Contract{id = ContractID} = pm_client_party:get_contract(ContractID, Client).
 
 contract_terms_retrieval(C) ->
     Client = cfg(client, C),
@@ -718,11 +699,9 @@ contract_already_terminated(C) ->
 contract_expiration(C) ->
     Client = cfg(client, C),
     ContractParams = make_contract_params(?tmpl(3)),
-    PayoutToolParams = pm_ct_helper:make_battle_ready_payout_tool_params(),
     ContractID = <<"CONTRACT_EXPIRED">>,
     Changeset = [
-        ?contract_modification(ContractID, {creation, ContractParams}),
-        ?contract_modification(ContractID, ?payout_tool_creation(<<"1">>, PayoutToolParams))
+        ?contract_modification(ContractID, {creation, ContractParams})
     ],
     Claim = assert_claim_pending(pm_client_party:create_claim(Changeset, Client), Client),
     ok = accept_claim(Claim, Client),
@@ -771,88 +750,6 @@ contract_report_preferences_modification(C) ->
         id = ContractID,
         report_preferences = Pref2
     } = pm_client_party:get_contract(ContractID, Client).
-
-contract_payout_tool_creation(C) ->
-    Client = cfg(client, C),
-    ContractID = ?REAL_CONTRACT_ID,
-    PayoutToolID1 = <<"2">>,
-    PayoutToolParams1 = #payproc_PayoutToolParams{
-        currency = ?cur(<<"RUB">>),
-        tool_info =
-            {russian_bank_account, #domain_RussianBankAccount{
-                account = <<"4276300010908312893">>,
-                bank_name = <<"SomeBank">>,
-                bank_post_account = <<"123129876">>,
-                bank_bik = <<"66642666">>
-            }}
-    },
-    PayoutToolID2 = <<"3">>,
-    PayoutToolParams2 = #payproc_PayoutToolParams{
-        currency = ?cur(<<"USD">>),
-        tool_info =
-            {international_bank_account, #domain_InternationalBankAccount{
-                bank = #domain_InternationalBankDetails{
-                    name = <<"SomeBank">>,
-                    address = <<"Bahamas">>,
-                    bic = <<"66642666">>
-                },
-                iban = <<"DC6664266612312312">>
-            }}
-    },
-    PayoutToolID3 = <<"4">>,
-    PayoutToolParams3 = #payproc_PayoutToolParams{
-        currency = ?cur(<<"USD">>),
-        tool_info =
-            {wallet_info, #domain_WalletInfo{
-                wallet_id = <<"123">>
-            }}
-    },
-    Changeset = [
-        ?contract_modification(ContractID, ?payout_tool_creation(PayoutToolID1, PayoutToolParams1)),
-        ?contract_modification(ContractID, ?payout_tool_creation(PayoutToolID2, PayoutToolParams2)),
-        ?contract_modification(ContractID, ?payout_tool_creation(PayoutToolID3, PayoutToolParams3))
-    ],
-    Claim = assert_claim_pending(pm_client_party:create_claim(Changeset, Client), Client),
-    ok = accept_claim(Claim, Client),
-    #domain_Contract{
-        id = ContractID,
-        payout_tools = PayoutTools
-    } = pm_client_party:get_contract(ContractID, Client),
-    true = lists:keymember(PayoutToolID1, #domain_PayoutTool.id, PayoutTools),
-    true = lists:keymember(PayoutToolID2, #domain_PayoutTool.id, PayoutTools),
-    true = lists:keymember(PayoutToolID3, #domain_PayoutTool.id, PayoutTools).
-
-contract_payout_tool_modification(C) ->
-    Client = cfg(client, C),
-    ContractID = ?REAL_CONTRACT_ID,
-    PayoutToolID = <<"3">>,
-    ToolInfo =
-        {international_bank_account, #domain_InternationalBankAccount{
-            number = <<"123456789">>,
-            bank = #domain_InternationalBankDetails{
-                name = <<"ABetterBank">>,
-                address = <<"Burkina Faso">>,
-                bic = <<"BCAOBFBFBOB">>
-            },
-            correspondent_account = #domain_InternationalBankAccount{
-                number = <<"1111222233334444">>
-            },
-            iban = <<"BF42BF0840101300463574000390">>
-        }},
-    Changeset = [
-        ?contract_modification(ContractID, ?payout_tool_info_modification(PayoutToolID, ToolInfo))
-    ],
-    Claim = assert_claim_pending(pm_client_party:create_claim(Changeset, Client), Client),
-    ok = accept_claim(Claim, Client),
-    #domain_Contract{
-        id = ContractID,
-        payout_tools = PayoutTools
-    } = pm_client_party:get_contract(ContractID, Client),
-    #domain_PayoutTool{payout_tool_info = ToolInfo} = lists:keyfind(
-        PayoutToolID,
-        #domain_PayoutTool.id,
-        PayoutTools
-    ).
 
 contract_adjustment_creation(C) ->
     Client = cfg(client, C),
@@ -953,22 +850,22 @@ check_all_payment_methods(C) ->
     TermsFun = fun(Type, Object) ->
         ?assertMatch(
             #domain_TermSet{
-                payouts = #domain_PayoutsServiceTerms{
-                    payout_methods =
+                payments = #domain_PaymentsServiceTerms{
+                    payment_methods =
                         {value, [_]}
                 }
             },
             pm_client_party:compute_payment_institution_terms(
-                ?pinst(2),
+                ?pinst(5),
                 #payproc_Varset{payment_method = ?pmt(Type, Object)},
                 Client
             )
         ),
         ok
     end,
-    #domain_TermSet{payouts = #domain_PayoutsServiceTerms{payout_methods = {value, []}}} =
+    #domain_TermSet{payments = #domain_PaymentsServiceTerms{payment_methods = {value, []}}} =
         pm_client_party:compute_payment_institution_terms(
-            ?pinst(2),
+            ?pinst(5),
             #payproc_Varset{payment_method = ?pmt(digital_wallet, ?pmt_srv(<<"wrong-ref">>))},
             Client
         ),
@@ -981,50 +878,6 @@ check_all_payment_methods(C) ->
     TermsFun(bank_card, ?token_bank_card(<<"visa">>, <<"applepay">>)),
     TermsFun(bank_card, ?bank_card_no_cvv(<<"visa">>)),
     TermsFun(generic, ?gnrc(?pmt_srv(<<"generic">>))).
-
-compute_payout_cash_flow(C) ->
-    Client = cfg(client, C),
-    Params = #payproc_PayoutParams{
-        id = ?REAL_SHOP_ID,
-        amount = #domain_Cash{amount = 10000, currency = ?cur(<<"RUB">>)},
-        timestamp = pm_datetime:format_now()
-    },
-    [
-        #domain_FinalCashFlowPosting{
-            source = #domain_FinalCashFlowAccount{account_type = {merchant, settlement}},
-            destination = #domain_FinalCashFlowAccount{account_type = {merchant, payout}},
-            volume = #domain_Cash{amount = 7500, currency = ?cur(<<"RUB">>)}
-        },
-        #domain_FinalCashFlowPosting{
-            source = #domain_FinalCashFlowAccount{account_type = {merchant, settlement}},
-            destination = #domain_FinalCashFlowAccount{account_type = {system, settlement}},
-            volume = #domain_Cash{amount = 2500, currency = ?cur(<<"RUB">>)}
-        }
-    ] = pm_client_party:compute_payout_cash_flow(Params, Client).
-
-compute_payout_cash_flow_payout_tool(C) ->
-    Client = cfg(client, C),
-    Params = #payproc_PayoutParams{
-        id = ?REAL_SHOP_ID,
-        amount = #domain_Cash{amount = 10000, currency = ?cur(<<"RUB">>)},
-        timestamp = pm_datetime:format_now(),
-        payout_tool_id = <<"1">>
-    },
-    [
-        #domain_FinalCashFlowPosting{
-            source = #domain_FinalCashFlowAccount{account_type = {merchant, settlement}},
-            destination = #domain_FinalCashFlowAccount{account_type = {merchant, payout}},
-            volume = #domain_Cash{amount = 7500, currency = ?cur(<<"RUB">>)}
-        },
-        #domain_FinalCashFlowPosting{
-            source = #domain_FinalCashFlowAccount{account_type = {merchant, settlement}},
-            destination = #domain_FinalCashFlowAccount{account_type = {system, settlement}},
-            volume = #domain_Cash{amount = 2500, currency = ?cur(<<"RUB">>)}
-        }
-    ] = pm_client_party:compute_payout_cash_flow(Params, Client),
-    {exception, #payproc_PayoutToolNotFound{}} = pm_client_party:compute_payout_cash_flow(
-        Params#payproc_PayoutParams{payout_tool_id = <<"Nope">>}, Client
-    ).
 
 contract_w2w_terms(C) ->
     Client = cfg(client, C),
@@ -1103,8 +956,7 @@ shop_creation(C) ->
         category = ?cat(2),
         location = {url, <<"https://somename.somedomain/p/123?redirect=1">>},
         details = Details,
-        contract_id = ContractID,
-        payout_tool_id = pm_ct_helper:get_first_payout_tool_id(ContractID, Client)
+        contract_id = ContractID
     },
     ShopAccountParams = #payproc_ShopAccountParams{currency = ?cur(<<"RUB">>)},
     Changeset = [
@@ -1162,8 +1014,7 @@ shop_already_exists(C) ->
         category = ?cat(2),
         location = {url, <<"https://s0mename.s0med0main">>},
         details = Details,
-        contract_id = ContractID,
-        payout_tool_id = pm_ct_helper:get_first_payout_tool_id(ContractID, Client)
+        contract_id = ContractID
     },
     Changeset = [?shop_modification(ShopID, {creation, Params})],
     ?invalid_changeset(?invalid_shop(ShopID, {already_exists, _})) = pm_client_party:create_claim(Changeset, Client).
@@ -1183,21 +1034,17 @@ shop_update(C) ->
     ok = accept_claim(Claim2, Client),
     #domain_Shop{location = Location, details = Details} = pm_client_party:get_shop(ShopID, Client),
 
-    PayoutToolParams = pm_ct_helper:make_battle_ready_payout_tool_params(),
     ContractID = <<"CONTRACT_IN_DIFFERENT_PAYMENT_INST">>,
-    PayoutToolID = <<"1">>,
     Changeset3 = [
         ?contract_modification(ContractID, {creation, make_contract_params(?tmpl(2), ?pinst(3))}),
-        ?contract_modification(ContractID, ?payout_tool_creation(PayoutToolID, PayoutToolParams)),
-        ?shop_modification(ShopID, ?shop_contract_modification(ContractID, PayoutToolID))
+        ?shop_modification(ShopID, ?shop_contract_modification(ContractID))
     ],
     Claim3 = assert_claim_pending(pm_client_party:create_claim(Changeset3, Client), Client),
     ok = accept_claim(Claim3, Client),
     #domain_Shop{
         location = Location,
         details = Details,
-        contract_id = ContractID,
-        payout_tool_id = PayoutToolID
+        contract_id = ContractID
     } = pm_client_party:get_shop(ShopID, Client).
 
 shop_update_before_confirm(C) ->
@@ -1207,8 +1054,7 @@ shop_update_before_confirm(C) ->
     Params = #payproc_ShopParams{
         location = {url, <<"">>},
         details = pm_ct_helper:make_shop_details(<<"THRIFT SHOP">>, <<"Hot. Fancy. Almost free.">>),
-        contract_id = ContractID,
-        payout_tool_id = pm_ct_helper:get_first_payout_tool_id(ContractID, Client)
+        contract_id = ContractID
     },
     Changeset1 = [?shop_modification(ShopID, {creation, Params})],
     Claim0 = assert_claim_pending(pm_client_party:create_claim(Changeset1, Client), Client),
@@ -1232,10 +1078,8 @@ shop_update_with_bad_params(C) ->
     ShopID = <<"SHOP2">>,
     ContractID = <<"CONTRACT3">>,
     ContractParams = make_contract_params(#domain_ContractTemplateRef{id = 5}),
-    PayoutToolParams = pm_ct_helper:make_battle_ready_payout_tool_params(),
     Changeset = [
-        ?contract_modification(ContractID, {creation, ContractParams}),
-        ?contract_modification(ContractID, ?payout_tool_creation(<<"1">>, PayoutToolParams))
+        ?contract_modification(ContractID, {creation, ContractParams})
     ],
     Claim = assert_claim_pending(pm_client_party:create_claim(Changeset, Client), Client),
     ok = accept_claim(Claim, Client),
@@ -1282,8 +1126,7 @@ claim_revocation(C) ->
     Params = #payproc_ShopParams{
         location = {url, <<"https://url3">>},
         details = pm_ct_helper:make_shop_details(<<"OOPS">>),
-        contract_id = ContractID,
-        payout_tool_id = <<"1">>
+        contract_id = ContractID
     },
     Changeset = [?shop_modification(ShopID, {creation, Params})],
     Claim = assert_claim_pending(pm_client_party:create_claim(Changeset, Client), Client),
@@ -1299,16 +1142,14 @@ complex_claim_acceptance(C) ->
         location = {url, <<"https://url4">>},
         category = ?cat(2),
         details = Details1 = pm_ct_helper:make_shop_details(<<"SHOP4">>),
-        contract_id = ContractID,
-        payout_tool_id = <<"1">>
+        contract_id = ContractID
     },
     ShopID2 = <<"SHOP5">>,
     Params2 = #payproc_ShopParams{
         location = {url, <<"http://url5">>},
         category = ?cat(3),
         details = Details2 = pm_ct_helper:make_shop_details(<<"SHOP5">>),
-        contract_id = ContractID,
-        payout_tool_id = <<"1">>
+        contract_id = ContractID
     },
     PartyName = <<"PartyName">>,
     PartyComment = <<"PartyComment">>,
@@ -2284,22 +2125,76 @@ construct_domain_fixture() ->
         }
     },
 
-    PayoutMDFun = fun(PaymentTool, PayoutMethods) ->
-        #domain_PayoutMethodDecision{
-            if_ = {condition, {payment_tool, PaymentTool}},
-            then_ = {value, ordsets:from_list(PayoutMethods)}
-        }
-    end,
-
-    PaymentMDFun = fun(PaymentTool, PaymentMethods) ->
-        #domain_PaymentMethodDecision{
-            if_ = {condition, {payment_tool, PaymentTool}},
-            then_ = {value, ordsets:from_list(PaymentMethods)}
-        }
-    end,
-
-    TermSet = #domain_TermSet{
+    AllMethodsTermSet = #domain_TermSet{
         payments = #domain_PaymentsServiceTerms{
+            payment_methods =
+                {decisions, [
+                    %% For check_all_payment_methods
+                    mk_payment_decision(
+                        {bank_card, #domain_BankCardCondition{
+                            definition = {
+                                payment_system,
+                                #domain_PaymentSystemCondition{
+                                    payment_system_is = ?pmt_sys(<<"visa">>)
+                                }
+                            }
+                        }},
+                        [?pmt(bank_card, ?bank_card(<<"visa">>))]
+                    ),
+                    mk_payment_decision(
+                        {payment_terminal, #domain_PaymentTerminalCondition{
+                            definition = {
+                                payment_service_is,
+                                ?pmt_srv(<<"alipay">>)
+                            }
+                        }},
+                        [?pmt(payment_terminal, ?pmt_srv(<<"alipay">>))]
+                    ),
+                    mk_payment_decision(
+                        {digital_wallet, #domain_DigitalWalletCondition{
+                            definition =
+                                {payment_service_is, ?pmt_srv(<<"qiwi">>)}
+                        }},
+                        [?pmt(digital_wallet, ?pmt_srv(<<"qiwi">>))]
+                    ),
+                    mk_payment_decision(
+                        {mobile_commerce, #domain_MobileCommerceCondition{
+                            definition = {operator_is, ?mob(<<"mts">>)}
+                        }},
+                        [?pmt(mobile, ?mob(<<"mts">>))]
+                    ),
+                    mk_payment_decision(
+                        {crypto_currency, #domain_CryptoCurrencyCondition{
+                            definition = {crypto_currency_is, ?crypta(<<"bitcoin">>)}
+                        }},
+                        [?pmt(crypto_currency, ?crypta(<<"bitcoin">>))]
+                    ),
+                    mk_payment_decision(
+                        {bank_card, #domain_BankCardCondition{
+                            definition =
+                                {payment_system, #domain_PaymentSystemCondition{
+                                    token_service_is = ?token_srv(<<"applepay">>)
+                                }}
+                        }},
+                        [?pmt(bank_card, ?token_bank_card(<<"visa">>, <<"applepay">>))]
+                    ),
+                    mk_payment_decision(
+                        {generic, {payment_service_is, ?pmt_srv(<<"generic">>)}},
+                        [?pmt(generic, ?gnrc(?pmt_srv(<<"generic">>)))]
+                    ),
+                    #domain_PaymentMethodDecision{
+                        if_ = {condition, {payment_tool, {bank_card, #domain_BankCardCondition{}}}},
+                        then_ = {value, ordsets:from_list([?pmt(bank_card, ?bank_card(<<"mastercard">>))])}
+                    },
+                    #domain_PaymentMethodDecision{
+                        if_ = {condition, {payment_tool, {payment_terminal, #domain_PaymentTerminalCondition{}}}},
+                        then_ = {value, ordsets:from_list([?pmt(payment_terminal, ?pmt_srv(<<"euroset">>))])}
+                    },
+                    #domain_PaymentMethodDecision{
+                        if_ = {constant, true},
+                        then_ = {value, ordsets:from_list([])}
+                    }
+                ]},
             cash_limit =
                 {value, #domain_CashRange{
                     lower = {inclusive, #domain_Cash{amount = 1000, currency = ?cur(<<"RUB">>)}},
@@ -2313,96 +2208,44 @@ construct_domain_fixture() ->
                         ?share(45, 1000, operation_amount)
                     )
                 ]}
-        },
-        payouts = #domain_PayoutsServiceTerms{
-            payout_methods =
-                {decisions, [
-                    PayoutMDFun(
-                        {bank_card, #domain_BankCardCondition{definition = {issuer_bank_is, ?bank(1)}}},
-                        [?pomt(russian_bank_account), ?pomt(international_bank_account)]
-                    ),
-                    PayoutMDFun(
-                        {bank_card, #domain_BankCardCondition{definition = {empty_cvv_is, true}}},
-                        [?pomt(wallet_info)]
-                    ),
+        }
+    },
 
-                    %% For check_all_payment_methods
-                    PayoutMDFun(
-                        {bank_card, #domain_BankCardCondition{
-                            definition = {
-                                payment_system,
-                                #domain_PaymentSystemCondition{
-                                    payment_system_is = ?pmt_sys(<<"visa">>)
-                                }
-                            }
-                        }},
-                        [?pomt(international_bank_account)]
+    TermSet = #domain_TermSet{
+        recurrent_paytools = #domain_RecurrentPaytoolsServiceTerms{
+            payment_methods =
+                {decisions, [
+                    mk_payment_decision(
+                        {bank_card, #domain_BankCardCondition{definition = {issuer_bank_is, ?bank(1)}}},
+                        [?pmt(bank_card, ?bank_card(<<"visa">>)), ?pmt(crypto_currency, ?crypta(<<"bitcoin">>))]
                     ),
-                    PayoutMDFun(
-                        {payment_terminal, #domain_PaymentTerminalCondition{
-                            definition = {
-                                payment_service_is,
-                                ?pmt_srv(<<"alipay">>)
-                            }
-                        }},
-                        [?pomt(wallet_info)]
+                    mk_payment_decision({bank_card, #domain_BankCardCondition{definition = {empty_cvv_is, true}}}, []),
+                    mk_payment_decision(
+                        {bank_card, #domain_BankCardCondition{}},
+                        [?pmt(bank_card, ?bank_card(<<"visa">>))]
                     ),
-                    PayoutMDFun(
-                        {digital_wallet, #domain_DigitalWalletCondition{
-                            definition =
-                                {payment_service_is, ?pmt_srv(<<"qiwi">>)}
-                        }},
-                        [?pomt(wallet_info)]
+                    mk_payment_decision(
+                        {payment_terminal, #domain_PaymentTerminalCondition{}},
+                        [?pmt(crypto_currency, ?crypta(<<"bitcoin">>))]
                     ),
-                    PayoutMDFun(
-                        {mobile_commerce, #domain_MobileCommerceCondition{
-                            definition = {operator_is, ?mob(<<"mts">>)}
-                        }},
-                        [?pomt(wallet_info)]
-                    ),
-                    PayoutMDFun(
-                        {crypto_currency, #domain_CryptoCurrencyCondition{
-                            definition = {crypto_currency_is, ?crypta(<<"bitcoin">>)}
-                        }},
-                        [?pomt(wallet_info)]
-                    ),
-                    PayoutMDFun(
-                        {bank_card, #domain_BankCardCondition{
-                            definition =
-                                {payment_system, #domain_PaymentSystemCondition{
-                                    token_service_is = ?token_srv(<<"applepay">>)
-                                }}
-                        }},
-                        [?pomt(wallet_info)]
-                    ),
-                    PayoutMDFun(
-                        {generic, {payment_service_is, ?pmt_srv(<<"generic">>)}},
-                        [?pomt(wallet_info)]
-                    ),
-                    #domain_PayoutMethodDecision{
-                        if_ = {condition, {payment_tool, {bank_card, #domain_BankCardCondition{}}}},
-                        then_ = {value, ordsets:from_list([?pomt(russian_bank_account)])}
-                    },
-                    #domain_PayoutMethodDecision{
-                        if_ = {condition, {payment_tool, {payment_terminal, #domain_PaymentTerminalCondition{}}}},
-                        then_ = {value, ordsets:from_list([?pomt(international_bank_account)])}
-                    },
-                    #domain_PayoutMethodDecision{
+                    #domain_PaymentMethodDecision{
                         if_ = {constant, true},
                         then_ = {value, ordsets:from_list([])}
                     }
-                ]},
+                ]}
+        },
+        payments = #domain_PaymentsServiceTerms{
+            cash_limit =
+                {value, #domain_CashRange{
+                    lower = {inclusive, #domain_Cash{amount = 1000, currency = ?cur(<<"RUB">>)}},
+                    upper = {exclusive, #domain_Cash{amount = 4200000, currency = ?cur(<<"RUB">>)}}
+                }},
             fees =
                 {value, [
                     ?cfpost(
                         {merchant, settlement},
-                        {merchant, payout},
-                        ?share(750, 1000, operation_amount)
-                    ),
-                    ?cfpost(
-                        {merchant, settlement},
                         {system, settlement},
-                        ?share(250, 1000, operation_amount)
+                        ?share(45, 1000, operation_amount)
                     )
                 ]}
         },
@@ -2432,7 +2275,7 @@ construct_domain_fixture() ->
             withdrawals = #domain_WithdrawalServiceTerms{
                 methods =
                     {decisions, [
-                        PaymentMDFun(
+                        mk_payment_decision(
                             {bank_card, #domain_BankCardCondition{
                                 definition = {
                                     payment_system,
@@ -2443,20 +2286,20 @@ construct_domain_fixture() ->
                             }},
                             [?pmt(bank_card, ?bank_card(<<"visa">>))]
                         ),
-                        PaymentMDFun(
+                        mk_payment_decision(
                             {digital_wallet, #domain_DigitalWalletCondition{
                                 definition =
                                     {payment_service_is, ?pmt_srv(<<"qiwi">>)}
                             }},
                             [?pmt(bank_card, ?bank_card(<<"visa">>))]
                         ),
-                        PaymentMDFun(
+                        mk_payment_decision(
                             {mobile_commerce, #domain_MobileCommerceCondition{
                                 definition = {operator_is, ?mob(<<"mts">>)}
                             }},
                             [?pmt(bank_card, ?bank_card(<<"visa">>))]
                         ),
-                        PaymentMDFun(
+                        mk_payment_decision(
                             {crypto_currency, #domain_CryptoCurrencyCondition{
                                 definition = {crypto_currency_is, ?crypta(<<"bitcoin">>)}
                             }},
@@ -2662,10 +2505,6 @@ construct_domain_fixture() ->
         pm_ct_fixture:construct_payment_method(?pmt(payment_terminal, ?pmt_srv(<<"euroset">>))),
         pm_ct_fixture:construct_payment_method(?pmt(bank_card, ?bank_card_no_cvv(<<"visa">>))),
 
-        pm_ct_fixture:construct_payout_method(?pomt(russian_bank_account)),
-        pm_ct_fixture:construct_payout_method(?pomt(international_bank_account)),
-        pm_ct_fixture:construct_payout_method(?pomt(wallet_info)),
-
         pm_ct_fixture:construct_proxy(
             ?prx(1),
             <<"Dummy proxy">>,
@@ -2754,6 +2593,20 @@ construct_domain_fixture() ->
             }
         }},
 
+        %% For check_all_payment_methods
+        {payment_institution, #domain_PaymentInstitutionObject{
+            ref = ?pinst(5),
+            data = #domain_PaymentInstitution{
+                name = <<"All Payments GmbH">>,
+                system_account_set = {value, ?sas(2)},
+                default_contract_template = {value, ?tmpl(6)},
+                providers = {value, ?ordset([])},
+                inspector = {value, ?insp(1)},
+                residences = [],
+                realm = live
+            }
+        }},
+
         {globals, #domain_GlobalsObject{
             ref = #domain_GlobalsRef{},
             data = #domain_Globals{
@@ -2764,7 +2617,7 @@ construct_domain_fixture() ->
                             then_ = {value, ?eas(1)}
                         }
                     ]},
-                payment_institutions = ?ordset([?pinst(1), ?pinst(2)])
+                payment_institutions = ?ordset([?pinst(1), ?pinst(2), ?pinst(5)])
             }
         }},
         pm_ct_fixture:construct_contract_template(
@@ -2790,6 +2643,11 @@ construct_domain_fixture() ->
         pm_ct_fixture:construct_contract_template(
             ?tmpl(5),
             ?trms(4)
+        ),
+        %% For check_all_payment_methods
+        pm_ct_fixture:construct_contract_template(
+            ?tmpl(6),
+            ?trms(5)
         ),
         pm_ct_fixture:construct_term_set_hierarchy(?trms(1), undefined, TestTermSet),
         pm_ct_fixture:construct_term_set_hierarchy(?trms(2), undefined, DefaultTermSet),
@@ -2817,6 +2675,8 @@ construct_domain_fixture() ->
                 }
             }
         ),
+        %% For check_all_payment_methods
+        pm_ct_fixture:construct_term_set_hierarchy(?trms(5), ?trms(2), AllMethodsTermSet),
         {bank, #domain_BankObject{
             ref = ?bank(1),
             data = #domain_Bank{
@@ -3124,3 +2984,9 @@ construct_domain_fixture() ->
             }
         }}
     ].
+
+mk_payment_decision(PaymentTool, PaymentMethods) ->
+    #domain_PaymentMethodDecision{
+        if_ = {condition, {payment_tool, PaymentTool}},
+        then_ = {value, ordsets:from_list(PaymentMethods)}
+    }.

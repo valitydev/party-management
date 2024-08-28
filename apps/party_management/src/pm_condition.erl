@@ -38,8 +38,6 @@ test({shop_location_is, V}, #{shop := S}, _) ->
     V =:= S#domain_Shop.location;
 test({party, V}, #{party_id := PartyID} = VS, _) ->
     test_party(V, PartyID, VS);
-test({payout_method_is, V1}, #{payout_method := V2}, _) ->
-    V1 =:= V2;
 test({identification_level_is, V1}, #{identification_level := V2}, _) ->
     V1 =:= V2;
 test({bin_data, #domain_BinDataCondition{} = C}, #{bin_data := #domain_BinData{} = V}, Rev) ->

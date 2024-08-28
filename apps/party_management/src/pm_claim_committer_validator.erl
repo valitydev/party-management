@@ -84,7 +84,6 @@ assert_shop_valid(#domain_Shop{contract_id = ContractID} = Shop, Timestamp, Revi
     case pm_party:get_contract(ContractID, Party) of
         #domain_Contract{} = Contract ->
             _ = assert_shop_contract_valid(Shop, Contract, Timestamp, Revision),
-            _ = assert_shop_payout_tool_valid(Shop, Contract),
             ok;
         undefined ->
             throw({invalid_changeset, ?cm_invalid_contract_not_exists(ContractID)})
@@ -118,32 +117,6 @@ assert_shop_contract_valid(
                     )}
             ),
     ok.
-
-assert_shop_payout_tool_valid(#domain_Shop{payout_tool_id = undefined, payout_schedule = undefined}, _) ->
-    % automatic payouts disabled for this shop and it's ok
-    ok;
-assert_shop_payout_tool_valid(#domain_Shop{id = ID, payout_tool_id = undefined, payout_schedule = Schedule}, _) ->
-    % automatic payouts enabled for this shop but no payout tool specified
-    pm_claim_committer:raise_invalid_changeset(?cm_invalid_shop_payout_tool_not_set_for_payouts(ID, Schedule), []);
-assert_shop_payout_tool_valid(#domain_Shop{id = ID, payout_tool_id = PayoutToolID} = Shop, Contract) ->
-    ShopAccountCurrency = (Shop#domain_Shop.account)#domain_ShopAccount.currency,
-    ContractID = Contract#domain_Contract.id,
-    case pm_contract:get_payout_tool(PayoutToolID, Contract) of
-        #domain_PayoutTool{currency = ShopAccountCurrency} ->
-            ok;
-        #domain_PayoutTool{currency = PayoutToolCurrency} ->
-            throw(
-                {invalid_changeset,
-                    ?cm_invalid_shop_payout_tool_currency_mismatch(
-                        ID,
-                        PayoutToolID,
-                        ShopAccountCurrency,
-                        PayoutToolCurrency
-                    )}
-            );
-        undefined ->
-            throw({invalid_changeset, ?cm_invalid_shop_payout_tool_not_in_contract(ID, ContractID, PayoutToolID)})
-    end.
 
 assert_wallet_valid(#domain_Wallet{contract = ContractID} = Wallet, Timestamp, Revision, Party) ->
     case pm_party:get_contract(ContractID, Party) of

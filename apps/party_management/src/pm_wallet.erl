@@ -60,20 +60,18 @@ create(
 create_account(#payproc_WalletAccountParams{currency = Currency}) ->
     SymbolicCode = Currency#domain_CurrencyRef.symbolic_code,
     SettlementID = pm_accounting:create_account(SymbolicCode),
-    PayoutID = pm_accounting:create_account(SymbolicCode),
     #domain_WalletAccount{
         currency = Currency,
         settlement = SettlementID,
-        payout = PayoutID
+        payout = 0
     };
 create_account(#claimmgmt_WalletAccountParams{currency = Currency}) ->
     SymbolicCode = Currency#domain_CurrencyRef.symbolic_code,
     SettlementID = pm_accounting:create_account(SymbolicCode),
-    PayoutID = pm_accounting:create_account(SymbolicCode),
     #domain_WalletAccount{
         currency = Currency,
         settlement = SettlementID,
-        payout = PayoutID
+        payout = 0
     }.
 
 -spec create_fake_account(wallet_account_params()) -> wallet_account().

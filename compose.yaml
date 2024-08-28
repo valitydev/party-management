@@ -24,7 +24,7 @@ services:
     command: /sbin/init
 
   dominant:
-    image: ghcr.io/valitydev/dominant:sha-2150eea
+    image: ghcr.io/valitydev/dominant:sha-1c283be-epic-IMP-278-fx-retire-payouts
     depends_on:
       - machinegun
     ports:
@@ -39,15 +39,15 @@ services:
       retries: 20
 
   machinegun:
-    image: ghcr.io/valitydev/machinegun:sha-5c0db56
+    image: ghcr.io/valitydev/mg2:sha-8bbcd29
     command: /opt/machinegun/bin/machinegun foreground
     volumes:
       - ./test/machinegun/config.yaml:/opt/machinegun/etc/config.yaml
       - ./test/machinegun/cookie:/opt/machinegun/etc/cookie
     healthcheck:
       test: "/opt/machinegun/bin/machinegun ping"
-      interval: 5s
-      timeout: 1s
+      interval: 10s
+      timeout: 5s
       retries: 10
 
   shumway:
