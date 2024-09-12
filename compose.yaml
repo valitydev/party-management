@@ -24,7 +24,7 @@ services:
     command: /sbin/init
 
   dominant:
-    image: ghcr.io/valitydev/dominant:sha-1c283be-epic-IMP-278-fx-retire-payouts
+    image: ghcr.io/valitydev/dominant:sha-7e33b86
     depends_on:
       - machinegun
     ports:

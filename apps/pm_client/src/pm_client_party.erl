@@ -45,6 +45,7 @@
 -export([get_shop_account/2]).
 -export([pull_event/1]).
 -export([pull_event/2]).
+-export([get_events/3]).
 
 -export([compute_provider/4]).
 -export([compute_provider_terminal/4]).
@@ -289,6 +290,11 @@ pull_event(Client) ->
 -spec pull_event(timeout(), pid()) -> tuple() | timeout | woody_error:business_error().
 pull_event(Timeout, Client) ->
     gen_server:call(Client, {pull_event, Timeout}, infinity).
+
+-spec get_events(non_neg_integer() | undefined, pos_integer() | undefined, pid()) ->
+    [tuple()] | woody_error:business_error().
+get_events(After, Limit, Client) ->
+    call(Client, 'GetEvents', with_party_id([]) ++ [#payproc_EventRange{'after' = After, limit = Limit}]).
 
 call(Client, Function, Args) ->
     map_result_error(gen_server:call(Client, {call, Function, Args})).
