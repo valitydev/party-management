@@ -847,7 +847,7 @@ compute_payment_institution(C) ->
 -spec check_all_payment_methods(config()) -> _.
 check_all_payment_methods(C) ->
     Client = cfg(client, C),
-    TermsFun = fun(Type, Object) ->
+    TermsFun0 = fun(Type, Object) ->
         ?assertMatch(
             #domain_TermSet{
                 payments = #domain_PaymentsServiceTerms{
@@ -863,6 +863,23 @@ check_all_payment_methods(C) ->
         ),
         ok
     end,
+
+    TermsFun1 = fun(Type, Object, PaymentTool) ->
+        ?assertMatch(
+            #domain_TermSet{
+                payments = #domain_PaymentsServiceTerms{
+                    payment_methods =
+                        {value, [_]}
+                }
+            },
+            pm_client_party:compute_payment_institution_terms(
+                ?pinst(5),
+                #payproc_Varset{payment_method = ?pmt(Type, Object), payment_tool = PaymentTool},
+                Client
+            )
+        ),
+        ok
+    end,
     #domain_TermSet{payments = #domain_PaymentsServiceTerms{payment_methods = {value, []}}} =
         pm_client_party:compute_payment_institution_terms(
             ?pinst(5),
@@ -870,14 +887,23 @@ check_all_payment_methods(C) ->
             Client
         ),
 
-    TermsFun(bank_card, ?bank_card(<<"visa">>)),
-    TermsFun(payment_terminal, ?pmt_srv(<<"alipay">>)),
-    TermsFun(digital_wallet, ?pmt_srv(<<"qiwi">>)),
-    TermsFun(mobile, ?mob(<<"mts">>)),
-    TermsFun(crypto_currency, ?crypta(<<"bitcoin">>)),
-    TermsFun(bank_card, ?token_bank_card(<<"visa">>, <<"applepay">>)),
-    TermsFun(bank_card, ?bank_card_no_cvv(<<"visa">>)),
-    TermsFun(generic, ?gnrc(?pmt_srv(<<"generic">>))).
+    TermsFun0(bank_card, ?bank_card(<<"visa">>)),
+    TermsFun0(payment_terminal, ?pmt_srv(<<"alipay">>)),
+    TermsFun0(digital_wallet, ?pmt_srv(<<"qiwi">>)),
+    TermsFun0(mobile, ?mob(<<"mts">>)),
+    TermsFun0(crypto_currency, ?crypta(<<"bitcoin">>)),
+    TermsFun0(bank_card, ?token_bank_card(<<"visa">>, <<"applepay">>)),
+    TermsFun0(bank_card, ?bank_card_no_cvv(<<"visa">>)),
+    TermsFun0(generic, ?gnrc(?pmt_srv(<<"generic">>))),
+    TermsFun1(
+        generic,
+        ?gnrc(?pmt_srv(<<"generic1">>)),
+        {generic,
+            ?gnrc_tool(?pmt_srv(<<"generic1">>), #base_Content{
+                type = <<"application/json">>,
+                data = jsx:encode(#{<<"some_path">> => <<"some_value">>})
+            })}
+    ).
 
 contract_w2w_terms(C) ->
     Client = cfg(client, C),
@@ -2182,6 +2208,10 @@ construct_domain_fixture() ->
                         {generic, {payment_service_is, ?pmt_srv(<<"generic">>)}},
                         [?pmt(generic, ?gnrc(?pmt_srv(<<"generic">>)))]
                     ),
+                    mk_payment_decision(
+                        {generic, {resource_field_matches, ?gnrc_cond([<<"some_path">>], <<"some_value">>)}},
+                        [?pmt(generic, ?gnrc(?pmt_srv(<<"generic1">>)))]
+                    ),
                     #domain_PaymentMethodDecision{
                         if_ = {condition, {payment_tool, {bank_card, #domain_BankCardCondition{}}}},
                         then_ = {value, ordsets:from_list([?pmt(bank_card, ?bank_card(<<"mastercard">>))])}
@@ -2490,6 +2520,7 @@ construct_domain_fixture() ->
         pm_ct_fixture:construct_crypto_currency(?crypta(<<"bitcoin">>), <<"Bitcoin">>),
         pm_ct_fixture:construct_tokenized_service(?token_srv(<<"applepay">>), <<"Apple Pay">>),
         pm_ct_fixture:construct_payment_service(?pmt_srv(<<"generic">>), <<"Generic">>),
+        pm_ct_fixture:construct_payment_service(?pmt_srv(<<"generic1">>), <<"Generic1">>),
 
         pm_ct_fixture:construct_payment_method(?pmt(bank_card, ?bank_card(<<"visa">>))),
         pm_ct_fixture:construct_payment_method(?pmt(bank_card, ?bank_card(<<"mastercard">>))),
@@ -2501,6 +2532,7 @@ construct_domain_fixture() ->
         pm_ct_fixture:construct_payment_method(?pmt(mobile, ?mob(<<"mts">>))),
         pm_ct_fixture:construct_payment_method(?pmt(crypto_currency, ?crypta(<<"bitcoin">>))),
         pm_ct_fixture:construct_payment_method(?pmt(generic, ?gnrc(?pmt_srv(<<"generic">>)))),
+        pm_ct_fixture:construct_payment_method(?pmt(generic, ?gnrc(?pmt_srv(<<"generic1">>)))),
 
         pm_ct_fixture:construct_payment_method(?pmt(payment_terminal, ?pmt_srv(<<"euroset">>))),
         pm_ct_fixture:construct_payment_method(?pmt(bank_card, ?bank_card_no_cvv(<<"visa">>))),

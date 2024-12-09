@@ -3,6 +3,7 @@
 -module(pm_payment_tool).
 
 -include_lib("damsel/include/dmsl_domain_thrift.hrl").
+-include_lib("damsel/include/dmsl_base_thrift.hrl").
 
 %%
 
@@ -193,10 +194,40 @@ test_mobile_commerce_condition_def(
 test_mobile_commerce_condition_def(_Cond, _Data) ->
     false.
 
+test_generic_condition({resource_field_matches, _}, #domain_GenericPaymentTool{data = undefined}) ->
+    false;
+test_generic_condition(
+    {resource_field_matches, #domain_GenericResourceCondition{field_path = Path, value = Value}},
+    #domain_GenericPaymentTool{data = #base_Content{type = Type, data = Data}}
+) ->
+    case decode_content(Type, Data) of
+        {ok, Result} ->
+            case get_field_by_path(Path, Result) of
+                {ok, Value} -> true;
+                _ -> false
+            end;
+        _ ->
+            false
+    end;
 test_generic_condition({payment_service_is, Ref1}, #domain_GenericPaymentTool{payment_service = Ref2}) ->
     Ref1 =:= Ref2;
 test_generic_condition(_Cond, _Data) ->
     false.
+
+decode_content(<<"application/schema-instance+json; schema=", _/binary>>, Data) ->
+    {ok, jsx:decode(Data)};
+decode_content(<<"application/json">>, Data) ->
+    {ok, jsx:decode(Data)};
+decode_content(Type, _Data) ->
+    {error, {unsupported, Type}}.
+
+get_field_by_path([], Data) ->
+    {ok, Data};
+get_field_by_path([Key | Path], Data) ->
+    case maps:get(Key, Data, undefined) of
+        undefined -> {error, notfound};
+        Value -> get_field_by_path(Path, Value)
+    end.
 
 -ifdef(TEST).
 -include_lib("eunit/include/eunit.hrl").
