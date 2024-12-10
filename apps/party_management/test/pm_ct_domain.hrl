@@ -39,6 +39,8 @@
 -define(crit(ID), #domain_CriterionRef{id = ID}).
 -define(crp(ID), #domain_CashRegisterProviderRef{id = ID}).
 -define(gnrc(PS), #domain_GenericPaymentMethod{payment_service = PS}).
+-define(gnrc_cond(Path, Value), #domain_GenericResourceCondition{field_path = Path, value = Value}).
+-define(gnrc_tool(PS, Data), #domain_GenericPaymentTool{payment_service = PS, data = Data}).
 
 -define(cashrng(Lower, Upper), #domain_CashRange{lower = Lower, upper = Upper}).
 
