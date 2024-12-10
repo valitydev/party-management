@@ -24,7 +24,7 @@ services:
     command: /sbin/init
 
   dominant:
-    image: ghcr.io/valitydev/dominant:sha-d89f4fd-epic-ft-EMP-167-bump_damsel
+    image: ghcr.io/valitydev/dominant:sha-c0ebc36
     depends_on:
       - machinegun
     ports:
