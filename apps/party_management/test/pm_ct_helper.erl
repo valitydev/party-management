@@ -73,8 +73,9 @@ start_app(dmt_client = AppName) ->
                 }}
             ]},
             {service_urls, #{
-                'Repository' => <<"http://dominant:8022/v1/domain/repository">>,
-                'RepositoryClient' => <<"http://dominant:8022/v1/domain/repository_client">>
+                'Repository' => <<"http://dmt:8022/v1/domain/repository">>,
+                'RepositoryClient' => <<"http://dmt:8022/v1/domain/repository_client">>,
+                'UserOpManagement' => <<"http://dmt:8022/v1/domain/user_op">>
             }}
         ]),
         #{}
@@ -195,7 +196,9 @@ make_party_params() ->
         }
     }.
 
--spec create_battle_ready_shop(category(), currency(), contract_tpl(), payment_institution(), Client :: pid()) ->
+-spec create_battle_ready_shop(
+    category(), currency(), contract_tpl(), payment_institution(), Client :: pid()
+) ->
     shop_id().
 create_battle_ready_shop(Category, Currency, TemplateRef, PaymentInstitutionRef, Client) ->
     ContractID = pm_utils:unique_id(),
@@ -284,7 +287,9 @@ adjust_contract(ContractID, TemplateRef, Client) ->
         Client
     ).
 
-ensure_claim_accepted(#payproc_Claim{id = ClaimID, revision = ClaimRevision, status = Status}, Client) ->
+ensure_claim_accepted(
+    #payproc_Claim{id = ClaimID, revision = ClaimRevision, status = Status}, Client
+) ->
     case Status of
         {accepted, _} ->
             ok;
@@ -343,7 +348,8 @@ make_meta_ns() ->
 make_meta_data() ->
     make_meta_data(<<"NS-0">>).
 
--spec make_meta_data(dmsl_domain_thrift:'PartyMetaNamespace'()) -> dmsl_domain_thrift:'PartyMetaData'().
+-spec make_meta_data(dmsl_domain_thrift:'PartyMetaNamespace'()) ->
+    dmsl_domain_thrift:'PartyMetaData'().
 make_meta_data(NS) ->
     {obj, #{
         {str, <<"NS">>} => {str, NS},
