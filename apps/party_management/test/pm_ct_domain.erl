@@ -1,9 +1,8 @@
 -module(pm_ct_domain).
 
--include_lib("damsel/include/dmsl_domain_conf_thrift.hrl").
+-include_lib("damsel/include/dmsl_domain_conf_v2_thrift.hrl").
 
 -export([upsert/2]).
--export([reset/1]).
 -export([commit/2]).
 
 -export([with/2]).
@@ -13,27 +12,28 @@
 -type revision() :: pm_domain:revision().
 -type object() :: pm_domain:object().
 
--spec upsert(revision(), object() | [object()]) -> revision() | no_return().
+-spec upsert(revision(), object() | [object()]) -> {revision(), [pm_domain:ref()]} | no_return().
 upsert(Revision, NewObject) when not is_list(NewObject) ->
     upsert(Revision, [NewObject]);
 upsert(Revision, NewObjects) ->
-    Commit = #'domain_conf_Commit'{
+    Commit = #domain_conf_v2_Commit{
         ops = lists:foldl(
-            fun(NewObject = {Tag, {ObjectName, Ref, NewData}}, Ops) ->
+            fun(NewObject = {Tag, {_ObjectName, Ref, NewData}}, Ops) ->
                 case pm_domain:find(Revision, {Tag, Ref}) of
                     NewData ->
                         Ops;
                     notfound ->
                         [
-                            {insert, #'domain_conf_InsertOp'{
-                                object = NewObject
+                            {insert, #domain_conf_v2_InsertOp{
+                                object = {Tag, NewData},
+                                force_ref = {Tag, Ref}
                             }}
                             | Ops
                         ];
-                    OldData ->
+                    _OldData ->
                         [
-                            {update, #'domain_conf_UpdateOp'{
-                                old_object = {Tag, {ObjectName, Ref, OldData}},
+                            {update, #domain_conf_v2_UpdateOp{
+                                targeted_ref = {Tag, Ref},
                                 new_object = NewObject
                             }}
                             | Ops
@@ -44,25 +44,29 @@ upsert(Revision, NewObjects) ->
             NewObjects
         )
     },
-    ok = commit(Revision, Commit),
-    pm_domain:head().
+    commit(Revision, Commit).
 
--spec reset(revision()) -> revision() | no_return().
-reset(ToRevision) ->
-    #'domain_conf_Snapshot'{domain = Domain} = dmt_client:checkout(ToRevision),
-    upsert(pm_domain:head(), maps:values(Domain)).
-
--spec commit(revision(), dmt_client:commit()) -> ok | no_return().
+-spec commit(revision(), dmt_client:commit()) -> {revision(), [pm_domain:ref()]} | no_return().
 commit(Revision, Commit) ->
-    Revision = dmt_client:commit(Revision, Commit) - 1,
-    ok.
+    #domain_conf_v2_CommitResponse{
+        version = Version, new_objects = NewObjects
+    } = dmt_client:commit(Revision, Commit, generate_author()),
+    NewObjectsIDs = [
+        {Tag, Ref}
+     || {Tag, {_ON, Ref, _Obj}} <- ordsets:to_list(NewObjects)
+    ],
+    {Version, NewObjectsIDs}.
 
--spec with(object() | [object()], fun((revision()) -> R)) -> R | no_return().
+-spec with(object() | [object()], fun((revision()) -> _)) ->
+    {revision(), [pm_domain:ref()]} | no_return().
 with(NewObjects, Fun) ->
     WasRevision = pm_domain:head(),
-    Revision = upsert(WasRevision, NewObjects),
-    try
-        Fun(Revision)
-    after
-        reset(WasRevision)
-    end.
+    {Version, NewObjectsIDs} = upsert(WasRevision, NewObjects),
+    _ = Fun(Version),
+    {Version, NewObjectsIDs}.
+
+generate_author() ->
+    Random = genlib:unique(),
+    Params = #domain_conf_v2_UserOpParams{email = Random, name = Random},
+    #domain_conf_v2_UserOp{id = Id} = dmt_client:user_op_create(Params, #{}),
+    Id.

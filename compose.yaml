@@ -1,5 +1,4 @@
 services:
-
   testrunner:
     image: $DEV_IMAGE_TAG
     build:
@@ -15,28 +14,51 @@ services:
     depends_on:
       machinegun:
         condition: service_healthy
-      dominant:
+      dmt:
         condition: service_healthy
       shumway:
+        condition: service_started
+      holmes:
         condition: service_started
     ports:
       - "8022:8022"
     command: /sbin/init
 
-  dominant:
-    image: ghcr.io/valitydev/dominant:sha-c0ebc36
-    depends_on:
-      - machinegun
-    ports:
-      - "8022"
-    command: /opt/dominant/bin/dominant foreground
-    volumes:
-      - ./test/dominant/sys.config:/opt/dominant/releases/0.1/sys.config
+  dmt:
+    image: ghcr.io/valitydev/dominant-v2:sha-acce76e-epic-fixes_for_client
+    command: /opt/dmt/bin/dmt foreground
     healthcheck:
-      test: "/opt/dominant/bin/dominant ping"
+      test: "/opt/dmt/bin/dmt ping"
       interval: 5s
-      timeout: 1s
-      retries: 20
+      timeout: 3s
+      retries: 12
+    ports:
+      - 8022:8022
+    hostname: dmt
+    # environment:
+    #   POSTGRES_HOST: dmt-db
+    #   POSTGRES_USER: postgres
+    #   POSTGRES_PASSWORD: postgres
+    #   POSTGRES_DB: dmt
+    depends_on:
+      dmt-db:
+        condition: service_healthy
+    volumes:
+      - ./test/dmt/sys.config:/opt/dmt/releases/0.1/sys.config
+
+  dmt-db:
+    image: postgres
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: dmt
+    ports:
+      - 5432:5432
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
 
   machinegun:
     image: ghcr.io/valitydev/mg2:sha-8bbcd29
@@ -78,3 +100,6 @@ services:
       - POSTGRES_DB=shumway
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=postgres
+
+  holmes:
+    image: ghcr.io/valitydev/holmes:sha-fdf0020
