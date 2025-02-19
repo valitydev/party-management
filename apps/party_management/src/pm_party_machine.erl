@@ -470,12 +470,12 @@ get_status(PartyID) ->
 call(PartyID, _ServiceName, FucntionRef, Args) ->
     WoodyCtx = pm_context:get_woody_context(pm_context:load()),
     Result = machinery:call(
-            ?NS,
-            PartyID,
-            {undefined, ?SNAPSHOT_STEP, backward},
-            {FucntionRef, Args},
-            get_backend(WoodyCtx)
-        ),
+        ?NS,
+        PartyID,
+        {undefined, ?SNAPSHOT_STEP, backward},
+        {FucntionRef, Args},
+        get_backend(WoodyCtx)
+    ),
     map_error(
         Result
     ).
@@ -516,20 +516,23 @@ get_history(PartyID, AfterID, Limit) ->
 
 get_history(PartyID, AfterID, Limit, Direction) ->
     WoodyCtx = pm_context:get_woody_context(pm_context:load()),
-    #{history := History} = map_history_error(machinery:get(?NS, PartyID, {AfterID, Limit, Direction}, get_backend(WoodyCtx))),
+    #{history := History} = map_history_error(
+        machinery:get(?NS, PartyID, {AfterID, Limit, Direction}, get_backend(WoodyCtx))
+    ),
     History.
 
 -spec get_aux_state(party_id()) -> party_aux_st().
 get_aux_state(PartyID) ->
     WoodyCtx = pm_context:get_woody_context(pm_context:load()),
-    State = #{history := History} = map_history_error(
-        machinery:get(
-            ?NS,
-            PartyID,
-            {undefined, 1, backward},
-            get_backend(WoodyCtx)
-        )
-    ),
+    State =
+        #{history := History} = map_history_error(
+            machinery:get(
+                ?NS,
+                PartyID,
+                {undefined, 1, backward},
+                get_backend(WoodyCtx)
+            )
+        ),
     AuxState = unwrap_aux_state(maps:get(aux_state, State, undefined)),
     case History of
         [] ->

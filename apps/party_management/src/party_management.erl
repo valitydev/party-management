@@ -119,7 +119,9 @@ get_service_client(ServiceName) ->
         Url ->
             genlib_map:compact(#{
                 url => Url,
-                event_handler => genlib_app:env(party_management, woody_event_handlers, [{scoper_woody_event_handler, #{}}])
+                event_handler => genlib_app:env(party_management, woody_event_handlers, [
+                    {scoper_woody_event_handler, #{}}
+                ])
             })
     end.
 
