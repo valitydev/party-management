@@ -15,6 +15,7 @@
         prometheus_cowboy,
         woody,
         scoper,  % should be before any scoper event handler usage
+        machinery,
         gproc,
         dmt_client,
         payproc_errors,

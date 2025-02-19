@@ -24,7 +24,8 @@ handle_function(Func, Args, Opts) ->
 %% Party
 handle_function_('Create', {PartyID, PartyParams}, _Opts) ->
     _ = set_party_mgmt_meta(PartyID),
-    pm_party_machine:start(PartyID, PartyParams);
+    WoodyCtx = pm_context:get_woody_context(pm_context:load()),
+    pm_party_machine:start(PartyID, PartyParams, WoodyCtx);
 handle_function_('Checkout', {PartyID, RevisionParam}, _Opts) ->
     _ = set_party_mgmt_meta(PartyID),
     checkout_party(PartyID, RevisionParam, #payproc_InvalidPartyRevision{});
