@@ -51,19 +51,6 @@ get_api_child_spec(Opts) ->
     EventHandlerOpts = genlib_app:env(?MODULE, scoper_event_handler_options, #{}),
     PrometeusRoute = get_prometheus_route(),
 
-    {Backends, MachineHandlers, ModernizerHandlers} = lists:unzip3([
-        contruct_backend_childspec(pm_party_machine:namespace(), pm_party_machine)
-    ]),
-
-    ok = application:set_env(?MODULE, backends, maps:from_list(Backends)),
-    RouteOptsEnv = genlib_app:env(?MODULE, route_opts, #{}),
-    EventHandlerOpts = genlib_app:env(?MODULE, scoper_event_handler_options, #{}),
-    RouteOpts = RouteOptsEnv#{event_handler => {scoper_woody_event_handler, EventHandlerOpts}},
-
-    AdditionalRoutes =
-        machinery_mg_backend:get_routes(MachineHandlers, RouteOpts) ++
-            machinery_modernizer_mg_backend:get_routes(ModernizerHandlers, RouteOpts),
-
     woody_server:child_spec(
         ?MODULE,
         #{
@@ -77,40 +64,43 @@ get_api_child_spec(Opts) ->
                     construct_service_handler(claim_committer, pm_claim_committer_handler, Opts),
                     construct_service_handler(party_management, pm_party_handler, Opts)
                 ],
-            additional_routes => AdditionalRoutes ++ [PrometeusRoute | HealthRoutes],
+            additional_routes => setup_machinery_routes() ++ [PrometeusRoute | HealthRoutes],
             shutdown_timeout => genlib_app:env(?MODULE, shutdown_timeout, 0)
         }
     ).
 
-contruct_backend_childspec(NS, Handler) ->
-    Schema = get_namespace_schema(NS),
-    {
-        construct_machinery_backend_spec(NS, Schema),
-        construct_machinery_handler_spec(NS, Handler, Schema),
-        construct_machinery_modernizer_spec(NS, Schema)
-    }.
+setup_machinery_routes() ->
+    Schema = party_management_machinery_schema,
+    Backend = construct_machinery_backend_spec(Schema),
+    ok = application:set_env(?MODULE, backends, #{pm_party_machine:namespace() => Backend}),
 
-construct_machinery_backend_spec(NS, Schema) ->
-    {NS,
-        {machinery_mg_backend, #{
-            schema => Schema,
-            client => get_service_client(automaton)
-        }}}.
+    MachineHandler = construct_machinery_handler_spec(pm_party_machine, Schema),
+    ModernizerHandler = construct_machinery_modernizer_spec(Schema),
 
-construct_machinery_handler_spec(_NS, Handler, Schema) ->
+    RouteOptsEnv = genlib_app:env(?MODULE, route_opts, #{}),
+    EventHandlerOpts = genlib_app:env(?MODULE, scoper_event_handler_options, #{}),
+    RouteOpts = RouteOptsEnv#{event_handler => {scoper_woody_event_handler, EventHandlerOpts}},
+
+    machinery_mg_backend:get_routes([MachineHandler], RouteOpts) ++
+        machinery_modernizer_mg_backend:get_routes([ModernizerHandler], RouteOpts).
+
+construct_machinery_backend_spec(Schema) ->
+    {machinery_mg_backend, #{
+        schema => Schema,
+        client => get_service_client(automaton)
+    }}.
+
+construct_machinery_handler_spec(Handler, Schema) ->
     {Handler, #{
         path => "/v1/stateproc/party",
         backend_config => #{schema => Schema}
     }}.
 
-construct_machinery_modernizer_spec(_NS, Schema) ->
+construct_machinery_modernizer_spec(Schema) ->
     #{
         path => "/v1/modernizer",
         backend_config => #{schema => Schema}
     }.
-
-get_namespace_schema(party) ->
-    party_management_machinery_schema.
 
 get_service_client(ServiceName) ->
     case get_service_client_url(ServiceName) of
