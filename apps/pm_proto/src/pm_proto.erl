@@ -21,11 +21,7 @@ get_service(claim_committer) ->
 get_service(party_management) ->
     {dmsl_payproc_thrift, 'PartyManagement'};
 get_service(accounter) ->
-    {dmsl_accounter_thrift, 'Accounter'};
-get_service(automaton) ->
-    {mg_proto_state_processing_thrift, 'Automaton'};
-get_service(processor) ->
-    {mg_proto_state_processing_thrift, 'Processor'}.
+    {dmsl_accounter_thrift, 'Accounter'}.
 
 -spec get_service_spec(Name :: atom()) -> service_spec().
 get_service_spec(Name) ->
@@ -35,6 +31,4 @@ get_service_spec(Name) ->
 get_service_spec(Name = claim_committer, #{}) ->
     {?VERSION_PREFIX ++ "/processing/claim_committer", get_service(Name)};
 get_service_spec(Name = party_management, #{}) ->
-    {?VERSION_PREFIX ++ "/processing/partymgmt", get_service(Name)};
-get_service_spec(Name = processor, #{namespace := Ns}) when is_binary(Ns) ->
-    {?VERSION_PREFIX ++ "/stateproc/" ++ binary_to_list(Ns), get_service(Name)}.
+    {?VERSION_PREFIX ++ "/processing/partymgmt", get_service(Name)}.

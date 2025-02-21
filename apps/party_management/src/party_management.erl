@@ -35,23 +35,22 @@ stop() ->
 
 -spec init([]) -> {ok, {supervisor:sup_flags(), [supervisor:child_spec()]}}.
 init([]) ->
-    MachineHandlers = [pm_party_machine],
     Options = application:get_env(?MODULE, cache_options, #{}),
     {ok,
         {
             #{strategy => one_for_all, intensity => 6, period => 30},
             [
                 pm_party_cache:cache_child_spec(party_cache, Options),
-                pm_machine:get_child_spec(MachineHandlers),
-                get_api_child_spec(MachineHandlers, Options)
+                get_api_child_spec(Options)
             ]
         }}.
 
-get_api_child_spec(MachineHandlers, Opts) ->
+get_api_child_spec(Opts) ->
     {ok, Ip} = inet:parse_address(genlib_app:env(?MODULE, ip, "::")),
     HealthRoutes = construct_health_routes(genlib_app:env(?MODULE, health_check, #{})),
     EventHandlerOpts = genlib_app:env(?MODULE, scoper_event_handler_options, #{}),
     PrometeusRoute = get_prometheus_route(),
+
     woody_server:child_spec(
         ?MODULE,
         #{
@@ -61,15 +60,64 @@ get_api_child_spec(MachineHandlers, Opts) ->
             protocol_opts => genlib_app:env(?MODULE, protocol_opts, #{}),
             event_handler => {pm_woody_event_handler, EventHandlerOpts},
             handlers =>
-                pm_machine:get_service_handlers(MachineHandlers, Opts) ++
                 [
                     construct_service_handler(claim_committer, pm_claim_committer_handler, Opts),
                     construct_service_handler(party_management, pm_party_handler, Opts)
                 ],
-            additional_routes => [PrometeusRoute | HealthRoutes],
+            additional_routes => setup_machinery_routes() ++ [PrometeusRoute | HealthRoutes],
             shutdown_timeout => genlib_app:env(?MODULE, shutdown_timeout, 0)
         }
     ).
+
+setup_machinery_routes() ->
+    Schema = party_management_machinery_schema,
+    Backend = construct_machinery_backend_spec(Schema),
+    ok = application:set_env(?MODULE, backends, #{pm_party_machine:namespace() => Backend}),
+
+    MachineHandler = construct_machinery_handler_spec(pm_party_machine, Schema),
+    ModernizerHandler = construct_machinery_modernizer_spec(Schema),
+
+    RouteOptsEnv = genlib_app:env(?MODULE, route_opts, #{}),
+    EventHandlerOpts = genlib_app:env(?MODULE, scoper_event_handler_options, #{}),
+    RouteOpts = RouteOptsEnv#{event_handler => {scoper_woody_event_handler, EventHandlerOpts}},
+
+    machinery_mg_backend:get_routes([MachineHandler], RouteOpts) ++
+        machinery_modernizer_mg_backend:get_routes([ModernizerHandler], RouteOpts).
+
+construct_machinery_backend_spec(Schema) ->
+    {machinery_mg_backend, #{
+        schema => Schema,
+        client => get_service_client(automaton)
+    }}.
+
+construct_machinery_handler_spec(Handler, Schema) ->
+    {Handler, #{
+        path => "/v1/stateproc/party",
+        backend_config => #{schema => Schema}
+    }}.
+
+construct_machinery_modernizer_spec(Schema) ->
+    #{
+        path => "/v1/modernizer",
+        backend_config => #{schema => Schema}
+    }.
+
+get_service_client(ServiceName) ->
+    case get_service_client_url(ServiceName) of
+        undefined ->
+            error({unknown_service, ServiceName});
+        Url ->
+            genlib_map:compact(#{
+                url => Url,
+                event_handler => genlib_app:env(party_management, woody_event_handlers, [
+                    {scoper_woody_event_handler, #{}}
+                ])
+            })
+    end.
+
+get_service_client_url(ServiceName) ->
+    ServiceClients = genlib_app:env(party_management, services, #{}),
+    maps:get(ServiceName, ServiceClients, undefined).
 
 construct_health_routes(Check) ->
     [erl_health_handle:get_route(enable_health_logging(Check))].
