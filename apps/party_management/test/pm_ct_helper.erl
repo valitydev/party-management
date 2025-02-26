@@ -89,6 +89,7 @@ start_app(party_management = AppName) ->
                     }
                 }
             }},
+            {machinery_backend, hybrid},
             {services, #{
                 accounter => <<"http://shumway:8022/accounter">>,
                 automaton => <<"http://machinegun:8022/v1/automaton">>,
