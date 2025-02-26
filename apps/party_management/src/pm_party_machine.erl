@@ -353,8 +353,23 @@ publish_party_event(Source, {ID, Dt, {Changes, _}}) ->
 %%
 -spec get_backend(woody_context()) -> machinery_mg_backend:backend().
 get_backend(WoodyCtx) ->
-    NS = ?NS,
-    Backend = maps:get(NS, genlib_app:env(party_management, backends, #{})),
+    get_backend(genlib_app:env(party_management, machinery_backend), WoodyCtx).
+
+%%% Internal functions
+
+get_backend(hybrid, WoodyCtx) ->
+    {machinery_hybrid_backend, #{
+        primary_backend => get_backend(progressor, WoodyCtx),
+        fallback_backend => get_backend(machinegun, WoodyCtx)
+    }};
+get_backend(progressor, WoodyCtx) ->
+    machinery_prg_backend:new(WoodyCtx, #{
+        namespace => ?NS,
+        handler => pm_party_machine,
+        schema => party_management_machinery_schema
+    });
+get_backend(machinegun, WoodyCtx) ->
+    Backend = maps:get(?NS, genlib_app:env(party_management, backends, #{})),
     {Mod, Opts} = machinery_utils:get_backend(Backend),
     {Mod, Opts#{
         woody_ctx => WoodyCtx

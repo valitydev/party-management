@@ -110,6 +110,65 @@ start_app(party_management = AppName) ->
         ]),
         #{}
     };
+start_app(epg_connector = AppName) ->
+    {
+        start_app(AppName, [
+            {databases, #{
+                default_db => #{
+                    host => "postgres",
+                    port => 5432,
+                    database => "progressor_db",
+                    username => "progressor",
+                    password => "progressor"
+                }
+            }},
+            {pools, #{
+                default_pool => #{
+                    database => default_db,
+                    size => 30
+                }
+            }}
+        ]),
+        #{}
+    };
+start_app(progressor = AppName) ->
+    {
+        start_app(AppName, [
+            {call_wait_timeout, 20},
+            {defaults, #{
+                storage => #{
+                    client => prg_pg_backend,
+                    options => #{
+                        pool => default_pool
+                    }
+                },
+                retry_policy => #{
+                    initial_timeout => 5,
+                    backoff_coefficient => 1.0,
+                    %% seconds
+                    max_timeout => 180,
+                    max_attempts => 3,
+                    non_retryable_errors => []
+                },
+                task_scan_timeout => 1,
+                worker_pool_size => 100,
+                process_step_timeout => 30
+            }},
+            {namespaces, #{
+                'party' => #{
+                    processor => #{
+                        client => machinery_prg_backend,
+                        options => #{
+                            namespace => 'party',
+                            handler => {pm_party_machine, #{}},
+                            schema => party_management_machinery_schema
+                        }
+                    }
+                }
+            }}
+        ]),
+        #{}
+    };
 start_app(AppName) ->
     {genlib_app:start_application(AppName), #{}}.
 
