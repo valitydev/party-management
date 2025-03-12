@@ -55,7 +55,7 @@
  {<<"kafka_protocol">>,{pkg,<<"kafka_protocol">>,<<"4.1.10">>},3},
  {<<"machinery">>,
   {git,"https://github.com/valitydev/machinery-erlang.git",
-       {ref,"bbf75ebdab526fd3510073bf5ff9de8b16303028"}},
+       {ref,"8d87f0f1c9801dfc8eddde81360bf719d45ea344"}},
   0},
  {<<"metrics">>,{pkg,<<"metrics">>,<<"1.0.1">>},2},
  {<<"mg_proto">>,
