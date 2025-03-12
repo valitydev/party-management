@@ -50,7 +50,7 @@ get_api_child_spec(Opts) ->
     HealthRoutes = construct_health_routes(genlib_app:env(?MODULE, health_check, #{})),
     EventHandlerOpts = genlib_app:env(?MODULE, scoper_event_handler_options, #{}),
     PrometeusRoute = get_prometheus_route(),
-
+    EventHandlers = {pm_woody_event_handler, EventHandlerOpts},
     woody_server:child_spec(
         ?MODULE,
         #{
@@ -58,18 +58,21 @@ get_api_child_spec(Opts) ->
             port => genlib_app:env(?MODULE, port, 8022),
             transport_opts => genlib_app:env(?MODULE, transport_opts, #{}),
             protocol_opts => genlib_app:env(?MODULE, protocol_opts, #{}),
-            event_handler => {pm_woody_event_handler, EventHandlerOpts},
+            event_handler => EventHandlers,
             handlers =>
                 [
                     construct_service_handler(claim_committer, pm_claim_committer_handler, Opts),
                     construct_service_handler(party_management, pm_party_handler, Opts)
                 ],
-            additional_routes => setup_machinery_routes() ++ [PrometeusRoute | HealthRoutes],
+            additional_routes => get_routes(EventHandlers, genlib_app:env(?MODULE, machinery_backend)) ++
+                [PrometeusRoute | HealthRoutes],
             shutdown_timeout => genlib_app:env(?MODULE, shutdown_timeout, 0)
         }
     ).
 
-setup_machinery_routes() ->
+get_routes(_EventHandlers, progressor) ->
+    [];
+get_routes(EventHandlers, Mode) when Mode == machinegun orelse Mode == hybrid ->
     Schema = party_management_machinery_schema,
     Backend = construct_machinery_backend_spec(Schema),
     ok = application:set_env(?MODULE, backends, #{pm_party_machine:namespace() => Backend}),
@@ -78,8 +81,7 @@ setup_machinery_routes() ->
     ModernizerHandler = construct_machinery_modernizer_spec(Schema),
 
     RouteOptsEnv = genlib_app:env(?MODULE, route_opts, #{}),
-    EventHandlerOpts = genlib_app:env(?MODULE, scoper_event_handler_options, #{}),
-    RouteOpts = RouteOptsEnv#{event_handler => {scoper_woody_event_handler, EventHandlerOpts}},
+    RouteOpts = RouteOptsEnv#{event_handler => EventHandlers},
 
     machinery_mg_backend:get_routes([MachineHandler], RouteOpts) ++
         machinery_modernizer_mg_backend:get_routes([ModernizerHandler], RouteOpts).
