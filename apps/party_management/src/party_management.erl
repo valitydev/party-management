@@ -64,7 +64,8 @@ get_api_child_spec(MachineHandlers, Opts) ->
                 pm_machine:get_service_handlers(MachineHandlers, Opts) ++
                 [
                     construct_service_handler(claim_committer, pm_claim_committer_handler, Opts),
-                    construct_service_handler(party_management, pm_party_handler, Opts)
+                    construct_service_handler(party_management, pm_party_handler, Opts),
+                    construct_service_handler(party_config, pm_party_config_handler, Opts)
                 ],
             additional_routes => [PrometeusRoute | HealthRoutes],
             shutdown_timeout => genlib_app:env(?MODULE, shutdown_timeout, 0)
