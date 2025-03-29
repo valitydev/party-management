@@ -24,10 +24,5 @@ handle_function(Func, Args, Opts) ->
 handle_function_('ComputeTerms', Args, _Opts) ->
     {Ref, Revision, Varset} = Args,
     VS = pm_varset:decode_varset(Varset),
-    Terms = get_terms(Ref, Revision),
+    Terms = pm_party:get_term_set(Ref, pm_datetime:format_now(), Revision),
     pm_party:reduce_terms(Terms, VS, Revision).
-
-%%
-
-get_terms(Ref, DomainRevision) ->
-    pm_domain:get(DomainRevision, {term_set_hierarchy, Ref}).

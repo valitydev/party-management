@@ -31,6 +31,7 @@
 -export([set_new_contract/3]).
 
 -export([get_terms/3]).
+-export([get_term_set/3]).
 -export([reduce_terms/3]).
 
 -export([create_shop/3]).
@@ -73,6 +74,7 @@
 -type contractor() :: dmsl_domain_thrift:'PartyContractor'().
 -type contractor_id() :: dmsl_domain_thrift:'ContractorID'().
 -type contract_template() :: dmsl_domain_thrift:'ContractTemplate'().
+-type termset_ref() :: dmsl_domain_thrift:'TermSetHierarchyRef'().
 -type shop() :: dmsl_domain_thrift:'Shop'().
 -type shop_id() :: dmsl_domain_thrift:'ShopID'().
 -type shop_params() :: dmsl_payproc_thrift:'ShopParams'() | dmsl_claimmgmt_thrift:'ShopParams'().
@@ -356,6 +358,8 @@ is_adjustment_active(
 ) ->
     pm_datetime:between(Timestamp, pm_utils:select_defined(ValidSince, CreatedAt), ValidUntil).
 
+-spec get_term_set(termset_ref(), timestamp(), revision()) ->
+    dmsl_domain_thrift:'TermSet'() | no_return().
 get_term_set(TermsRef, Timestamp, Revision) ->
     #domain_TermSetHierarchy{
         parent_terms = ParentRef,
