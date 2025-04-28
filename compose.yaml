@@ -25,7 +25,7 @@ services:
     command: /sbin/init
 
   dmt:
-    image: ghcr.io/valitydev/dominant-v2:sha-acce76e-epic-fixes_for_client
+    image: ghcr.io/valitydev/dominant-v2:sha-67b1207-epic-fixes_for_client
     command: /opt/dmt/bin/dmt foreground
     healthcheck:
       test: "/opt/dmt/bin/dmt ping"
@@ -35,11 +35,11 @@ services:
     ports:
       - 8022:8022
     hostname: dmt
-    # environment:
-    #   POSTGRES_HOST: dmt-db
-    #   POSTGRES_USER: postgres
-    #   POSTGRES_PASSWORD: postgres
-    #   POSTGRES_DB: dmt
+    environment:
+      POSTGRES_HOST: dmt-db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: dmt
     depends_on:
       dmt-db:
         condition: service_healthy

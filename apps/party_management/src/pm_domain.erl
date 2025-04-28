@@ -34,7 +34,7 @@
 
 -spec head() -> revision().
 head() ->
-    dmt_client:get_last_version().
+    dmt_client:get_latest_version().
 
 -spec get(revision(), ref()) -> data() | no_return().
 get(Revision0, Ref) ->
@@ -70,9 +70,9 @@ exists(Revision0, Ref) ->
 extract_data(#domain_conf_v2_VersionedObject{object = {_Tag, {_Name, _Ref, Data}}}) ->
     Data.
 
--spec commit(revision(), dmt_client:commit(), binary()) -> commit_response() | no_return().
-commit(Revision, Commit, AuthorID) ->
-    dmt_client:commit(Revision, Commit, AuthorID).
+-spec commit(revision(), [dmt_client:operation()], binary()) -> commit_response() | no_return().
+commit(Revision, Operations, AuthorID) ->
+    dmt_client:commit(Revision, Operations, AuthorID).
 
 -spec insert(object() | [object()]) -> {revision(), [ref()]} | no_return().
 insert(Objects) ->
@@ -82,18 +82,15 @@ insert(Objects) ->
 insert(Object, AuthorID) when not is_list(Object) ->
     insert([Object], AuthorID);
 insert(Objects, AuthorID) ->
-    Commit = #domain_conf_v2_Commit{
-        ops = [
-            {insert, #domain_conf_v2_InsertOp{
-                object = {Type, Object},
-                force_ref = {Type, ForceRef}
-            }}
-         || {Type, {_ObjectName, ForceRef, Object}} <- Objects
-        ]
-    },
-    #domain_conf_v2_CommitResponse{
-        version = Version, new_objects = NewObjects
-    } = commit(head(), Commit, AuthorID),
+    Commit = [
+        {insert, #domain_conf_v2_InsertOp{
+            object = {Type, Object},
+            force_ref = {Type, ForceRef}
+        }}
+     || {Type, {_ObjectName, ForceRef, Object}} <- Objects
+    ],
+    #domain_conf_v2_CommitResponse{version = Version, new_objects = NewObjects} =
+        commit(head(), Commit, AuthorID),
     NewObjectsIDs = [
         {Tag, Ref}
      || {Tag, {_ON, Ref, _Obj}} <- ordsets:to_list(NewObjects)
@@ -109,28 +106,21 @@ update(NewObject, AuthorID) when not is_list(NewObject) ->
     update([NewObject], AuthorID);
 update(NewObjects, AuthorID) ->
     Revision = head(),
-    Commit = #domain_conf_v2_Commit{
-        ops = [
-            {update, #domain_conf_v2_UpdateOp{
-                targeted_ref = {Tag, Ref},
-                new_object = NewObject
-            }}
-         || NewObject = {Tag, {_ObjectName, Ref, _Data}} <- NewObjects
-        ]
-    },
+    Commit = [
+        {update, #domain_conf_v2_UpdateOp{object = NewObject}}
+     || NewObject = {_Tag, {_ObjectName, _Ref, _Data}} <- NewObjects
+    ],
     #domain_conf_v2_CommitResponse{version = Version} = commit(Revision, Commit, AuthorID),
     Version.
 
 -spec remove([object()], binary()) -> revision() | no_return().
 remove(Objects, AuthorID) ->
-    Commit = #domain_conf_v2_Commit{
-        ops = [
-            {remove, #domain_conf_v2_RemoveOp{
-                ref = Ref
-            }}
-         || Ref <- Objects
-        ]
-    },
+    Commit = [
+        {remove, #domain_conf_v2_RemoveOp{
+            ref = Ref
+        }}
+     || Ref <- Objects
+    ],
     #domain_conf_v2_CommitResponse{version = Version} = commit(head(), Commit, AuthorID),
     Version.
 
@@ -140,8 +130,8 @@ cleanup(Refs) ->
 
 generate_author() ->
     Random = genlib:unique(),
-    Params = #domain_conf_v2_UserOpParams{email = Random, name = Random},
-    #domain_conf_v2_UserOp{id = Id} = dmt_client:user_op_create(Params, #{}),
+    Params = #domain_conf_v2_AuthorParams{email = Random, name = Random},
+    #domain_conf_v2_Author{id = Id} = dmt_client:author_create(Params, #{}),
     Id.
 
 maybe_migrate_version(N) when is_number(N) ->
