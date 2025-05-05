@@ -16,41 +16,35 @@
 upsert(Revision, NewObject) when not is_list(NewObject) ->
     upsert(Revision, [NewObject]);
 upsert(Revision, NewObjects) ->
-    Commit = #domain_conf_v2_Commit{
-        ops = lists:foldl(
-            fun(NewObject = {Tag, {_ObjectName, Ref, NewData}}, Ops) ->
-                case pm_domain:find(Revision, {Tag, Ref}) of
-                    NewData ->
-                        Ops;
-                    notfound ->
-                        [
-                            {insert, #domain_conf_v2_InsertOp{
-                                object = {Tag, NewData},
-                                force_ref = {Tag, Ref}
-                            }}
-                            | Ops
-                        ];
-                    _OldData ->
-                        [
-                            {update, #domain_conf_v2_UpdateOp{
-                                targeted_ref = {Tag, Ref},
-                                new_object = NewObject
-                            }}
-                            | Ops
-                        ]
-                end
-            end,
-            [],
-            NewObjects
-        )
-    },
+    Commit = lists:foldl(
+        fun(NewObject = {Tag, {_ObjectName, Ref, NewData}}, Ops) ->
+            case pm_domain:find(Revision, {Tag, Ref}) of
+                NewData ->
+                    Ops;
+                notfound ->
+                    [
+                        {insert, #domain_conf_v2_InsertOp{
+                            object = {Tag, NewData},
+                            force_ref = {Tag, Ref}
+                        }}
+                        | Ops
+                    ];
+                _OldData ->
+                    [
+                        {update, #domain_conf_v2_UpdateOp{object = NewObject}}
+                        | Ops
+                    ]
+            end
+        end,
+        [],
+        NewObjects
+    ),
     commit(Revision, Commit).
 
--spec commit(revision(), dmt_client:commit()) -> {revision(), [pm_domain:ref()]} | no_return().
-commit(Revision, Commit) ->
-    #domain_conf_v2_CommitResponse{
-        version = Version, new_objects = NewObjects
-    } = dmt_client:commit(Revision, Commit, generate_author()),
+-spec commit(revision(), [dmt_client:operation()]) -> {revision(), [pm_domain:ref()]} | no_return().
+commit(Revision, Operations) ->
+    #domain_conf_v2_CommitResponse{version = Version, new_objects = NewObjects} =
+        dmt_client:commit(Revision, Operations, generate_author()),
     NewObjectsIDs = [
         {Tag, Ref}
      || {Tag, {_ON, Ref, _Obj}} <- ordsets:to_list(NewObjects)
@@ -67,6 +61,6 @@ with(NewObjects, Fun) ->
 
 generate_author() ->
     Random = genlib:unique(),
-    Params = #domain_conf_v2_UserOpParams{email = Random, name = Random},
-    #domain_conf_v2_UserOp{id = Id} = dmt_client:user_op_create(Params, #{}),
+    Params = #domain_conf_v2_AuthorParams{email = Random, name = Random},
+    #domain_conf_v2_Author{id = Id} = dmt_client:author_create(Params, #{}),
     Id.
