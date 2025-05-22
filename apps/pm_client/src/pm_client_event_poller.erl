@@ -37,6 +37,8 @@ poll(N, Timeout, Client, St) ->
 
 poll(_, Timeout, Acc, _Client, St) when Timeout < 0 ->
     {Acc, St};
+poll(N, _Timeout, Acc, _Client, St) when N < 0 ->
+    {Acc, St};
 poll(N, Timeout, Acc, Client, St) ->
     StartTs = genlib_time:ticks(),
     Range = construct_range(St, N),
