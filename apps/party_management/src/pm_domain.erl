@@ -22,10 +22,9 @@
 %%
 
 -type revision() :: pos_integer().
--type ref() :: dmsl_domain_thrift:'Reference'().
--type object() :: dmsl_domain_thrift:'DomainObject'().
+-type ref() :: dmt_client:object_ref().
+-type object() :: dmt_client:domain_object().
 -type data() :: _.
--type commit_response() :: dmsl_domain_conf_v2_thrift:'CommitResponse'().
 
 -export_type([revision/0]).
 -export_type([ref/0]).
@@ -37,30 +36,27 @@ head() ->
     dmt_client:get_latest_version().
 
 -spec get(revision(), ref()) -> data() | no_return().
-get(Revision0, Ref) ->
-    Revision1 = maybe_migrate_version(Revision0),
+get(Revision, Ref) ->
     try
-        extract_data(dmt_client:checkout_object(Ref, Revision1))
+        extract_data(dmt_client:checkout_object(Revision, Ref))
     catch
         throw:#domain_conf_v2_ObjectNotFound{} ->
-            error({object_not_found, {Revision1, Ref}})
+            error({object_not_found, {Revision, Ref}})
     end.
 
 -spec find(revision(), ref()) -> data() | notfound.
-find(Revision0, Ref) ->
-    Revision1 = maybe_migrate_version(Revision0),
+find(Revision, Ref) ->
     try
-        extract_data(dmt_client:checkout_object(Ref, Revision1))
+        extract_data(dmt_client:checkout_object(Revision, Ref))
     catch
         throw:#domain_conf_v2_ObjectNotFound{} ->
             notfound
     end.
 
 -spec exists(revision(), ref()) -> boolean().
-exists(Revision0, Ref) ->
-    Revision1 = maybe_migrate_version(Revision0),
+exists(Revision, Ref) ->
     try
-        _ = dmt_client:checkout_object(Ref, Revision1),
+        _ = dmt_client:checkout_object(Revision, Ref),
         true
     catch
         throw:#domain_conf_v2_ObjectNotFound{} ->
@@ -70,7 +66,6 @@ exists(Revision0, Ref) ->
 extract_data(#domain_conf_v2_VersionedObject{object = {_Tag, {_Name, _Ref, Data}}}) ->
     Data.
 
--spec commit(revision(), [dmt_client:operation()], binary()) -> commit_response() | no_return().
 commit(Revision, Operations, AuthorID) ->
     dmt_client:commit(Revision, Operations, AuthorID).
 
@@ -102,41 +97,20 @@ update(NewObject) when not is_list(NewObject) ->
     update(NewObject, generate_author()).
 
 -spec update(object() | [object()], binary()) -> revision() | no_return().
-update(NewObject, AuthorID) when not is_list(NewObject) ->
-    update([NewObject], AuthorID);
-update(NewObjects, AuthorID) ->
-    Revision = head(),
-    Commit = [
-        {update, #domain_conf_v2_UpdateOp{object = NewObject}}
-     || NewObject = {_Tag, {_ObjectName, _Ref, _Data}} <- NewObjects
-    ],
-    #domain_conf_v2_CommitResponse{version = Version} = commit(Revision, Commit, AuthorID),
-    Version.
+update(Objects, AuthorID) ->
+    dmt_client:update(Objects, AuthorID).
 
--spec remove([object()], binary()) -> revision() | no_return().
-remove(Objects, AuthorID) ->
+-spec cleanup([ref()]) -> revision() | no_return().
+cleanup(Refs) ->
     Commit = [
         {remove, #domain_conf_v2_RemoveOp{
             ref = Ref
         }}
-     || Ref <- Objects
+     || Ref <- Refs
     ],
-    #domain_conf_v2_CommitResponse{version = Version} = commit(head(), Commit, AuthorID),
+    #domain_conf_v2_CommitResponse{version = Version} =
+        commit(head(), Commit, generate_author()),
     Version.
 
--spec cleanup([ref()]) -> revision() | no_return().
-cleanup(Refs) ->
-    remove(Refs, generate_author()).
-
 generate_author() ->
-    Random = genlib:unique(),
-    Params = #domain_conf_v2_AuthorParams{email = Random, name = Random},
-    #domain_conf_v2_Author{id = Id} = dmt_client:author_create(Params, #{}),
-    Id.
-
-maybe_migrate_version(N) when is_number(N) ->
-    N;
-maybe_migrate_version({version, N}) ->
-    N;
-maybe_migrate_version({head, _}) ->
-    head().
+    dmt_client:create_author(genlib:unique(), genlib:unique()).

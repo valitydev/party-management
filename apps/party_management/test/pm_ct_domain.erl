@@ -60,7 +60,4 @@ with(NewObjects, Fun) ->
     {Version, NewObjectsIDs}.
 
 generate_author() ->
-    Random = genlib:unique(),
-    Params = #domain_conf_v2_AuthorParams{email = Random, name = Random},
-    #domain_conf_v2_Author{id = Id} = dmt_client:author_create(Params, #{}),
-    Id.
+    dmt_client:create_author(genlib:unique(), genlib:unique()).
