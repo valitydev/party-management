@@ -290,12 +290,12 @@ groups() ->
 -spec init_per_suite(config()) -> config().
 init_per_suite(C) ->
     {Apps, _Ret} = pm_ct_helper:start_apps([woody, scoper, dmt_client, epg_connector, progressor, party_management]),
-    _ = pm_domain:insert(construct_domain_fixture()),
-    [{apps, Apps} | C].
+    {_Rev, ObjIds} = pm_domain:insert(construct_domain_fixture()),
+    [{apps, Apps}, {objects_ids, ObjIds} | C].
 
 -spec end_per_suite(config()) -> _.
 end_per_suite(C) ->
-    _ = pm_domain:cleanup(),
+    _ = pm_domain:cleanup(cfg(objects_ids, C)),
     [application:stop(App) || App <- cfg(apps, C)].
 
 %% tests
@@ -393,7 +393,9 @@ end_per_testcase(_Name, _C) ->
 
 -define(claim(ID), #payproc_Claim{id = ID}).
 -define(claim(ID, Status), #payproc_Claim{id = ID, status = Status}).
--define(claim(ID, Status, Changeset), #payproc_Claim{id = ID, status = Status, changeset = Changeset}).
+-define(claim(ID, Status, Changeset), #payproc_Claim{
+    id = ID, status = Status, changeset = Changeset
+}).
 
 -define(claim_not_found(),
     {exception, #payproc_ClaimNotFound{}}
@@ -797,7 +799,9 @@ contract_adjustment_expiration(C) ->
                 Revision
             ),
     AfterExpiration = pm_datetime:add_interval(pm_datetime:format_now(), {0, 1, 1}),
-    Terms = pm_party:get_terms(pm_client_party:get_contract(ContractID, Client), AfterExpiration, Revision),
+    Terms = pm_party:get_terms(
+        pm_client_party:get_contract(ContractID, Client), AfterExpiration, Revision
+    ),
     pm_context:cleanup().
 
 compute_payment_institution_terms(C) ->
@@ -1011,7 +1015,9 @@ shop_terms_retrieval(C) ->
     ShopID = ?REAL_SHOP_ID,
     Timestamp = pm_datetime:format_now(),
     VS = #payproc_ComputeShopTermsVarset{},
-    TermSet1 = pm_client_party:compute_shop_terms(ShopID, Timestamp, {timestamp, Timestamp}, VS, Client),
+    TermSet1 = pm_client_party:compute_shop_terms(
+        ShopID, Timestamp, {timestamp, Timestamp}, VS, Client
+    ),
     ?assertMatch(
         #domain_TermSet{
             payments = #domain_PaymentsServiceTerms{
@@ -1021,7 +1027,9 @@ shop_terms_retrieval(C) ->
         TermSet1
     ),
     _ = pm_domain:update(construct_term_set_for_party(PartyID, {shop_is, ShopID})),
-    TermSet2 = pm_client_party:compute_shop_terms(ShopID, pm_datetime:format_now(), {timestamp, Timestamp}, VS, Client),
+    TermSet2 = pm_client_party:compute_shop_terms(
+        ShopID, pm_datetime:format_now(), {timestamp, Timestamp}, VS, Client
+    ),
     ?assertMatch(
         #domain_TermSet{
             payments = #domain_PaymentsServiceTerms{
@@ -1033,7 +1041,9 @@ shop_terms_retrieval(C) ->
 
 shop_already_exists(C) ->
     Client = cfg(client, C),
-    Details = pm_ct_helper:make_shop_details(<<"THRlFT SHOP">>, <<"Hot. Fancy. Almost like thrift.">>),
+    Details = pm_ct_helper:make_shop_details(
+        <<"THRlFT SHOP">>, <<"Hot. Fancy. Almost like thrift.">>
+    ),
     ContractID = ?REAL_CONTRACT_ID,
     ShopID = ?REAL_SHOP_ID,
     Params = #payproc_ShopParams{
@@ -1043,7 +1053,9 @@ shop_already_exists(C) ->
         contract_id = ContractID
     },
     Changeset = [?shop_modification(ShopID, {creation, Params})],
-    ?invalid_changeset(?invalid_shop(ShopID, {already_exists, _})) = pm_client_party:create_claim(Changeset, Client).
+    ?invalid_changeset(?invalid_shop(ShopID, {already_exists, _})) = pm_client_party:create_claim(
+        Changeset, Client
+    ).
 
 shop_update(C) ->
     Client = cfg(client, C),
@@ -1096,7 +1108,9 @@ shop_update_before_confirm(C) ->
     ok = update_claim(Claim0, Changeset2, Client),
     Claim1 = pm_client_party:get_claim(pm_claim:get_id(Claim0), Client),
     ok = accept_claim(Claim1, Client),
-    #domain_Shop{category = NewCategory, details = NewDetails} = pm_client_party:get_shop(ShopID, Client).
+    #domain_Shop{category = NewCategory, details = NewDetails} = pm_client_party:get_shop(
+        ShopID, Client
+    ).
 
 shop_update_with_bad_params(C) ->
     % FIXME add more invalid params checks
@@ -1209,7 +1223,9 @@ complex_claim_acceptance(C) ->
         ),
         Client
     ),
-    ok = update_claim(Claim1, [?shop_modification(ShopID1, {category_modification, ?cat(3)})], Client),
+    ok = update_claim(
+        Claim1, [?shop_modification(ShopID1, {category_modification, ?cat(3)})], Client
+    ),
     Claim1_1 = pm_client_party:get_claim(pm_claim:get_id(Claim1), Client),
     true = Claim1#payproc_Claim.changeset =/= Claim1_1#payproc_Claim.changeset,
     true = Claim1#payproc_Claim.revision =/= Claim1_1#payproc_Claim.revision,
@@ -1220,7 +1236,9 @@ complex_claim_acceptance(C) ->
         comment = PartyComment,
         contact_info = #domain_PartyContactInfo{manager_contact_emails = Emails}
     } = pm_client_party:get(Client),
-    #domain_Shop{details = Details1, category = ?cat(3)} = pm_client_party:get_shop(ShopID1, Client),
+    #domain_Shop{details = Details1, category = ?cat(3)} = pm_client_party:get_shop(
+        ShopID1, Client
+    ),
     #domain_Shop{details = Details2} = pm_client_party:get_shop(ShopID2, Client).
 
 claim_already_accepted_on_revoke(C) ->
@@ -1451,8 +1469,12 @@ shop_account_set_retrieval(C) ->
 
 shop_account_retrieval(C) ->
     Client = cfg(client, C),
-    {shop_account_set_retrieval, #domain_ShopAccount{guarantee = AccountID}} = ?config(saved_config, C),
-    #payproc_AccountState{account_id = AccountID} = pm_client_party:get_account_state(AccountID, Client).
+    {shop_account_set_retrieval, #domain_ShopAccount{guarantee = AccountID}} = ?config(
+        saved_config, C
+    ),
+    #payproc_AccountState{account_id = AccountID} = pm_client_party:get_account_state(
+        AccountID, Client
+    ).
 
 get_account_state_not_found(C) ->
     Client = cfg(client, C),
@@ -1506,7 +1528,9 @@ contract_w_contractor_creation(C) ->
     ],
     Claim = assert_claim_pending(pm_client_party:create_claim(Changeset, Client), Client),
     ok = accept_claim(Claim, Client),
-    #domain_Contract{id = ContractID, contractor_id = ContractorID} = pm_client_party:get_contract(ContractID, Client).
+    #domain_Contract{id = ContractID, contractor_id = ContractorID} = pm_client_party:get_contract(
+        ContractID, Client
+    ).
 
 %% Compute providers
 
@@ -1542,7 +1566,9 @@ compute_provider_not_found(C) ->
     Client = cfg(client, C),
     DomainRevision = pm_domain:head(),
     {exception, #payproc_ProviderNotFound{}} =
-        (catch pm_client_party:compute_provider(?prv(?WRONG_DMT_OBJ_ID), DomainRevision, #payproc_Varset{}, Client)).
+        (catch pm_client_party:compute_provider(
+            ?prv(?WRONG_DMT_OBJ_ID), DomainRevision, #payproc_Varset{}, Client
+        )).
 
 compute_provider_terminal_terms_ok(C) ->
     Client = cfg(client, C),
@@ -1594,7 +1620,9 @@ compute_provider_terminal_terms_ok(C) ->
         recurrent_paytools = #domain_RecurrentPaytoolsProvisionTerms{
             cash_value = {value, ?cash(1000, <<"RUB">>)}
         }
-    } = pm_client_party:compute_provider_terminal_terms(?prv(1), ?trm(1), DomainRevision, Varset, Client).
+    } = pm_client_party:compute_provider_terminal_terms(
+        ?prv(1), ?trm(1), DomainRevision, Varset, Client
+    ).
 
 compute_provider_terminal_terms_global_allow_ok(C) ->
     Client = cfg(client, C),
@@ -1610,7 +1638,9 @@ compute_provider_terminal_terms_global_allow_ok(C) ->
                 global_allow = {constant, false}
             }
         },
-        pm_client_party:compute_provider_terminal_terms(?prv(3), ?trm(5), DomainRevision, Varset0, Client)
+        pm_client_party:compute_provider_terminal_terms(
+            ?prv(3), ?trm(5), DomainRevision, Varset0, Client
+        )
     ),
     Varset1 = Varset0#payproc_Varset{party_id = <<"PARTYID2">>},
     ?assertEqual(
@@ -1620,7 +1650,9 @@ compute_provider_terminal_terms_global_allow_ok(C) ->
                 global_allow = {constant, false}
             }
         },
-        pm_client_party:compute_provider_terminal_terms(?prv(3), ?trm(5), DomainRevision, Varset1, Client)
+        pm_client_party:compute_provider_terminal_terms(
+            ?prv(3), ?trm(5), DomainRevision, Varset1, Client
+        )
     ),
     Varset2 = Varset0#payproc_Varset{amount = ?cash(101, <<"RUB">>)},
     ?assertEqual(
@@ -1630,7 +1662,9 @@ compute_provider_terminal_terms_global_allow_ok(C) ->
                 global_allow = {constant, true}
             }
         },
-        pm_client_party:compute_provider_terminal_terms(?prv(3), ?trm(5), DomainRevision, Varset2, Client)
+        pm_client_party:compute_provider_terminal_terms(
+            ?prv(3), ?trm(5), DomainRevision, Varset2, Client
+        )
     ).
 
 compute_provider_terminal_terms_not_found(C) ->
@@ -1824,7 +1858,9 @@ compute_payment_routing_ruleset_not_found(C) ->
     Client = cfg(client, C),
     DomainRevision = pm_domain:head(),
     {exception, #payproc_RuleSetNotFound{}} =
-        (catch pm_client_party:compute_routing_ruleset(?ruleset(5), DomainRevision, #payproc_Varset{}, Client)).
+        (catch pm_client_party:compute_routing_ruleset(
+            ?ruleset(5), DomainRevision, #payproc_Varset{}, Client
+        )).
 
 %%
 
@@ -1898,29 +1934,34 @@ compute_terms_w_criteria(C) ->
         {inclusive, ?cash(10, <<"KZT">>)},
         {exclusive, ?cash(100, <<"KZT">>)}
     ),
-    pm_ct_domain:with(
-        [
-            pm_ct_fixture:construct_criterion(
-                CritBase,
-                <<"Visas">>,
-                {all_of,
-                    ?ordset([
+    WasRevision = pm_domain:head(),
+    % TODO it's a weak point for cleanup, as we don't update Config with new IDs
+    {_, _NewIDs0} = pm_ct_domain:upsert(
+        WasRevision,
+        pm_ct_fixture:construct_criterion(
+            CritBase,
+            <<"Visas">>,
+            {all_of,
+                ?ordset([
+                    {condition,
+                        {payment_tool,
+                            {bank_card, #domain_BankCardCondition{
+                                definition =
+                                    {payment_system, #domain_PaymentSystemCondition{
+                                        payment_system_is = ?pmt_sys(<<"visa">>)
+                                    }}
+                            }}}},
+                    {is_not,
                         {condition,
                             {payment_tool,
                                 {bank_card, #domain_BankCardCondition{
-                                    definition =
-                                        {payment_system, #domain_PaymentSystemCondition{
-                                            payment_system_is = ?pmt_sys(<<"visa">>)
-                                        }}
-                                }}}},
-                        {is_not,
-                            {condition,
-                                {payment_tool,
-                                    {bank_card, #domain_BankCardCondition{
-                                        definition = {empty_cvv_is, true}
-                                    }}}}}
-                    ])}
-            ),
+                                    definition = {empty_cvv_is, true}
+                                }}}}}
+                ])}
+        )
+    ),
+    {_, _NewIDs1} = pm_ct_domain:with(
+        [
             pm_ct_fixture:construct_criterion(
                 CritRef,
                 <<"Kazakh Visas">>,
@@ -2020,7 +2061,9 @@ update_claim(#payproc_Claim{id = ClaimID, revision = Revision}, Changeset, Clien
 accept_claim(#payproc_Claim{id = ClaimID, revision = Revision}, Client) ->
     ok = pm_client_party:accept_claim(ClaimID, Revision, Client),
     NextRevision = Revision + 1,
-    [?claim_status_changed(ClaimID, ?accepted(_), NextRevision, _), ?revision_changed(_, _)] = next_event(Client),
+    [?claim_status_changed(ClaimID, ?accepted(_), NextRevision, _), ?revision_changed(_, _)] = next_event(
+        Client
+    ),
     ok.
 
 deny_claim(#payproc_Claim{id = ClaimID, revision = Revision}, Client) ->
@@ -2214,11 +2257,14 @@ construct_domain_fixture() ->
                     ),
                     #domain_PaymentMethodDecision{
                         if_ = {condition, {payment_tool, {bank_card, #domain_BankCardCondition{}}}},
-                        then_ = {value, ordsets:from_list([?pmt(bank_card, ?bank_card(<<"mastercard">>))])}
+                        then_ =
+                            {value, ordsets:from_list([?pmt(bank_card, ?bank_card(<<"mastercard">>))])}
                     },
                     #domain_PaymentMethodDecision{
-                        if_ = {condition, {payment_tool, {payment_terminal, #domain_PaymentTerminalCondition{}}}},
-                        then_ = {value, ordsets:from_list([?pmt(payment_terminal, ?pmt_srv(<<"euroset">>))])}
+                        if_ =
+                            {condition, {payment_tool, {payment_terminal, #domain_PaymentTerminalCondition{}}}},
+                        then_ =
+                            {value, ordsets:from_list([?pmt(payment_terminal, ?pmt_srv(<<"euroset">>))])}
                     },
                     #domain_PaymentMethodDecision{
                         if_ = {constant, true},
@@ -2246,10 +2292,18 @@ construct_domain_fixture() ->
             payment_methods =
                 {decisions, [
                     mk_payment_decision(
-                        {bank_card, #domain_BankCardCondition{definition = {issuer_bank_is, ?bank(1)}}},
-                        [?pmt(bank_card, ?bank_card(<<"visa">>)), ?pmt(crypto_currency, ?crypta(<<"bitcoin">>))]
+                        {bank_card, #domain_BankCardCondition{
+                            definition = {issuer_bank_is, ?bank(1)}
+                        }},
+                        [
+                            ?pmt(bank_card, ?bank_card(<<"visa">>)),
+                            ?pmt(crypto_currency, ?crypta(<<"bitcoin">>))
+                        ]
                     ),
-                    mk_payment_decision({bank_card, #domain_BankCardCondition{definition = {empty_cvv_is, true}}}, []),
+                    mk_payment_decision(
+                        {bank_card, #domain_BankCardCondition{definition = {empty_cvv_is, true}}},
+                        []
+                    ),
                     mk_payment_decision(
                         {bank_card, #domain_BankCardCondition{}},
                         [?pmt(bank_card, ?bank_card(<<"visa">>))]
@@ -2436,7 +2490,10 @@ construct_domain_fixture() ->
                                                         {inclusive, ?cash(0, <<"RUB">>)},
                                                         {exclusive, ?cash(3000, <<"RUB">>)}
                                                     )}},
-                                        then_ = {value, #domain_Fees{fees = #{surplus => ?fixed(50, <<"RUB">>)}}}
+                                        then_ =
+                                            {value, #domain_Fees{
+                                                fees = #{surplus => ?fixed(50, <<"RUB">>)}
+                                            }}
                                     },
                                     #domain_FeeDecision{
                                         if_ =
@@ -2447,7 +2504,11 @@ construct_domain_fixture() ->
                                                         {exclusive, ?cash(300000, <<"RUB">>)}
                                                     )}},
                                         then_ =
-                                            {value, #domain_Fees{fees = #{surplus => ?share(4, 100, operation_amount)}}}
+                                            {value, #domain_Fees{
+                                                fees = #{
+                                                    surplus => ?share(4, 100, operation_amount)
+                                                }
+                                            }}
                                     }
                                 ]}
                         }
@@ -2526,7 +2587,9 @@ construct_domain_fixture() ->
         pm_ct_fixture:construct_payment_method(?pmt(bank_card, ?bank_card(<<"mastercard">>))),
         pm_ct_fixture:construct_payment_method(?pmt(bank_card, ?bank_card(<<"maestro">>))),
         pm_ct_fixture:construct_payment_method(?pmt(bank_card, ?bank_card(<<"jcb">>))),
-        pm_ct_fixture:construct_payment_method(?pmt(bank_card, ?token_bank_card(<<"visa">>, <<"applepay">>))),
+        pm_ct_fixture:construct_payment_method(
+            ?pmt(bank_card, ?token_bank_card(<<"visa">>, <<"applepay">>))
+        ),
         pm_ct_fixture:construct_payment_method(?pmt(payment_terminal, ?pmt_srv(<<"alipay">>))),
         pm_ct_fixture:construct_payment_method(?pmt(digital_wallet, ?pmt_srv(<<"qiwi">>))),
         pm_ct_fixture:construct_payment_method(?pmt(mobile, ?mob(<<"mts">>))),
@@ -2802,7 +2865,8 @@ construct_domain_fixture() ->
                                         {condition,
                                             {payment_tool,
                                                 {bank_card, #domain_BankCardCondition{
-                                                    definition = {issuer_bank_is, #domain_BankRef{id = 1}}
+                                                    definition =
+                                                        {issuer_bank_is, #domain_BankRef{id = 1}}
                                                 }}}},
                                     then_ =
                                         {value,
@@ -2836,7 +2900,10 @@ construct_domain_fixture() ->
                                             {condition,
                                                 {payment_tool,
                                                     {bank_card, #domain_BankCardCondition{
-                                                        definition = {issuer_bank_is, #domain_BankRef{id = 1}}
+                                                        definition =
+                                                            {issuer_bank_is, #domain_BankRef{
+                                                                id = 1
+                                                            }}
                                                     }}}}},
                                     then_ =
                                         {value,

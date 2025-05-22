@@ -73,14 +73,16 @@ all() ->
 -spec init_per_suite(config()) -> config().
 init_per_suite(C) ->
     {Apps, _Ret} = pm_ct_helper:start_apps([woody, scoper, dmt_client, epg_connector, progressor, party_management]),
-    _ = pm_domain:insert(construct_domain_fixture()),
-    PartyID = erlang:list_to_binary([?MODULE_STRING, ".", erlang:integer_to_list(erlang:system_time())]),
+    {_Rev, ObjIds} = pm_domain:insert(construct_domain_fixture()),
+    PartyID = erlang:list_to_binary([
+        ?MODULE_STRING, ".", erlang:integer_to_list(erlang:system_time())
+    ]),
     ApiClient = pm_ct_helper:create_client(),
-    [{apps, Apps}, {party_id, PartyID}, {api_client, ApiClient} | C].
+    [{apps, Apps}, {party_id, PartyID}, {api_client, ApiClient}, {objects_ids, ObjIds} | C].
 
 -spec end_per_suite(config()) -> _.
 end_per_suite(C) ->
-    _ = pm_domain:cleanup(),
+    _ = pm_domain:cleanup(cfg(objects_ids, C)),
     [application:stop(App) || App <- cfg(apps, C)].
 
 %%% Tests
@@ -197,8 +199,12 @@ contract_adjustment_creation(C) ->
     PartyID = cfg(party_id, C),
     ContractID = ?REAL_CONTRACT_ID1,
     ID = <<"ADJ1">>,
-    AdjustmentParams = #claimmgmt_ContractAdjustmentParams{template = #domain_ContractTemplateRef{id = 2}},
-    Modifications = [?cm_contract_modification(ContractID, ?cm_adjustment_creation(ID, AdjustmentParams))],
+    AdjustmentParams = #claimmgmt_ContractAdjustmentParams{
+        template = #domain_ContractTemplateRef{id = 2}
+    },
+    Modifications = [
+        ?cm_contract_modification(ContractID, ?cm_adjustment_creation(ID, AdjustmentParams))
+    ],
     Claim = claim(Modifications, PartyID),
     ok = accept_claim(Claim, C),
     ok = commit_claim(Claim, C),
@@ -304,14 +310,16 @@ shop_complex_modification(C) ->
             id = <<"ID">>,
             upper_boundary = 10000,
             %% Only needs to be set when TurnoverLimit is in dominant config, otherwise skip it
-            domain_revision = dmt_client:get_last_version()
+            domain_revision = dmt_client:get_latest_version()
         }
     ]),
     Modifications = [
         ?cm_shop_modification(ShopID, {category_modification, NewCategory}),
         ?cm_shop_modification(ShopID, {details_modification, NewDetails}),
         ?cm_shop_modification(ShopID, {location_modification, NewLocation}),
-        ?cm_shop_modification(ShopID, {cash_register_modification_unit, CashRegisterModificationUnit}),
+        ?cm_shop_modification(
+            ShopID, {cash_register_modification_unit, CashRegisterModificationUnit}
+        ),
         ?cm_shop_modification(ShopID, {turnover_limits_modification, TurnoverLimits})
     ],
     Claim = claim(Modifications, PartyID),
@@ -336,10 +344,15 @@ invalid_cash_register_modification(C) ->
         description = <<"Updated shop description.">>
     },
     AnotherShopID = <<"Totaly not the valid one">>,
-    Mod = ?cm_shop_modification(AnotherShopID, {cash_register_modification_unit, CashRegisterModificationUnit}),
+    Mod = ?cm_shop_modification(
+        AnotherShopID, {cash_register_modification_unit, CashRegisterModificationUnit}
+    ),
     Modifications = [?cm_shop_modification(?REAL_SHOP_ID, {details_modification, NewDetails}), Mod],
     Claim = claim(Modifications, PartyID),
-    {exception, ?cm_invalid_party_changeset(?cm_invalid_shop_not_exists(AnotherShopID), [{party_modification, Mod}])} =
+    {exception,
+        ?cm_invalid_party_changeset(?cm_invalid_shop_not_exists(AnotherShopID), [
+            {party_modification, Mod}
+        ])} =
         accept_claim(Claim, C).
 
 -spec shop_contract_modification(config()) -> _.
@@ -380,7 +393,9 @@ contractor_already_exists(C) ->
     Mod = ?cm_contractor_creation(ContractorID, ContractorParams),
     Claim = claim([Mod], PartyID),
     {exception,
-        ?cm_invalid_party_changeset(?cm_invalid_contractor_already_exists(ContractorID), [{party_modification, Mod}])} =
+        ?cm_invalid_party_changeset(?cm_invalid_contractor_already_exists(ContractorID), [
+            {party_modification, Mod}
+        ])} =
         accept_claim(Claim, C).
 
 -spec contract_already_exists(config()) -> _.
@@ -391,7 +406,9 @@ contract_already_exists(C) ->
     Mod = ?cm_contract_creation(ContractID, ContractParams),
     Claim = claim([Mod], PartyID),
     {exception,
-        ?cm_invalid_party_changeset(?cm_invalid_contract_already_exists(ContractID), [{party_modification, Mod}])} =
+        ?cm_invalid_party_changeset(?cm_invalid_contract_already_exists(ContractID), [
+            {party_modification, Mod}
+        ])} =
         accept_claim(Claim, C).
 
 -spec contract_already_terminated(config()) -> _.
@@ -402,9 +419,11 @@ contract_already_terminated(C) ->
     Mod = ?cm_contract_modification(ContractID, {termination, Reason}),
     Claim = claim([Mod], PartyID),
     {exception,
-        ?cm_invalid_party_changeset(?cm_invalid_contract_invalid_status_terminated(ContractID, _), [
-            {party_modification, Mod}
-        ])} =
+        ?cm_invalid_party_changeset(
+            ?cm_invalid_contract_invalid_status_terminated(ContractID, _), [
+                {party_modification, Mod}
+            ]
+        )} =
         accept_claim(Claim, C).
 
 -spec shop_already_exists(config()) -> _.
@@ -428,7 +447,10 @@ shop_already_exists(C) ->
         ?cm_shop_account_creation(ShopID, ?cur(<<"RUB">>))
     ],
     Claim = claim(Modifications, PartyID),
-    {exception, ?cm_invalid_party_changeset(?cm_invalid_shop_already_exists(ShopID), [{party_modification, Mod}])} =
+    {exception,
+        ?cm_invalid_party_changeset(?cm_invalid_shop_already_exists(ShopID), [
+            {party_modification, Mod}
+        ])} =
         accept_claim(Claim, C).
 
 -spec wallet_account_creation(config()) -> _.
@@ -492,7 +514,10 @@ claim(PartyModifications, PartyID) ->
         id = id(),
         party_id = PartyID,
         status = {pending, #claimmgmt_ClaimPending{}},
-        changeset = [?cm_party_modification(id(), ts(), Mod, UserInfo) || Mod <- PartyModifications],
+        changeset = [
+            ?cm_party_modification(id(), ts(), Mod, UserInfo)
+         || Mod <- PartyModifications
+        ],
         revision = 1,
         created_at = ts()
     }.
