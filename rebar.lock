@@ -77,7 +77,7 @@
   {git,"https://github.com/valitydev/progressor.git",
        {ref,"6df2e447a867434ad45bfc3540c4681e10105e02"}},
   1},
- {<<"prometheus">>,{pkg,<<"prometheus">>,<<"4.8.1">>},0},
+ {<<"prometheus">>,{pkg,<<"prometheus">>,<<"4.11.0">>},0},
  {<<"prometheus_cowboy">>,{pkg,<<"prometheus_cowboy">>,<<"0.1.9">>},0},
  {<<"prometheus_httpd">>,{pkg,<<"prometheus_httpd">>,<<"2.1.15">>},1},
  {<<"quantile_estimator">>,{pkg,<<"quantile_estimator">>,<<"0.2.1">>},1},
