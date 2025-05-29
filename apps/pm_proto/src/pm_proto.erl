@@ -35,6 +35,4 @@ get_service_spec(Name = claim_committer, #{}) ->
 get_service_spec(Name = party_management, #{}) ->
     {?VERSION_PREFIX ++ "/processing/partymgmt", get_service(Name)};
 get_service_spec(Name = party_config, #{}) ->
-    {?VERSION_PREFIX ++ "/processing/partycfg", get_service(Name)};
-get_service_spec(Name = processor, #{namespace := Ns}) when is_binary(Ns) ->
-    {?VERSION_PREFIX ++ "/stateproc/" ++ binary_to_list(Ns), get_service(Name)}.
+    {?VERSION_PREFIX ++ "/processing/partycfg", get_service(Name)}.
