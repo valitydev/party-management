@@ -23,11 +23,7 @@ get_service(party_management) ->
 get_service(party_config) ->
     {dmsl_payproc_thrift, 'PartyConfigManagement'};
 get_service(accounter) ->
-    {dmsl_accounter_thrift, 'Accounter'};
-get_service(automaton) ->
-    {mg_proto_state_processing_thrift, 'Automaton'};
-get_service(processor) ->
-    {mg_proto_state_processing_thrift, 'Processor'}.
+    {dmsl_accounter_thrift, 'Accounter'}.
 
 -spec get_service_spec(Name :: atom()) -> service_spec().
 get_service_spec(Name) ->
