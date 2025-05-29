@@ -26,7 +26,7 @@ services:
     command: /sbin/init
 
   dominant:
-    image: ghcr.io/valitydev/dominant:sha-c0ebc36
+    image: ghcr.io/valitydev/dominant:sha-ef03371-epic-party_here
     depends_on:
       - machinegun
     ports:

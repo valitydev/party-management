@@ -62,7 +62,8 @@ get_api_child_spec(Opts) ->
             handlers =>
                 [
                     construct_service_handler(claim_committer, pm_claim_committer_handler, Opts),
-                    construct_service_handler(party_management, pm_party_handler, Opts)
+                    construct_service_handler(party_management, pm_party_handler, Opts),
+                    construct_service_handler(party_config, pm_party_config_handler, Opts)
                 ],
             additional_routes => get_routes(EventHandlers, genlib_app:env(?MODULE, machinery_backend)) ++
                 [PrometeusRoute | HealthRoutes],
