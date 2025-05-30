@@ -2786,6 +2786,7 @@ construct_domain_fixture() ->
             data = #domain_Provider{
                 name = <<"Brovider">>,
                 description = <<"A provider but bro">>,
+                realm = test,
                 proxy = #domain_Proxy{
                     ref = ?prx(1),
                     additional = #{
@@ -2794,7 +2795,6 @@ construct_domain_fixture() ->
                         <<"override_terminal">> => <<"provider">>
                     }
                 },
-                abs_account = <<"1234567890">>,
                 accounts = pm_ct_fixture:construct_provider_account_set([?cur(<<"RUB">>)]),
                 terms = #domain_ProvisionTermSet{
                     payments = #domain_PaymentsProvisionTerms{
@@ -2962,8 +2962,8 @@ construct_domain_fixture() ->
             data = #domain_Provider{
                 name = <<"Provider 2">>,
                 description = <<"Provider without terms">>,
+                realm = test,
                 proxy = #domain_Proxy{ref = ?prx(1), additional = #{}},
-                abs_account = <<"1234567890">>,
                 accounts = pm_ct_fixture:construct_provider_account_set([?cur(<<"RUB">>)])
             }
         }},
@@ -2973,6 +2973,7 @@ construct_domain_fixture() ->
             data = #domain_Provider{
                 name = <<"Brovider">>,
                 description = <<"A provider but bro">>,
+                realm = test,
                 proxy = #domain_Proxy{
                     ref = ?prx(1),
                     additional = #{
