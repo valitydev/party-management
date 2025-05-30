@@ -6,10 +6,6 @@ namespaces:
         processor:
             url: http://party-management:8022/v1/stateproc/party
             pool_size: 300
-    domain-config:
-        processor:
-            url: http://dominant:8022/v1/stateproc
-            pool_size: 300
 
 storage:
     type: memory
