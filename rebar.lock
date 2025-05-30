@@ -19,11 +19,11 @@
  {<<"ctx">>,{pkg,<<"ctx">>,<<"0.6.0">>},2},
  {<<"damsel">>,
   {git,"https://github.com/valitydev/damsel.git",
-       {ref,"35a8abf6c006d744617d770aef5948a0322f2bd5"}},
+       {ref,"ab44b9db25a76a2c50545fd884e4cdf3d3e3b628"}},
   0},
  {<<"dmt_client">>,
   {git,"https://github.com/valitydev/dmt_client.git",
-       {ref,"be672256f9780cfc311fed1aa3a21a79fd6ecf18"}},
+       {ref,"ec1f8c8dcf1e7a9ef39328a91da3949bd89770cf"}},
   0},
  {<<"dmt_core">>,
   {git,"https://github.com/valitydev/dmt-core.git",
@@ -99,7 +99,7 @@
  {<<"tls_certificate_check">>,
   {pkg,<<"tls_certificate_check">>,<<"1.28.0">>},
   1},
- {<<"unicode_util_compat">>,{pkg,<<"unicode_util_compat">>,<<"0.7.0">>},2},
+ {<<"unicode_util_compat">>,{pkg,<<"unicode_util_compat">>,<<"0.7.1">>},2},
  {<<"woody">>,
   {git,"https://github.com/valitydev/woody_erlang.git",
        {ref,"cc983a9423325ba1d6a509775eb6ff7ace721539"}},
@@ -138,7 +138,7 @@
  {<<"recon">>, <<"9052588E83BFEDFD9B72E1034532AEE2A5369D9D9343B61AEB7FBCE761010741">>},
  {<<"ssl_verify_fun">>, <<"354C321CF377240C7B8716899E182CE4890C5938111A1296ADD3EC74CF1715DF">>},
  {<<"tls_certificate_check">>, <<"C39BF21F67C2D124AE905454FAD00F27E625917E8AB1009146E916E1DF6AB275">>},
- {<<"unicode_util_compat">>, <<"BC84380C9AB48177092F43AC89E4DFA2C6D62B40B8BD132B1059ECC7232F9A78">>}]},
+ {<<"unicode_util_compat">>, <<"A48703A25C170EEDADCA83B11E88985AF08D35F37C6F664D6DCFB106A97782FC">>}]},
 {pkg_hash_ext,[
  {<<"accept">>, <<"CA69388943F5DAD2E7232A5478F16086E3C872F48E32B88B378E1885A59F5649">>},
  {<<"acceptor_pool">>, <<"0CBCD83FDC8B9AD2EEE2067EF8B91A14858A5883CB7CD800E6FCD5803E158788">>},
@@ -172,5 +172,5 @@
  {<<"recon">>, <<"96C6799792D735CC0F0FD0F86267E9D351E63339CBE03DF9D162010CEFC26BB0">>},
  {<<"ssl_verify_fun">>, <<"FE4C190E8F37401D30167C8C405EDA19469F34577987C76DDE613E838BBC67F8">>},
  {<<"tls_certificate_check">>, <<"3AB058C3F9457FFFCA916729587415F0DDC822048A0E5B5E2694918556D92DF1">>},
- {<<"unicode_util_compat">>, <<"25EEE6D67DF61960CF6A794239566599B09E17E668D3700247BC498638152521">>}]}
+ {<<"unicode_util_compat">>, <<"B3A917854CE3AE233619744AD1E0102E05673136776FB2FA76234F3E03B23642">>}]}
 ].
