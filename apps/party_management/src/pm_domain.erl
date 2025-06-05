@@ -6,8 +6,7 @@
 
 -module(pm_domain).
 
--include_lib("damsel/include/dmsl_domain_thrift.hrl").
--include_lib("damsel/include/dmsl_domain_conf_thrift.hrl").
+-include_lib("damsel/include/dmsl_domain_conf_v2_thrift.hrl").
 
 %%
 
@@ -18,13 +17,13 @@
 
 -export([insert/1]).
 -export([update/1]).
--export([cleanup/0]).
+-export([cleanup/1]).
 
 %%
 
 -type revision() :: pos_integer().
--type ref() :: dmsl_domain_thrift:'Reference'().
--type object() :: dmsl_domain_thrift:'DomainObject'().
+-type ref() :: dmt_client:object_ref().
+-type object() :: dmt_client:domain_object().
 -type data() :: _.
 
 -export_type([revision/0]).
@@ -34,14 +33,14 @@
 
 -spec head() -> revision().
 head() ->
-    dmt_client:get_last_version().
+    dmt_client:get_latest_version().
 
 -spec get(revision(), ref()) -> data() | no_return().
 get(Revision, Ref) ->
     try
         extract_data(dmt_client:checkout_object(Revision, Ref))
     catch
-        throw:#domain_conf_ObjectNotFound{} ->
+        throw:#domain_conf_v2_ObjectNotFound{} ->
             error({object_not_found, {Revision, Ref}})
     end.
 
@@ -50,7 +49,7 @@ find(Revision, Ref) ->
     try
         extract_data(dmt_client:checkout_object(Revision, Ref))
     catch
-        throw:#domain_conf_ObjectNotFound{} ->
+        throw:#domain_conf_v2_ObjectNotFound{} ->
             notfound
     end.
 
@@ -60,61 +59,58 @@ exists(Revision, Ref) ->
         _ = dmt_client:checkout_object(Revision, Ref),
         true
     catch
-        throw:#domain_conf_ObjectNotFound{} ->
+        throw:#domain_conf_v2_ObjectNotFound{} ->
             false
     end.
 
-extract_data({_Tag, {_Name, _Ref, Data}}) ->
+extract_data(#domain_conf_v2_VersionedObject{object = {_Tag, {_Name, _Ref, Data}}}) ->
     Data.
 
--spec commit(revision(), dmt_client:commit()) -> revision() | no_return().
-commit(Revision, Commit) ->
-    dmt_client:commit(Revision, Commit).
+commit(Revision, Operations, AuthorID) ->
+    dmt_client:commit(Revision, Operations, AuthorID).
 
--spec insert(object() | [object()]) -> revision() | no_return().
-insert(Object) when not is_list(Object) ->
-    insert([Object]);
+-spec insert(object() | [object()]) -> {revision(), [ref()]} | no_return().
 insert(Objects) ->
-    Commit = #'domain_conf_Commit'{
-        ops = [
-            {insert, #'domain_conf_InsertOp'{
-                object = Object
-            }}
-         || Object <- Objects
-        ]
-    },
-    commit(head(), Commit).
+    insert(Objects, generate_author()).
+
+-spec insert(object() | [object()], binary()) -> {revision(), [ref()]} | no_return().
+insert(Object, AuthorID) when not is_list(Object) ->
+    insert([Object], AuthorID);
+insert(Objects, AuthorID) ->
+    Commit = [
+        {insert, #domain_conf_v2_InsertOp{
+            object = {Type, Object},
+            force_ref = {Type, ForceRef}
+        }}
+     || {Type, {_ObjectName, ForceRef, Object}} <- Objects
+    ],
+    #domain_conf_v2_CommitResponse{version = Version, new_objects = NewObjects} =
+        commit(head(), Commit, AuthorID),
+    NewObjectsIDs = [
+        {Tag, Ref}
+     || {Tag, {_ON, Ref, _Obj}} <- ordsets:to_list(NewObjects)
+    ],
+    {Version, NewObjectsIDs}.
 
 -spec update(object() | [object()]) -> revision() | no_return().
 update(NewObject) when not is_list(NewObject) ->
-    update([NewObject]);
-update(NewObjects) ->
-    Revision = head(),
-    Commit = #'domain_conf_Commit'{
-        ops = [
-            {update, #'domain_conf_UpdateOp'{
-                old_object = {Tag, {ObjectName, Ref, OldData}},
-                new_object = NewObject
-            }}
-         || NewObject = {Tag, {ObjectName, Ref, _Data}} <- NewObjects,
-            OldData <- [get(Revision, {Tag, Ref})]
-        ]
-    },
-    commit(Revision, Commit).
+    update(NewObject, generate_author()).
 
--spec remove([object()]) -> revision() | no_return().
-remove(Objects) ->
-    Commit = #'domain_conf_Commit'{
-        ops = [
-            {remove, #'domain_conf_RemoveOp'{
-                object = Object
-            }}
-         || Object <- Objects
-        ]
-    },
-    commit(head(), Commit).
+-spec update(object() | [object()], binary()) -> revision() | no_return().
+update(Objects, AuthorID) ->
+    dmt_client:update(Objects, AuthorID).
 
--spec cleanup() -> revision() | no_return().
-cleanup() ->
-    #'domain_conf_Snapshot'{domain = Domain} = dmt_client:checkout(latest),
-    remove(maps:values(Domain)).
+-spec cleanup([ref()]) -> revision() | no_return().
+cleanup(Refs) ->
+    Commit = [
+        {remove, #domain_conf_v2_RemoveOp{
+            ref = Ref
+        }}
+     || Ref <- Refs
+    ],
+    #domain_conf_v2_CommitResponse{version = Version} =
+        commit(head(), Commit, generate_author()),
+    Version.
+
+generate_author() ->
+    dmt_client:create_author(genlib:unique(), genlib:unique()).
