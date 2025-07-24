@@ -19,19 +19,15 @@ handle_function(Func, Args, Opts) ->
 
 -spec handle_function_(woody:func(), woody:args(), pm_woody_wrapper:handler_opts()) -> term() | no_return().
 %% Accounts
-handle_function_('GetShopAccount', {PartyID, ShopID}, _Opts) ->
+handle_function_('GetShopAccount', {PartyID, ShopID, DomainRevision}, _Opts) ->
     _ = set_party_mgmt_meta(PartyID),
-    Party = pm_party_machine:get_party(PartyID),
-    pm_party:get_shop_account(ShopID, Party);
-handle_function_('GetWalletAccount', {PartyID, WalletID}, _Opts) ->
+    pm_party:get_shop_account(ShopID, PartyID, DomainRevision);
+handle_function_('GetWalletAccount', {PartyID, WalletID, DomainRevision}, _Opts) ->
     _ = set_party_mgmt_meta(PartyID),
-    Party = pm_party_machine:get_party(PartyID),
-    %% TODO Implement
-    pm_party:get_wallet_account(WalletID, Party);
-handle_function_('GetAccountState', {PartyID, AccountID}, _Opts) ->
+    pm_party:get_wallet_account(WalletID, PartyID, DomainRevision);
+handle_function_('GetAccountState', {PartyID, AccountID, DomainRevision}, _Opts) ->
     _ = set_party_mgmt_meta(PartyID),
-    Party = pm_party_machine:get_party(PartyID),
-    pm_party:get_account_state(AccountID, Party);
+    pm_party:get_account_state(AccountID, PartyID, DomainRevision);
 %% Providers
 handle_function_('ComputeProvider', Args, _Opts) ->
     {ProviderRef, DomainRevision, Varset} = Args,
@@ -85,13 +81,6 @@ handle_function_('ComputeRoutingRuleset', Args, _Opts) ->
     VS = pm_varset:decode_varset(Varset),
     pm_ruleset:reduce_payment_routing_ruleset(RuleSet, VS, DomainRevision);
 %% Payment Institutions
-handle_function_('ComputePaymentInstitutionTerms', {PaymentInstitutionRef, Varset}, _Opts) ->
-    Revision = pm_domain:head(),
-    PaymentInstitution = get_payment_institution(PaymentInstitutionRef, Revision),
-    VS = pm_varset:decode_varset(Varset),
-    ContractTemplate = get_default_contract_template(PaymentInstitution, VS, Revision),
-    Terms = pm_party:get_terms(ContractTemplate, pm_datetime:format_now(), Revision),
-    pm_party:reduce_terms(Terms, VS, Revision);
 handle_function_('ComputePaymentInstitution', Args, _Opts) ->
     {PaymentInstitutionRef, DomainRevision, Varset} = Args,
     PaymentInstitution = get_payment_institution(PaymentInstitutionRef, DomainRevision),
@@ -100,18 +89,8 @@ handle_function_('ComputePaymentInstitution', Args, _Opts) ->
 handle_function_('ComputeTerms', Args, _Opts) ->
     {Ref, Revision, Varset} = Args,
     VS = pm_varset:decode_varset(Varset),
-    Terms = pm_party:get_term_set(Ref, pm_datetime:format_now(), Revision),
+    Terms = pm_party:get_term_set(Ref, Revision),
     pm_party:reduce_terms(Terms, VS, Revision).
-
-%%
-
-call(PartyID, FunctionName, Args) ->
-    pm_party_machine:call(
-        PartyID,
-        party_management,
-        {'PartyManagement', FunctionName},
-        Args
-    ).
 
 %%
 
@@ -125,27 +104,6 @@ assert_provider_terms_reduced(undefined) ->
 
 set_party_mgmt_meta(PartyID) ->
     scoper:add_meta(#{party_id => PartyID}).
-
-checkout_party(PartyID, RevisionParam) ->
-    checkout_party(PartyID, RevisionParam, #payproc_PartyNotExistsYet{}).
-
-checkout_party(PartyID, RevisionParam, Exception) ->
-    try
-        pm_party_machine:checkout(PartyID, RevisionParam)
-    catch
-        error:revision_not_found ->
-            throw(Exception)
-    end.
-
-ensure_contract(#domain_Contract{} = Contract) ->
-    Contract;
-ensure_contract(undefined) ->
-    throw(#payproc_ContractNotFound{}).
-
-ensure_shop(#domain_Shop{} = Shop) ->
-    Shop;
-ensure_shop(undefined) ->
-    throw(#payproc_ShopNotFound{}).
 
 get_payment_institution(PaymentInstitutionRef, Revision) ->
     case pm_domain:find(Revision, {payment_institution, PaymentInstitutionRef}) of
@@ -187,19 +145,3 @@ get_payment_routing_ruleset(RuleSetRef, DomainRevision) ->
         error:{object_not_found, {DomainRevision, {routing_rules, RuleSetRef}}} ->
             throw(#payproc_RuleSetNotFound{})
     end.
-
-get_default_contract_template(#domain_PaymentInstitution{default_contract_template = ContractSelector}, VS, Revision) ->
-    ContractTemplateRef = pm_selector:reduce_to_value(ContractSelector, VS, Revision),
-    pm_domain:get(Revision, {contract_template, ContractTemplateRef}).
-
-get_identification_level(#domain_Contract{contractor_id = undefined, contractor = Contractor}, _) ->
-    %% TODO legacy, remove after migration
-    case Contractor of
-        {legal_entity, _} ->
-            full;
-        _ ->
-            none
-    end;
-get_identification_level(#domain_Contract{contractor_id = ContractorID}, Party) ->
-    Contractor = pm_party:get_contractor(ContractorID, Party),
-    Contractor#domain_PartyContractor.status.

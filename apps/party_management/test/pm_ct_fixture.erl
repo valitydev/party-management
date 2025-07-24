@@ -17,8 +17,6 @@
 -export([construct_inspector/3]).
 -export([construct_inspector/4]).
 -export([construct_inspector/5]).
--export([construct_contract_template/2]).
--export([construct_contract_template/4]).
 -export([construct_provider_account_set/1]).
 -export([construct_system_account_set/1]).
 -export([construct_system_account_set/3]).
@@ -219,23 +217,6 @@ construct_inspector(Ref, Name, ProxyRef, Additional, FallBackScore) ->
         }
     }}.
 
--spec construct_contract_template(template(), terms()) ->
-    {contract_template, dmsl_domain_thrift:'ContractTemplateObject'()}.
-construct_contract_template(Ref, TermsRef) ->
-    construct_contract_template(Ref, TermsRef, undefined, undefined).
-
--spec construct_contract_template(template(), terms(), ValidSince :: lifetime(), ValidUntil :: lifetime()) ->
-    {contract_template, dmsl_domain_thrift:'ContractTemplateObject'()}.
-construct_contract_template(Ref, TermsRef, ValidSince, ValidUntil) ->
-    {contract_template, #domain_ContractTemplateObject{
-        ref = Ref,
-        data = #domain_ContractTemplate{
-            valid_since = ValidSince,
-            valid_until = ValidUntil,
-            terms = TermsRef
-        }
-    }}.
-
 -spec construct_provider_account_set([currency()]) -> dmsl_domain_thrift:'ProviderAccountSet'().
 construct_provider_account_set(Currencies) ->
     ok = pm_context:save(pm_context:create()),
@@ -337,12 +318,7 @@ construct_term_set_hierarchy(Ref, ParentRef, TermSet) ->
         ref = Ref,
         data = #domain_TermSetHierarchy{
             parent_terms = ParentRef,
-            term_sets = [
-                #domain_TimedTermSet{
-                    action_time = #base_TimestampInterval{},
-                    terms = TermSet
-                }
-            ]
+            term_sets = [TermSet]
         }
     }}.
 

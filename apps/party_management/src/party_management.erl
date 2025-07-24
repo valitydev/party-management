@@ -17,9 +17,6 @@
 -export([start/2]).
 -export([stop/1]).
 
-% 30 seconds
--define(DEFAULT_HANDLING_TIMEOUT, 30000).
-
 %%
 %% API
 %%
@@ -40,7 +37,6 @@ init([]) ->
         {
             #{strategy => one_for_all, intensity => 6, period => 30},
             [
-                pm_party_cache:cache_child_spec(party_cache, Options),
                 get_api_child_spec(Options)
             ]
         }}.

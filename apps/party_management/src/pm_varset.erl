@@ -35,7 +35,6 @@ encode_varset(Varset) ->
         payment_method = genlib_map:get(payment_method, Varset),
         wallet_id = genlib_map:get(wallet_id, Varset),
         shop_id = genlib_map:get(shop_id, Varset),
-        identification_level = genlib_map:get(identification_level, Varset),
         payment_tool = genlib_map:get(payment_tool, Varset),
         party_id = genlib_map:get(party_id, Varset),
         bin_data = genlib_map:get(bin_data, Varset)
@@ -53,27 +52,12 @@ decode_varset(#payproc_Varset{} = Varset, VS) ->
         payment_method => Varset#payproc_Varset.payment_method,
         wallet_id => Varset#payproc_Varset.wallet_id,
         shop_id => Varset#payproc_Varset.shop_id,
-        identification_level => Varset#payproc_Varset.identification_level,
         payment_tool => prepare_payment_tool_var(
             Varset#payproc_Varset.payment_method,
             Varset#payproc_Varset.payment_tool
         ),
         party_id => Varset#payproc_Varset.party_id,
         bin_data => Varset#payproc_Varset.bin_data
-    });
-decode_varset(#payproc_ComputeShopTermsVarset{} = Varset, VS) ->
-    genlib_map:compact(VS#{
-        cost => Varset#payproc_ComputeShopTermsVarset.amount,
-        payment_tool => Varset#payproc_ComputeShopTermsVarset.payment_tool
-    });
-decode_varset(#payproc_ComputeContractTermsVarset{} = Varset, VS) ->
-    genlib_map:compact(VS#{
-        currency => Varset#payproc_ComputeContractTermsVarset.currency,
-        cost => Varset#payproc_ComputeContractTermsVarset.amount,
-        shop_id => Varset#payproc_ComputeContractTermsVarset.shop_id,
-        payment_tool => Varset#payproc_ComputeContractTermsVarset.payment_tool,
-        wallet_id => Varset#payproc_ComputeContractTermsVarset.wallet_id,
-        bin_data => Varset#payproc_ComputeContractTermsVarset.bin_data
     }).
 
 prepare_payment_tool_var(_PaymentMethodRef, PaymentTool) when PaymentTool /= undefined ->

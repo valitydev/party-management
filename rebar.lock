@@ -19,7 +19,7 @@
  {<<"ctx">>,{pkg,<<"ctx">>,<<"0.6.0">>},2},
  {<<"damsel">>,
   {git,"https://github.com/valitydev/damsel.git",
-       {ref,"79271b018818262137b2466ed9107c38fd52d8d7"}},
+       {ref,"3ebdbe865a05137ce131737e07dacd330b2f6616"}},
   0},
  {<<"dmt_client">>,
   {git,"https://github.com/valitydev/dmt_client.git",

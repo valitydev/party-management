@@ -90,10 +90,6 @@
 -export([compute_payment_institution_terms/1]).
 -export([compute_payment_institution/1]).
 
--export([contractor_creation/1]).
--export([contractor_modification/1]).
--export([contract_w_contractor_creation/1]).
-
 -export([compute_provider_ok/1]).
 -export([compute_provider_not_found/1]).
 -export([compute_provider_terminal_terms_ok/1]).
@@ -229,12 +225,6 @@ groups() ->
             shop_already_suspended,
             shop_activation,
             shop_already_active
-        ]},
-        {contractor_management, [sequence], [
-            party_creation,
-            contractor_creation,
-            contractor_modification,
-            contract_w_contractor_creation
         ]},
         {shop_account_lazy_creation, [sequence], [
             party_creation,
@@ -491,9 +481,6 @@ end_per_testcase(_Name, _C) ->
 -spec compute_payment_institution_terms(config()) -> _ | no_return().
 -spec compute_payment_institution(config()) -> _ | no_return().
 -spec contract_w2w_terms(config()) -> _ | no_return().
--spec contractor_creation(config()) -> _ | no_return().
--spec contractor_modification(config()) -> _ | no_return().
--spec contract_w_contractor_creation(config()) -> _ | no_return().
 
 -spec compute_provider_ok(config()) -> _ | no_return().
 -spec compute_provider_not_found(config()) -> _ | no_return().
@@ -768,41 +755,6 @@ contract_adjustment_creation(C) ->
         adjustments = Adjustments
     } = pm_client_party:get_contract(ContractID, Client),
     true = lists:keymember(ID, #domain_ContractAdjustment.id, Adjustments).
-
-contract_adjustment_expiration(C) ->
-    Client = cfg(client, C),
-    ok = pm_context:save(pm_context:create()),
-    ContractID = ?REAL_CONTRACT_ID,
-    ID = <<"ADJ2">>,
-    Revision = pm_domain:head(),
-    Terms = pm_party:get_terms(
-        pm_client_party:get_contract(ContractID, Client),
-        pm_datetime:format_now(),
-        Revision
-    ),
-    AdjustmentParams = #payproc_ContractAdjustmentParams{
-        template = #domain_ContractTemplateRef{id = 4}
-    },
-    Changeset = [?contract_modification(ContractID, ?adjustment_creation(ID, AdjustmentParams))],
-    Claim = assert_claim_pending(pm_client_party:create_claim(Changeset, Client), Client),
-    ok = accept_claim(Claim, Client),
-    #domain_Contract{
-        id = ContractID,
-        adjustments = Adjustments
-    } = pm_client_party:get_contract(ContractID, Client),
-    true = lists:keymember(ID, #domain_ContractAdjustment.id, Adjustments),
-    true =
-        Terms /=
-            pm_party:get_terms(
-                pm_client_party:get_contract(ContractID, Client),
-                pm_datetime:format_now(),
-                Revision
-            ),
-    AfterExpiration = pm_datetime:add_interval(pm_datetime:format_now(), {0, 1, 1}),
-    Terms = pm_party:get_terms(
-        pm_client_party:get_contract(ContractID, Client), AfterExpiration, Revision
-    ),
-    pm_context:cleanup().
 
 compute_payment_institution_terms(C) ->
     Client = cfg(client, C),
@@ -1483,55 +1435,6 @@ get_account_state_not_found(C) ->
 
 %%
 
-contractor_creation(C) ->
-    Client = cfg(client, C),
-    ContractorParams = make_contractor_params(),
-    ContractorID = ?REAL_CONTRACTOR_ID,
-    Changeset = [
-        ?contractor_modification(ContractorID, {creation, ContractorParams})
-    ],
-    Claim = assert_claim_pending(pm_client_party:create_claim(Changeset, Client), Client),
-    ok = accept_claim(Claim, Client),
-    Party = pm_client_party:get(Client),
-    #domain_PartyContractor{} = pm_party:get_contractor(ContractorID, Party).
-
-contractor_modification(C) ->
-    Client = cfg(client, C),
-    ContractorID = ?REAL_CONTRACTOR_ID,
-    Party1 = pm_client_party:get(Client),
-    #domain_PartyContractor{} = C1 = pm_party:get_contractor(ContractorID, Party1),
-    Changeset = [
-        ?contractor_modification(ContractorID, {identification_level_modification, full}),
-        ?contractor_modification(
-            ContractorID,
-            {
-                identity_documents_modification,
-                #payproc_ContractorIdentityDocumentsModification{
-                    identity_documents = [<<"some_binary">>, <<"and_even_more_binary">>]
-                }
-            }
-        )
-    ],
-    Claim = assert_claim_pending(pm_client_party:create_claim(Changeset, Client), Client),
-    ok = accept_claim(Claim, Client),
-    Party2 = pm_client_party:get(Client),
-    #domain_PartyContractor{} = C2 = pm_party:get_contractor(ContractorID, Party2),
-    C1 /= C2 orelse error(same_contractor).
-
-contract_w_contractor_creation(C) ->
-    Client = cfg(client, C),
-    ContractorID = ?REAL_CONTRACTOR_ID,
-    ContractParams = make_contract_w_contractor_params(ContractorID),
-    ContractID = ?REAL_CONTRACT_ID,
-    Changeset = [
-        ?contract_modification(ContractID, {creation, ContractParams})
-    ],
-    Claim = assert_claim_pending(pm_client_party:create_claim(Changeset, Client), Client),
-    ok = accept_claim(Claim, Client),
-    #domain_Contract{id = ContractID, contractor_id = ContractorID} = pm_client_party:get_contract(
-        ContractID, Client
-    ).
-
 %% Compute providers
 
 compute_provider_ok(C) ->
@@ -2052,38 +1955,6 @@ compute_terms_w_criteria(C) ->
 
 %%
 
-update_claim(#payproc_Claim{id = ClaimID, revision = Revision}, Changeset, Client) ->
-    ok = pm_client_party:update_claim(ClaimID, Revision, Changeset, Client),
-    NextRevision = Revision + 1,
-    [?claim_updated(ClaimID, Changeset, NextRevision, _)] = next_event(Client),
-    ok.
-
-accept_claim(#payproc_Claim{id = ClaimID, revision = Revision}, Client) ->
-    ok = pm_client_party:accept_claim(ClaimID, Revision, Client),
-    NextRevision = Revision + 1,
-    [?claim_status_changed(ClaimID, ?accepted(_), NextRevision, _), ?revision_changed(_, _)] = next_event(
-        Client
-    ),
-    ok.
-
-deny_claim(#payproc_Claim{id = ClaimID, revision = Revision}, Client) ->
-    ok = pm_client_party:deny_claim(ClaimID, Revision, Reason = <<"The Reason">>, Client),
-    NextRevision = Revision + 1,
-    [?claim_status_changed(ClaimID, ?denied(Reason), NextRevision, _)] = next_event(Client),
-    ok.
-
-revoke_claim(#payproc_Claim{id = ClaimID, revision = Revision}, Client) ->
-    ok = pm_client_party:revoke_claim(ClaimID, Revision, undefined, Client),
-    NextRevision = Revision + 1,
-    [?claim_status_changed(ClaimID, ?revoked(undefined), NextRevision, _)] = next_event(Client),
-    ok.
-
-assert_claim_pending(?claim(ClaimID, ?pending()) = Claim, Client) ->
-    [?claim_created(?claim(ClaimID))] = next_event(Client),
-    Claim.
-
-%%
-
 next_event(Client) ->
     case pm_client_party:pull_event(Client) of
         ?party_ev(Event) ->
@@ -2099,25 +1970,6 @@ make_party_params() ->
 
 make_party_params(ContactInfo) ->
     #payproc_PartyParams{contact_info = ContactInfo}.
-
-make_contract_params() ->
-    make_contract_params(undefined).
-
-make_contract_params(TemplateRef) ->
-    make_contract_params(TemplateRef, ?pinst(2)).
-
-make_contract_params(TemplateRef, PaymentInstitutionRef) ->
-    pm_ct_helper:make_battle_ready_contract_params(TemplateRef, PaymentInstitutionRef).
-
-make_contract_w_contractor_params(ContractorID) ->
-    #payproc_ContractParams{
-        contractor_id = ContractorID,
-        template = undefined,
-        payment_institution = ?pinst(2)
-    }.
-
-make_contractor_params() ->
-    pm_ct_helper:make_battle_ready_contractor().
 
 construct_term_set_for_party(PartyID, Def) ->
     TermSet = #domain_TermSet{
@@ -2629,8 +2481,6 @@ construct_domain_fixture() ->
             data = #domain_PaymentInstitution{
                 name = <<"Test Inc.">>,
                 system_account_set = {value, ?sas(1)},
-                default_contract_template = {value, ?tmpl(1)},
-                providers = {value, ?ordset([])},
                 inspector = {value, ?insp(1)},
                 residences = [],
                 realm = test
@@ -2642,8 +2492,6 @@ construct_domain_fixture() ->
             data = #domain_PaymentInstitution{
                 name = <<"Chetky Payments Inc.">>,
                 system_account_set = {value, ?sas(2)},
-                default_contract_template = {value, ?tmpl(2)},
-                providers = {value, ?ordset([])},
                 inspector = {value, ?insp(1)},
                 residences = [],
                 realm = live
@@ -2655,8 +2503,6 @@ construct_domain_fixture() ->
             data = #domain_PaymentInstitution{
                 name = <<"Chetky Payments Inc.">>,
                 system_account_set = {value, ?sas(2)},
-                default_contract_template = {value, ?tmpl(2)},
-                providers = {value, ?ordset([])},
                 inspector = {value, ?insp(1)},
                 residences = [],
                 realm = live
@@ -2680,8 +2526,6 @@ construct_domain_fixture() ->
                                 {value, ?sas(1)}
                         }
                     ]},
-                default_contract_template = {value, ?tmpl(2)},
-                providers = {value, ?ordset([])},
                 inspector = {value, ?insp(1)},
                 residences = [],
                 realm = live
@@ -2694,8 +2538,6 @@ construct_domain_fixture() ->
             data = #domain_PaymentInstitution{
                 name = <<"All Payments GmbH">>,
                 system_account_set = {value, ?sas(2)},
-                default_contract_template = {value, ?tmpl(6)},
-                providers = {value, ?ordset([])},
                 inspector = {value, ?insp(1)},
                 residences = [],
                 realm = live
