@@ -35,7 +35,7 @@ test({cost_is_multiple_of, V}, #{cost := C}, _) ->
 test({payment_tool, C}, #{payment_tool := V}, Rev) ->
     pm_payment_tool:test_condition(C, V, Rev);
 test({shop_location_is, V}, #{shop := S}, _) ->
-    V =:= S#domain_Shop.location;
+    V =:= S#domain_ShopConfig.location;
 test({party, V}, #{party_id := PartyID} = VS, _) ->
     test_party(V, PartyID, VS);
 test({identification_level_is, V1}, #{identification_level := V2}, _) ->

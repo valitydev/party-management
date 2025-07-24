@@ -13,135 +13,25 @@
 
 -spec handle_function(woody:func(), woody:args(), pm_woody_wrapper:handler_opts()) -> term() | no_return().
 handle_function(Func, Args, Opts) ->
-    scoper:scope(
-        partymgmt,
-        fun() ->
-            handle_function_(Func, Args, Opts)
-        end
-    ).
+    scoper:scope(partymgmt, fun() ->
+        handle_function_(Func, Args, Opts)
+    end).
 
 -spec handle_function_(woody:func(), woody:args(), pm_woody_wrapper:handler_opts()) -> term() | no_return().
-%% Party
-handle_function_('Create', {PartyID, PartyParams}, _Opts) ->
-    _ = set_party_mgmt_meta(PartyID),
-    WoodyCtx = pm_context:get_woody_context(pm_context:load()),
-    pm_party_machine:start(PartyID, PartyParams, WoodyCtx);
-handle_function_('Checkout', {PartyID, RevisionParam}, _Opts) ->
-    _ = set_party_mgmt_meta(PartyID),
-    checkout_party(PartyID, RevisionParam, #payproc_InvalidPartyRevision{});
-handle_function_('Get', {PartyID}, _Opts) ->
-    _ = set_party_mgmt_meta(PartyID),
-    pm_party_machine:get_party(PartyID);
-handle_function_('GetRevision', {PartyID}, _Opts) ->
-    _ = set_party_mgmt_meta(PartyID),
-    pm_party_machine:get_last_revision(PartyID);
-handle_function_('GetStatus', {PartyID}, _Opts) ->
-    _ = set_party_mgmt_meta(PartyID),
-    pm_party_machine:get_status(PartyID);
-handle_function_(Fun, Args, _Opts) when
-    Fun =:= 'Block' orelse
-        Fun =:= 'Unblock' orelse
-        Fun =:= 'Suspend' orelse
-        Fun =:= 'Activate'
-->
-    PartyID = erlang:element(1, Args),
-    _ = set_party_mgmt_meta(PartyID),
-    call(PartyID, Fun, Args);
-%% Contract
-handle_function_('GetContract', {PartyID, ContractID}, _Opts) ->
-    _ = set_party_mgmt_meta(PartyID),
-    Party = pm_party_machine:get_party(PartyID),
-    ensure_contract(pm_party:get_contract(ContractID, Party));
-handle_function_('ComputeContractTerms', Args, _Opts) ->
-    {PartyID, ContractID, Timestamp, PartyRevisionParams, DomainRevision, Varset} = Args,
-    _ = set_party_mgmt_meta(PartyID),
-    Party = checkout_party(PartyID, PartyRevisionParams),
-    Contract = ensure_contract(pm_party:get_contract(ContractID, Party)),
-    VS =
-        case pm_varset:decode_varset(Varset) of
-            #{shop_id := ShopID} = VS0 ->
-                Shop = ensure_shop(pm_party:get_shop(ShopID, Party)),
-                Currency = maps:get(currency, VS0, (Shop#domain_Shop.account)#domain_ShopAccount.currency),
-                VS0#{
-                    category => Shop#domain_Shop.category,
-                    currency => Currency
-                };
-            #{} = VS0 ->
-                VS0
-        end,
-    DecodedVS = VS#{
-        party_id => PartyID,
-        identification_level => get_identification_level(Contract, Party)
-    },
-    Terms = pm_party:get_terms(Contract, Timestamp, DomainRevision),
-    pm_party:reduce_terms(Terms, DecodedVS, DomainRevision);
-%% Shop
-handle_function_('GetShop', {PartyID, ID}, _Opts) ->
-    _ = set_party_mgmt_meta(PartyID),
-    Party = pm_party_machine:get_party(PartyID),
-    ensure_shop(pm_party:get_shop(ID, Party));
-handle_function_('GetShopContract', {PartyID, ID}, _Opts) ->
-    _ = set_party_mgmt_meta(PartyID),
-    Party = pm_party_machine:get_party(PartyID),
-    Shop = ensure_shop(pm_party:get_shop(ID, Party)),
-    Contract = pm_party:get_contract(Shop#domain_Shop.contract_id, Party),
-    Contractor = pm_party:get_contractor(Contract#domain_Contract.contractor_id, Party),
-    #payproc_ShopContract{shop = Shop, contract = Contract, contractor = Contractor};
-handle_function_('ComputeShopTerms', {PartyID, ShopID, Timestamp, PartyRevision, Varset}, _Opts) ->
-    _ = set_party_mgmt_meta(PartyID),
-    Party = checkout_party(PartyID, PartyRevision),
-    Shop = ensure_shop(pm_party:get_shop(ShopID, Party)),
-    Contract = pm_party:get_contract(Shop#domain_Shop.contract_id, Party),
-    Revision = pm_domain:head(),
-    VS0 = pm_varset:decode_varset(Varset),
-    DecodedVS = VS0#{
-        party_id => PartyID,
-        shop_id => ShopID,
-        category => Shop#domain_Shop.category,
-        currency => (Shop#domain_Shop.account)#domain_ShopAccount.currency,
-        identification_level => get_identification_level(Contract, Party)
-    },
-    pm_party:reduce_terms(pm_party:get_terms(Contract, Timestamp, Revision), DecodedVS, Revision);
-handle_function_(Fun, Args, _Opts) when
-    Fun =:= 'BlockShop' orelse
-        Fun =:= 'UnblockShop' orelse
-        Fun =:= 'SuspendShop' orelse
-        Fun =:= 'ActivateShop'
-->
-    PartyID = erlang:element(1, Args),
-    _ = set_party_mgmt_meta(PartyID),
-    call(PartyID, Fun, Args);
-%% Claim
-handle_function_('GetClaim', {PartyID, ID}, _Opts) ->
-    _ = set_party_mgmt_meta(PartyID),
-    pm_party_machine:get_claim(ID, PartyID);
-handle_function_('GetClaims', {PartyID}, _Opts) ->
-    _ = set_party_mgmt_meta(PartyID),
-    pm_party_machine:get_claims(PartyID);
-handle_function_(Fun, Args, _Opts) when
-    Fun =:= 'CreateClaim' orelse
-        Fun =:= 'AcceptClaim' orelse
-        Fun =:= 'UpdateClaim' orelse
-        Fun =:= 'DenyClaim' orelse
-        Fun =:= 'RevokeClaim'
-->
-    PartyID = erlang:element(1, Args),
-    _ = set_party_mgmt_meta(PartyID),
-    call(PartyID, Fun, Args);
-%% Event
-handle_function_('GetEvents', {PartyID, Range}, _Opts) ->
-    _ = set_party_mgmt_meta(PartyID),
-    #payproc_EventRange{'after' = AfterID, limit = Limit} = Range,
-    pm_party_machine:get_public_history(PartyID, AfterID, Limit);
-%% ShopAccount
-handle_function_('GetAccountState', {PartyID, AccountID}, _Opts) ->
-    _ = set_party_mgmt_meta(PartyID),
-    Party = pm_party_machine:get_party(PartyID),
-    pm_party:get_account_state(AccountID, Party);
+%% Accounts
 handle_function_('GetShopAccount', {PartyID, ShopID}, _Opts) ->
     _ = set_party_mgmt_meta(PartyID),
     Party = pm_party_machine:get_party(PartyID),
     pm_party:get_shop_account(ShopID, Party);
+handle_function_('GetWalletAccount', {PartyID, WalletID}, _Opts) ->
+    _ = set_party_mgmt_meta(PartyID),
+    Party = pm_party_machine:get_party(PartyID),
+    %% TODO Implement
+    pm_party:get_wallet_account(WalletID, Party);
+handle_function_('GetAccountState', {PartyID, AccountID}, _Opts) ->
+    _ = set_party_mgmt_meta(PartyID),
+    Party = pm_party_machine:get_party(PartyID),
+    pm_party:get_account_state(AccountID, Party);
 %% Providers
 handle_function_('ComputeProvider', Args, _Opts) ->
     {ProviderRef, DomainRevision, Varset} = Args,
@@ -189,37 +79,13 @@ handle_function_('ComputeGlobals', Args, _Opts) ->
     VS = pm_varset:decode_varset(Varset),
     pm_globals:reduce_globals(Globals, VS, DomainRevision);
 %% RuleSets
-handle_function_(ComputeRulesetFun, Args, _Opts) when
-    %% 'ComputePaymentRoutingRuleset' is deprecated, will be replaced by 'ComputeRoutingRuleset'
-    ComputeRulesetFun =:= 'ComputePaymentRoutingRuleset' orelse
-        ComputeRulesetFun =:= 'ComputeRoutingRuleset'
-->
+handle_function_('ComputeRoutingRuleset', Args, _Opts) ->
     {RuleSetRef, DomainRevision, Varset} = Args,
     RuleSet = get_payment_routing_ruleset(RuleSetRef, DomainRevision),
     VS = pm_varset:decode_varset(Varset),
     pm_ruleset:reduce_payment_routing_ruleset(RuleSet, VS, DomainRevision);
-%% PartyMeta
-
-handle_function_('GetMeta', {PartyID}, _Opts) ->
-    _ = set_party_mgmt_meta(PartyID),
-    pm_party_machine:get_meta(PartyID);
-handle_function_('GetMetaData', {PartyID, NS}, _Opts) ->
-    _ = set_party_mgmt_meta(PartyID),
-    pm_party_machine:get_metadata(NS, PartyID);
-handle_function_(Fun, Args, _Opts) when
-    Fun =:= 'SetMetaData' orelse
-        Fun =:= 'RemoveMetaData'
-->
-    PartyID = erlang:element(1, Args),
-    _ = set_party_mgmt_meta(PartyID),
-    call(PartyID, Fun, Args);
 %% Payment Institutions
-
-handle_function_(
-    'ComputePaymentInstitutionTerms',
-    {PaymentInstitutionRef, Varset},
-    _Opts
-) ->
+handle_function_('ComputePaymentInstitutionTerms', {PaymentInstitutionRef, Varset}, _Opts) ->
     Revision = pm_domain:head(),
     PaymentInstitution = get_payment_institution(PaymentInstitutionRef, Revision),
     VS = pm_varset:decode_varset(Varset),
@@ -230,7 +96,12 @@ handle_function_('ComputePaymentInstitution', Args, _Opts) ->
     {PaymentInstitutionRef, DomainRevision, Varset} = Args,
     PaymentInstitution = get_payment_institution(PaymentInstitutionRef, DomainRevision),
     VS = pm_varset:decode_varset(Varset),
-    pm_payment_institution:reduce_payment_institution(PaymentInstitution, VS, DomainRevision).
+    pm_payment_institution:reduce_payment_institution(PaymentInstitution, VS, DomainRevision);
+handle_function_('ComputeTerms', Args, _Opts) ->
+    {Ref, Revision, Varset} = Args,
+    VS = pm_varset:decode_varset(Varset),
+    Terms = pm_party:get_term_set(Ref, pm_datetime:format_now(), Revision),
+    pm_party:reduce_terms(Terms, VS, Revision).
 
 %%
 

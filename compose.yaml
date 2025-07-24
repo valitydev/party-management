@@ -18,42 +18,25 @@ services:
         condition: service_healthy
       shumway:
         condition: service_started
-      postgres:
+      db:
         condition: service_healthy
     ports:
       - "8022:8022"
     command: /sbin/init
 
   dmt:
-    image: ghcr.io/valitydev/dominant-v2:sha-109d2ea
+    image: ghcr.io/valitydev/dominant-v2:sha-fe53b88
     command: /opt/dmt/bin/dmt foreground
     healthcheck:
       test: "/opt/dmt/bin/dmt ping"
       interval: 5s
       timeout: 3s
       retries: 12
-    environment:
-      POSTGRES_HOST: dmt-db
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
-      POSTGRES_DB: dmt
     depends_on:
-      dmt-db:
+      db:
         condition: service_healthy
     volumes:
       - ./test/dmt/sys.config:/opt/dmt/releases/0.1/sys.config
-
-  dmt-db:
-    image: postgres
-    environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
-      POSTGRES_DB: dmt
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres"]
-      interval: 5s
-      timeout: 5s
-      retries: 5
 
   machinegun:
     image: ghcr.io/valitydev/mg2:sha-8bbcd29
@@ -71,51 +54,33 @@ services:
     image: ghcr.io/valitydev/shumway:sha-658587c
     restart: unless-stopped
     depends_on:
-      - shumway-db
-    ports:
-      - "8022"
+      db:
+        condition: service_healthy
     entrypoint:
       - java
       - -Xmx512m
       - -jar
       - /opt/shumway/shumway.jar
-      - --spring.datasource.url=jdbc:postgresql://shumway-db:5432/shumway
-      - --spring.datasource.username=postgres
+      - --spring.datasource.url=jdbc:postgresql://db:5432/shumway
+      - --spring.datasource.username=shumway
       - --spring.datasource.password=postgres
       - --management.endpoint.metrics.enabled=false
       - --management.endpoint.prometheus.enabled=false
     healthcheck:
       disable: true
 
-  shumway-db:
-    image: docker.io/library/postgres:13.10
-    environment:
-      - POSTGRES_DB=shumway
-      - POSTGRES_USER=postgres
-      - POSTGRES_PASSWORD=postgres
-
-  postgres:
+  db:
     image: postgres:15-bookworm
-    command: -c 'max_connections=200'
+    command: -c 'max_connections=1000'
     environment:
-      POSTGRES_DB: "progressor_db"
-      POSTGRES_USER: "progressor"
-      POSTGRES_PASSWORD: "progressor"
-      PGDATA: "/tmp/postgresql/data/pgdata"
+      POSTGRES_MULTIPLE_DATABASES: "dmt,party_management,shumway"
+      POSTGRES_PASSWORD: "postgres"
     volumes:
-      - progressor-data:/tmp/postgresql/data
+      - ./test/postgres/docker-entrypoint-initdb.d:/docker-entrypoint-initdb.d
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U progressor -d progressor_db"]
+      test: ["CMD-SHELL", "pg_isready -U hellgate"]
       interval: 10s
       timeout: 5s
       retries: 5
       start_period: 10s
     restart: unless-stopped
-    deploy:
-      resources:
-        limits:
-          cpus: '1'
-          memory: 4G
-
-volumes:
-  progressor-data:
