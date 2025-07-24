@@ -15,13 +15,11 @@
 -export([activate/1]).
 -export([get_status/1]).
 
--export([get_meta/1]).
 -export([get_metadata/2]).
 -export([set_metadata/3]).
 -export([remove_metadata/2]).
 
 -export([get_contract/2]).
--export([compute_contract_terms/6]).
 -export([get_shop/2]).
 -export([get_shop_contract/2]).
 -export([compute_shop_terms/5]).
@@ -73,7 +71,6 @@
 -type claim_revision() :: dmsl_payproc_thrift:'ClaimRevision'().
 -type changeset() :: dmsl_payproc_thrift:'PartyChangeset'().
 -type shop_account_id() :: dmsl_domain_thrift:'AccountID'().
--type meta() :: dmsl_domain_thrift:'PartyMeta'().
 -type meta_ns() :: dmsl_domain_thrift:'PartyMetaNamespace'().
 -type meta_data() :: dmsl_domain_thrift:'PartyMetaData'().
 -type timestamp() :: dmsl_base_thrift:'Timestamp'().
@@ -81,7 +78,6 @@
 -type party_revision_param() :: dmsl_payproc_thrift:'PartyRevisionParam'().
 -type payment_intitution_ref() :: dmsl_domain_thrift:'PaymentInstitutionRef'().
 -type varset() :: dmsl_payproc_thrift:'Varset'().
--type contract_terms_varset() :: dmsl_payproc_thrift:'ComputeContractTermsVarset'().
 -type shop_terms_varset() :: dmsl_payproc_thrift:'ComputeShopTermsVarset'().
 
 -type provider_ref() :: dmsl_domain_thrift:'ProviderRef'().
@@ -136,10 +132,6 @@ suspend(Client) ->
 activate(Client) ->
     call(Client, 'Activate', with_party_id([])).
 
--spec get_meta(pid()) -> meta() | woody_error:business_error().
-get_meta(Client) ->
-    call(Client, 'GetMeta', with_party_id([])).
-
 -spec get_metadata(meta_ns(), pid()) -> meta_data() | woody_error:business_error().
 get_metadata(NS, Client) ->
     call(Client, 'GetMetaData', with_party_id([NS])).
@@ -155,19 +147,6 @@ remove_metadata(NS, Client) ->
 -spec get_contract(contract_id(), pid()) -> dmsl_domain_thrift:'Contract'() | woody_error:business_error().
 get_contract(ID, Client) ->
     call(Client, 'GetContract', with_party_id([ID])).
-
--spec compute_contract_terms(
-    contract_id(),
-    timestamp(),
-    party_revision_param(),
-    domain_revision(),
-    contract_terms_varset(),
-    pid()
-) ->
-    dmsl_domain_thrift:'TermSet'() | woody_error:business_error().
-compute_contract_terms(ID, Timestamp, PartyRevision, DomainRevision, Varset, Client) ->
-    Args = with_party_id([ID, Timestamp, PartyRevision, DomainRevision, Varset]),
-    call(Client, 'ComputeContractTerms', Args).
 
 -spec compute_payment_institution_terms(payment_intitution_ref(), varset(), pid()) ->
     dmsl_domain_thrift:'TermSet'() | woody_error:business_error().

@@ -16,7 +16,6 @@
     payment_method => dmsl_domain_thrift:'PaymentMethodRef'(),
     wallet_id => dmsl_domain_thrift:'WalletID'(),
     shop_id => dmsl_domain_thrift:'ShopID'(),
-    identification_level => dmsl_domain_thrift:'ContractorIdentificationLevel'(),
     payment_tool => dmsl_domain_thrift:'PaymentTool'(),
     party_id => dmsl_domain_thrift:'PartyID'(),
     bin_data => dmsl_domain_thrift:'BinData'()
@@ -89,7 +88,6 @@ encode_decode_test() ->
         },
         wallet_id => <<"wallet_id">>,
         shop_id => <<"shop_id">>,
-        identification_level => full,
         payment_tool =>
             {digital_wallet, #domain_DigitalWallet{
                 payment_service = #domain_PaymentServiceRef{id = <<"qiwi">>},

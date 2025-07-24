@@ -39,9 +39,6 @@
 -type proxy() :: dmsl_domain_thrift:'ProxyRef'().
 -type inspector() :: dmsl_domain_thrift:'InspectorRef'().
 -type risk_score() :: dmsl_domain_thrift:'RiskScore'().
--type template() :: dmsl_domain_thrift:'ContractTemplateRef'().
--type terms() :: dmsl_domain_thrift:'TermSetHierarchyRef'().
--type lifetime() :: dmsl_domain_thrift:'Lifetime'() | undefined.
 -type payment_routing_ruleset() :: dmsl_domain_thrift:'RoutingRulesetRef'().
 
 -type payment_system() :: dmsl_domain_thrift:'PaymentSystemRef'().
