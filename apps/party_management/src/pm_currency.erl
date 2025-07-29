@@ -9,7 +9,7 @@
 -export([validate_currency/2]).
 
 -type currency() :: dmsl_domain_thrift:'CurrencyRef'().
--type shop() :: dmsl_domain_thrift:'Shop'().
+-type shop() :: dmsl_domain_thrift:'ShopConfig'().
 
 -spec validate_currency(currency(), shop()) -> ok.
 validate_currency(Currency, Shop = #domain_ShopConfig{}) ->

@@ -12,14 +12,10 @@ services:
     hostname: $SERVICE_NAME
     working_dir: $PWD
     depends_on:
-      machinegun:
-        condition: service_healthy
       dmt:
         condition: service_healthy
       shumway:
         condition: service_started
-      db:
-        condition: service_healthy
     ports:
       - "8022:8022"
     command: /sbin/init
@@ -37,18 +33,6 @@ services:
         condition: service_healthy
     volumes:
       - ./test/dmt/sys.config:/opt/dmt/releases/0.1/sys.config
-
-  machinegun:
-    image: ghcr.io/valitydev/mg2:sha-8bbcd29
-    command: /opt/machinegun/bin/machinegun foreground
-    volumes:
-      - ./test/machinegun/config.yaml:/opt/machinegun/etc/config.yaml
-      - ./test/machinegun/cookie:/opt/machinegun/etc/cookie
-    healthcheck:
-      test: "/opt/machinegun/bin/machinegun ping"
-      interval: 10s
-      timeout: 5s
-      retries: 10
 
   shumway:
     image: ghcr.io/valitydev/shumway:sha-658587c
@@ -73,7 +57,7 @@ services:
     image: postgres:15-bookworm
     command: -c 'max_connections=1000'
     environment:
-      POSTGRES_MULTIPLE_DATABASES: "dmt,party_management,shumway"
+      POSTGRES_MULTIPLE_DATABASES: "dmt,shumway"
       POSTGRES_PASSWORD: "postgres"
     volumes:
       - ./test/postgres/docker-entrypoint-initdb.d:/docker-entrypoint-initdb.d

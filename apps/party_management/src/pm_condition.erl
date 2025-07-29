@@ -56,8 +56,6 @@ test_party_definition({shop_is, ID1}, #{shop_id := ID2}) ->
     ID1 =:= ID2;
 test_party_definition({wallet_is, ID1}, #{wallet_id := ID2}) ->
     ID1 =:= ID2;
-test_party_definition({contract_is, ID1}, #{contract_id := ID2}) ->
-    ID1 =:= ID2;
 test_party_definition(_, _) ->
     undefined.
 

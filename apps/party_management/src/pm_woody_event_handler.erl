@@ -91,9 +91,9 @@ filter(V) ->
 format_event_w_secret_test_() ->
     [
         ?_assertEqual(
-            #{args => {some_data, ?ARG_WO_SECRET}, code => 200, function => 'ComputePaymentInstitutionTerms'},
+            #{args => {some_data, ?ARG_WO_SECRET}, code => 200, function => 'ComputePaymentInstitution'},
             filter_meta(
-                #{args => {some_data, ?ARG_W_SECRET}, code => 200, function => 'ComputePaymentInstitutionTerms'}
+                #{args => {some_data, ?ARG_W_SECRET}, code => 200, function => 'ComputePaymentInstitution'}
             )
         )
     ].

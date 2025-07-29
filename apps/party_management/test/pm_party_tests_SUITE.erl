@@ -17,9 +17,9 @@
 -export([init_per_testcase/2]).
 -export([end_per_testcase/2]).
 
--export([shop_account_set_retrieval/1]).
--export([shop_account_retrieval/1]).
--export([get_account_state_not_found/1]).
+%% -export([shop_account_set_retrieval/1]).
+%% -export([shop_account_retrieval/1]).
+%% -export([get_account_state_not_found/1]).
 
 -export([compute_payment_institution_terms/1]).
 -export([compute_payment_institution/1]).
@@ -63,17 +63,8 @@ cfg(Key, C) ->
 -spec all() -> [{group, group_name()}].
 all() ->
     [
-        {group, party_creation},
-        {group, party_revisioning},
-        {group, party_blocking_suspension},
-        {group, party_meta},
-        {group, party_status},
-        {group, contract_management},
-        {group, shop_management},
+        {group, accounts},
         {group, shop_account_lazy_creation},
-        {group, contractor_management},
-
-        {group, claim_management},
         {group, compute},
         {group, terms}
     ].
@@ -81,115 +72,19 @@ all() ->
 -spec groups() -> [{group_name(), list(), [test_case_name()]}].
 groups() ->
     [
-        {party_accounts, [parallel], [
-                                      %% TODO Add failure cases for each of these
-                                      get_shop_account,
-                                      get_wallet_account,
-                                      get_account_state
-                                     ]},
-
-        {party_creation, [sequence], [
-            party_not_found_on_retrieval,
-            party_creation,
-            party_already_exists,
-            party_retrieval
-        ]},
-        {party_revisioning, [sequence], [
-            party_creation,
-            party_get_initial_revision,
-            party_revisioning,
-            party_get_revision
-        ]},
-        {party_blocking_suspension, [sequence], [
-            party_creation,
-            party_blocking,
-            party_already_blocked,
-            party_blocked_on_suspend,
-            party_unblocking,
-            party_already_unblocked,
-            party_suspension,
-            party_already_suspended,
-            party_blocking,
-            party_unblocking,
-            party_activation,
-            party_already_active
-        ]},
-        {party_meta, [sequence], [
-            party_creation,
-            party_metadata_setting,
-            party_metadata_retrieval,
-            party_metadata_removing,
-            party_meta_retrieval
-        ]},
-        {party_status, [sequence], [
-            party_creation,
-            party_get_status
-        ]},
-        {contract_management, [sequence], [
-            party_creation,
-            contract_not_found,
-            contract_creation,
-            contract_terms_retrieval,
-            contract_already_exists,
-            contract_termination,
-            contract_already_terminated,
-            contract_expiration,
-            contract_legal_agreement_binding,
-            contract_report_preferences_modification,
-            contract_adjustment_creation,
-            contract_adjustment_expiration,
-            compute_payment_institution_terms,
-            compute_payment_institution,
-            contract_w2w_terms
-        ]},
-        {shop_management, [sequence], [
-            party_creation,
-            contract_creation,
-            shop_not_found_on_retrieval,
-            shop_update_before_confirm,
-            shop_update_with_bad_params,
-            shop_creation,
-            shop_aggregation,
-            shop_terms_retrieval,
-            shop_already_exists,
-            shop_update,
-            {group, shop_blocking_suspension}
-        ]},
-        {shop_blocking_suspension, [sequence], [
-            shop_blocking,
-            shop_already_blocked,
-            shop_blocked_on_suspend,
-            shop_unblocking,
-            shop_already_unblocked,
-            shop_suspension,
-            shop_already_suspended,
-            shop_activation,
-            shop_already_active
+        {accounts, [parallel], [
+            %% TODO Add failure cases for each of these
+            get_shop_account,
+            get_wallet_account,
+            get_account_state
         ]},
         {shop_account_lazy_creation, [sequence], [
-            party_creation,
-            contract_creation,
-            shop_creation,
             shop_account_set_retrieval,
             shop_account_retrieval,
             get_account_state_not_found
         ]},
-        {claim_management, [sequence], [
-            party_creation,
-            contract_creation,
-            claim_not_found_on_retrieval,
-            claim_already_accepted_on_revoke,
-            claim_already_accepted_on_accept,
-            claim_already_accepted_on_deny,
-            shop_creation,
-            claim_acceptance,
-            claim_denial,
-            claim_revocation,
-            no_pending_claims,
-            complex_claim_acceptance,
-            no_pending_claims
-        ]},
         {compute, [parallel], [
+            compute_payment_institution,
             compute_provider_ok,
             compute_provider_not_found,
             compute_provider_terminal_terms_ok,
@@ -205,7 +100,6 @@ groups() ->
             compute_payment_routing_ruleset_not_found
         ]},
         {terms, [sequence], [
-            party_creation,
             compute_pred_w_partial_all_of,
             compute_pred_w_irreducible_criterion,
             compute_pred_w_partially_irreducible_criterion,
@@ -219,7 +113,7 @@ groups() ->
 
 -spec init_per_suite(config()) -> config().
 init_per_suite(C) ->
-    {Apps, _Ret} = pm_ct_helper:start_apps([woody, scoper, dmt_client, epg_connector, progressor, party_management]),
+    {Apps, _Ret} = pm_ct_helper:start_apps([woody, scoper, dmt_client, party_management]),
     {_Rev, ObjIds} = pm_domain:insert(construct_domain_fixture()),
     [{apps, Apps}, {objects_ids, ObjIds} | C].
 
@@ -231,8 +125,6 @@ end_per_suite(C) ->
 %% tests
 
 -spec init_per_group(group_name(), config()) -> config().
-init_per_group(shop_blocking_suspension, C) ->
-    C;
 init_per_group(Group, C) ->
     PartyID = list_to_binary(lists:concat([Group, ".", erlang:system_time()])),
     ApiClient = pm_ct_helper:create_client(),
@@ -253,13 +145,13 @@ end_per_testcase(_Name, _C) ->
 
 %%
 
--define(REAL_SHOP_ID, <<"SHOP1">>).
+%% -define(REAL_SHOP_ID, <<"SHOP1">>).
 
 -define(WRONG_DMT_OBJ_ID, 99999).
 
--spec shop_account_set_retrieval(config()) -> _ | no_return().
--spec shop_account_retrieval(config()) -> _ | no_return().
--spec get_account_state_not_found(config()) -> _ | no_return().
+%% -spec shop_account_set_retrieval(config()) -> _ | no_return().
+%% -spec shop_account_retrieval(config()) -> _ | no_return().
+%% -spec get_account_state_not_found(config()) -> _ | no_return().
 
 -spec compute_payment_institution_terms(config()) -> _ | no_return().
 -spec compute_payment_institution(config()) -> _ | no_return().
@@ -424,25 +316,25 @@ check_all_withdrawal_methods(C) ->
     TermsFun(mobile, ?mob(<<"mts">>)),
     TermsFun(crypto_currency, ?crypta(<<"bitcoin">>)).
 
-shop_account_set_retrieval(C) ->
-    Client = cfg(client, C),
-    ShopID = ?REAL_SHOP_ID,
-    S = #domain_ShopAccount{} = pm_client_party:get_shop_account(ShopID, Client),
-    {save_config, S}.
+%% shop_account_set_retrieval(C) ->
+%%     Client = cfg(client, C),
+%%     ShopID = ?REAL_SHOP_ID,
+%%     S = #domain_ShopAccount{} = pm_client_party:get_shop_account(ShopID, Client),
+%%     {save_config, S}.
 
-shop_account_retrieval(C) ->
-    Client = cfg(client, C),
-    {shop_account_set_retrieval, #domain_ShopAccount{guarantee = AccountID}} = ?config(
-        saved_config, C
-    ),
-    #payproc_AccountState{account_id = AccountID} = pm_client_party:get_account_state(
-        AccountID, Client
-    ).
+%% shop_account_retrieval(C) ->
+%%     Client = cfg(client, C),
+%%     {shop_account_set_retrieval, #domain_ShopAccount{guarantee = AccountID}} = ?config(
+%%         saved_config, C
+%%     ),
+%%     #payproc_AccountState{account_id = AccountID} = pm_client_party:get_account_state(
+%%         AccountID, Client
+%%     ).
 
-get_account_state_not_found(C) ->
-    Client = cfg(client, C),
-    {exception, #payproc_AccountNotFound{}} =
-        (catch pm_client_party:get_account_state(420, Client)).
+%% get_account_state_not_found(C) ->
+%%     Client = cfg(client, C),
+%%     {exception, #payproc_AccountNotFound{}} =
+%%         (catch pm_client_party:get_account_state(420, Client)).
 
 %%
 

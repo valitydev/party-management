@@ -23,21 +23,12 @@
 -export([get_shop/2]).
 -export([get_shop_contract/2]).
 -export([compute_shop_terms/5]).
--export([compute_payment_institution_terms/3]).
 -export([compute_payment_institution/4]).
 
 -export([block_shop/3]).
 -export([unblock_shop/3]).
 -export([suspend_shop/2]).
 -export([activate_shop/2]).
-
--export([get_claim/2]).
--export([get_claims/1]).
--export([create_claim/2]).
--export([update_claim/4]).
--export([accept_claim/3]).
--export([deny_claim/4]).
--export([revoke_claim/4]).
 
 -export([get_account_state/2]).
 -export([get_shop_account/2]).
@@ -66,10 +57,6 @@
 -type domain_revision() :: dmsl_domain_thrift:'DataRevision'().
 -type contract_id() :: dmsl_domain_thrift:'ContractID'().
 -type shop_id() :: dmsl_domain_thrift:'ShopID'().
--type claim_id() :: dmsl_payproc_thrift:'ClaimID'().
--type claim() :: dmsl_payproc_thrift:'Claim'().
--type claim_revision() :: dmsl_payproc_thrift:'ClaimRevision'().
--type changeset() :: dmsl_payproc_thrift:'PartyChangeset'().
 -type shop_account_id() :: dmsl_domain_thrift:'AccountID'().
 -type meta_ns() :: dmsl_domain_thrift:'PartyMetaNamespace'().
 -type meta_data() :: dmsl_domain_thrift:'PartyMetaData'().
@@ -148,11 +135,6 @@ remove_metadata(NS, Client) ->
 get_contract(ID, Client) ->
     call(Client, 'GetContract', with_party_id([ID])).
 
--spec compute_payment_institution_terms(payment_intitution_ref(), varset(), pid()) ->
-    dmsl_domain_thrift:'TermSet'() | woody_error:business_error().
-compute_payment_institution_terms(Ref, Varset, Client) ->
-    call(Client, 'ComputePaymentInstitutionTerms', [Ref, Varset]).
-
 -spec compute_payment_institution(payment_intitution_ref(), domain_revision(), varset(), pid()) ->
     dmsl_domain_thrift:'TermSet'() | woody_error:business_error().
 compute_payment_institution(Ref, DomainRevision, Varset, Client) ->
@@ -187,34 +169,6 @@ activate_shop(ID, Client) ->
     dmsl_domain_thrift:'TermSet'() | woody_error:business_error().
 compute_shop_terms(ID, Timestamp, PartyRevision, VS, Client) ->
     call(Client, 'ComputeShopTerms', with_party_id([ID, Timestamp, PartyRevision, VS])).
-
--spec get_claim(claim_id(), pid()) -> claim() | woody_error:business_error().
-get_claim(ID, Client) ->
-    call(Client, 'GetClaim', with_party_id([ID])).
-
--spec get_claims(pid()) -> [claim()] | woody_error:business_error().
-get_claims(Client) ->
-    call(Client, 'GetClaims', with_party_id([])).
-
--spec create_claim(changeset(), pid()) -> claim() | woody_error:business_error().
-create_claim(Changeset, Client) ->
-    call(Client, 'CreateClaim', with_party_id([Changeset])).
-
--spec update_claim(claim_id(), claim_revision(), changeset(), pid()) -> ok | woody_error:business_error().
-update_claim(ID, Revision, Changeset, Client) ->
-    call(Client, 'UpdateClaim', with_party_id([ID, Revision, Changeset])).
-
--spec accept_claim(claim_id(), claim_revision(), pid()) -> ok | woody_error:business_error().
-accept_claim(ID, Revision, Client) ->
-    call(Client, 'AcceptClaim', with_party_id([ID, Revision])).
-
--spec deny_claim(claim_id(), claim_revision(), binary() | undefined, pid()) -> ok | woody_error:business_error().
-deny_claim(ID, Revision, Reason, Client) ->
-    call(Client, 'DenyClaim', with_party_id([ID, Revision, Reason])).
-
--spec revoke_claim(claim_id(), claim_revision(), binary() | undefined, pid()) -> ok | woody_error:business_error().
-revoke_claim(ID, Revision, Reason, Client) ->
-    call(Client, 'RevokeClaim', with_party_id([ID, Revision, Reason])).
 
 -spec get_account_state(shop_account_id(), pid()) ->
     dmsl_payproc_thrift:'AccountState'() | woody_error:business_error().
