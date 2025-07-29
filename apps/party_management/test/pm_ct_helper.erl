@@ -82,7 +82,6 @@ start_app(party_management = AppName) ->
         ]),
         #{}
     };
-
 start_app(AppName) ->
     {genlib_app:start_application(AppName), #{}}.
 

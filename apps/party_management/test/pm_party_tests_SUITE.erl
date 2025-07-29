@@ -17,9 +17,9 @@
 -export([init_per_testcase/2]).
 -export([end_per_testcase/2]).
 
-%% -export([shop_account_set_retrieval/1]).
-%% -export([shop_account_retrieval/1]).
-%% -export([get_account_state_not_found/1]).
+-export([get_shop_account/1]).
+-export([get_wallet_account/1]).
+-export([get_account_state/1]).
 
 -export([compute_payment_institution_terms/1]).
 -export([compute_payment_institution/1]).
@@ -114,8 +114,9 @@ groups() ->
 -spec init_per_suite(config()) -> config().
 init_per_suite(C) ->
     {Apps, _Ret} = pm_ct_helper:start_apps([woody, scoper, dmt_client, party_management]),
-    {_Rev, ObjIds} = pm_domain:insert(construct_domain_fixture()),
-    [{apps, Apps}, {objects_ids, ObjIds} | C].
+    PartyID = list_to_binary(lists:concat(["party.", erlang:system_time()])),
+    {_Rev, ObjIds} = pm_domain:insert(construct_domain_fixture(PartyID)),
+    [{apps, Apps}, {objects_ids, ObjIds}, {party_id, PartyID} | C].
 
 -spec end_per_suite(config()) -> _.
 end_per_suite(C) ->
@@ -125,11 +126,10 @@ end_per_suite(C) ->
 %% tests
 
 -spec init_per_group(group_name(), config()) -> config().
-init_per_group(Group, C) ->
-    PartyID = list_to_binary(lists:concat([Group, ".", erlang:system_time()])),
+init_per_group(_Group, C) ->
     ApiClient = pm_ct_helper:create_client(),
-    Client = pm_client_party:start(PartyID, ApiClient),
-    [{party_id, PartyID}, {client, Client} | C].
+    Client = pm_client_party:start(cfg(party_id, C), ApiClient),
+    [{client, Client} | C].
 
 -spec end_per_group(group_name(), config()) -> _.
 end_per_group(_Group, C) ->
@@ -145,13 +145,14 @@ end_per_testcase(_Name, _C) ->
 
 %%
 
-%% -define(REAL_SHOP_ID, <<"SHOP1">>).
+-define(SHOP_ID, <<"SHOP1">>).
+-define(WALLET_ID, <<"WALLET1">>).
 
 -define(WRONG_DMT_OBJ_ID, 99999).
 
-%% -spec shop_account_set_retrieval(config()) -> _ | no_return().
-%% -spec shop_account_retrieval(config()) -> _ | no_return().
-%% -spec get_account_state_not_found(config()) -> _ | no_return().
+-spec get_shop_account(config()) -> _ | no_return().
+-spec get_wallet_account(config()) -> _ | no_return().
+-spec get_account_state(config()) -> _ | no_return().
 
 -spec compute_payment_institution_terms(config()) -> _ | no_return().
 -spec compute_payment_institution(config()) -> _ | no_return().
@@ -173,6 +174,36 @@ end_per_testcase(_Name, _C) ->
 -spec compute_pred_w_partial_all_of(config()) -> _ | no_return().
 -spec compute_pred_w_irreducible_criterion(config()) -> _ | no_return().
 -spec compute_pred_w_partially_irreducible_criterion(config()) -> _ | no_return().
+
+%% Accounts
+
+get_shop_account(C) ->
+    Client = cfg(client, C),
+    DomainRevision = pm_domain:head(),
+    ?assertMatch(
+        #domain_ShopAccount{},
+        pm_client_party:get_shop_account(?SHOP_ID, DomainRevision, Client)
+    ).
+
+get_wallet_account(C) ->
+    Client = cfg(client, C),
+    DomainRevision = pm_domain:head(),
+    ?assertMatch(
+        #domain_WalletAccount{},
+        pm_client_party:get_wallet_account(?WALLET_ID, DomainRevision, Client)
+    ).
+
+get_account_state(C) ->
+    Client = cfg(client, C),
+    DomainRevision = pm_domain:head(),
+    #domain_ShopAccount{settlement = AccountID} =
+        pm_client_party:get_shop_account(?SHOP_ID, DomainRevision, Client),
+    ?assertMatch(
+        #payproc_AccountState{account_id = AccountID},
+        pm_client_party:get_account_state(AccountID, DomainRevision, Client)
+    ).
+
+%%
 
 compute_payment_institution_terms(C) ->
     Client = cfg(client, C),
@@ -315,28 +346,6 @@ check_all_withdrawal_methods(C) ->
     TermsFun(digital_wallet, ?pmt_srv(<<"qiwi">>)),
     TermsFun(mobile, ?mob(<<"mts">>)),
     TermsFun(crypto_currency, ?crypta(<<"bitcoin">>)).
-
-%% shop_account_set_retrieval(C) ->
-%%     Client = cfg(client, C),
-%%     ShopID = ?REAL_SHOP_ID,
-%%     S = #domain_ShopAccount{} = pm_client_party:get_shop_account(ShopID, Client),
-%%     {save_config, S}.
-
-%% shop_account_retrieval(C) ->
-%%     Client = cfg(client, C),
-%%     {shop_account_set_retrieval, #domain_ShopAccount{guarantee = AccountID}} = ?config(
-%%         saved_config, C
-%%     ),
-%%     #payproc_AccountState{account_id = AccountID} = pm_client_party:get_account_state(
-%%         AccountID, Client
-%%     ).
-
-%% get_account_state_not_found(C) ->
-%%     Client = cfg(client, C),
-%%     {exception, #payproc_AccountNotFound{}} =
-%%         (catch pm_client_party:get_account_state(420, Client)).
-
-%%
 
 %% Compute providers
 
@@ -729,8 +738,8 @@ compute_pred_w_partially_irreducible_criterion(_) ->
 
 %%
 
--spec construct_domain_fixture() -> [pm_domain:object()].
-construct_domain_fixture() ->
+-spec construct_domain_fixture(binary()) -> [pm_domain:object()].
+construct_domain_fixture(PartyID) ->
     TestTermSet = #domain_TermSet{
         payments = #domain_PaymentsServiceTerms{
             currencies = {value, ordsets:from_list([?cur(<<"RUB">>)])},
@@ -1137,6 +1146,22 @@ construct_domain_fixture() ->
                 realm = live
             }
         }},
+
+        %% Party, shop and wallet
+        pm_ct_fixture:construct_shop(
+            ?SHOP_ID,
+            ?pinst(1),
+            pm_ct_fixture:construct_shop_account(<<"RUB">>),
+            PartyID,
+            <<"http://example.com">>,
+            ?cat(1)
+        ),
+        pm_ct_fixture:construct_wallet(
+            ?WALLET_ID,
+            ?pinst(1),
+            pm_ct_fixture:construct_wallet_account(<<"RUB">>),
+            PartyID
+        ),
 
         {globals, #domain_GlobalsObject{
             ref = #domain_GlobalsRef{},
