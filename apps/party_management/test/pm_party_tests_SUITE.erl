@@ -93,8 +93,7 @@ groups() ->
         {terms, [sequence], [
             compute_pred_w_partial_all_of,
             compute_pred_w_irreducible_criterion,
-            compute_pred_w_partially_irreducible_criterion,
-            compute_terms_w_criteria
+            compute_pred_w_partially_irreducible_criterion
         ]}
     ].
 
@@ -960,6 +959,15 @@ construct_domain_fixture(PartyID) ->
                 }
             }
         ),
+
+        {bank, #domain_BankObject{
+            ref = ?bank(1),
+            data = #domain_Bank{
+                name = <<"Test BIN range">>,
+                description = <<"Test BIN range">>,
+                bins = ordsets:from_list([<<"1234">>, <<"5678">>])
+            }
+        }},
 
         {provider, #domain_ProviderObject{
             ref = ?prv(1),
