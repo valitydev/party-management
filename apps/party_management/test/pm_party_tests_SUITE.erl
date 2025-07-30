@@ -61,7 +61,6 @@ cfg(Key, C) ->
 all() ->
     [
         {group, accounts},
-        {group, shop_account_lazy_creation},
         {group, compute},
         {group, terms}
     ].
@@ -74,11 +73,6 @@ groups() ->
             get_shop_account,
             get_wallet_account,
             get_account_state
-        ]},
-        {shop_account_lazy_creation, [sequence], [
-            shop_account_set_retrieval,
-            shop_account_retrieval,
-            get_account_state_not_found
         ]},
         {compute, [parallel], [
             compute_payment_institution,
@@ -911,6 +905,7 @@ construct_domain_fixture(PartyID) ->
         }},
 
         %% Party, shop and wallet
+        pm_ct_fixture:construct_party(PartyID, [?shop(?SHOP_ID)], [?wallet(?WALLET_ID)]),
         pm_ct_fixture:construct_shop(
             ?SHOP_ID,
             ?pinst(1),

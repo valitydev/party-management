@@ -76,7 +76,7 @@
     [dmsl_domain_thrift:'WalletConfigRef'()]
 ) -> dmsl_domain_thrift:'PartyConfigObject'().
 construct_party(PartyID, ShopRefs, WalletRefs) ->
-    #domain_PartyConfigObject{
+    {party_config, #domain_PartyConfigObject{
         ref = #domain_PartyConfigRef{id = PartyID},
         data = #domain_PartyConfig{
             name = PartyID,
@@ -86,14 +86,18 @@ construct_party(PartyID, ShopRefs, WalletRefs) ->
             wallets = WalletRefs,
             contact_info = #domain_PartyContactInfo{registration_email = <<"party@example.com">>}
         }
-    }.
+    }}.
 
 -spec construct_shop_account(dmsl_domain_thrift:'CurrencySymbolicCode'()) -> dmsl_domain_thrift:'ShopAccount'().
 construct_shop_account(CurrencyCode) ->
+    ok = pm_context:save(pm_context:create()),
+    Settlement = pm_accounting:create_account(CurrencyCode),
+    Guarantee = pm_accounting:create_account(CurrencyCode),
+    _ = pm_context:cleanup(),
     #domain_ShopAccount{
         currency = ?cur(CurrencyCode),
-        settlement = pm_accounting:create_account(CurrencyCode),
-        guarantee = pm_accounting:create_account(CurrencyCode)
+        settlement = Settlement,
+        guarantee = Guarantee
     }.
 
 -spec construct_shop(
@@ -121,9 +125,12 @@ construct_shop(ShopID, PaymentInstitutionRef, ShopAccount, PartyID, ShopLocation
 
 -spec construct_wallet_account(dmsl_domain_thrift:'CurrencySymbolicCode'()) -> dmsl_domain_thrift:'WalletAccount'().
 construct_wallet_account(CurrencyCode) ->
+    ok = pm_context:save(pm_context:create()),
+    Settlement = pm_accounting:create_account(CurrencyCode),
+    _ = pm_context:cleanup(),
     #domain_WalletAccount{
         currency = ?cur(CurrencyCode),
-        settlement = pm_accounting:create_account(CurrencyCode)
+        settlement = Settlement
     }.
 
 -spec construct_wallet(
