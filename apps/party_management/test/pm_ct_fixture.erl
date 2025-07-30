@@ -36,6 +36,7 @@
 -export([construct_payment_service/2]).
 -export([construct_crypto_currency/2]).
 -export([construct_tokenized_service/2]).
+
 %%
 
 -type name() :: binary().
@@ -79,8 +80,8 @@ construct_party(PartyID, ShopRefs, WalletRefs) ->
         ref = #domain_PartyConfigRef{id = PartyID},
         data = #domain_PartyConfig{
             name = PartyID,
-            block = {unblocked, #domain_Unblocked{}},
-            suspension = {active, #domain_Active{}},
+            block = make_unblocked(),
+            suspension = make_active(),
             shops = ShopRefs,
             wallets = WalletRefs,
             contact_info = #domain_PartyContactInfo{registration_email = <<"party@example.com">>}
@@ -102,14 +103,14 @@ construct_shop_account(CurrencyCode) ->
     dmsl_domain_thrift:'PartyID'(),
     binary(),
     dmsl_domain_thrift:'CategoryRef'()
-) -> dmsl_domain_thrift:'ShopConfigObject'().
+) -> {shop_config, dmsl_domain_thrift:'ShopConfigObject'()}.
 construct_shop(ShopID, PaymentInstitutionRef, ShopAccount, PartyID, ShopLocation, CategoryRef) ->
     {shop_config, #domain_ShopConfigObject{
         ref = #domain_ShopConfigRef{id = ShopID},
         data = #domain_ShopConfig{
             name = ShopID,
-            block = {unblocked, #domain_Unblocked{}},
-            suspension = {active, #domain_Active{}},
+            block = make_unblocked(),
+            suspension = make_active(),
             payment_institution = PaymentInstitutionRef,
             account = ShopAccount,
             party_id = PartyID,
@@ -130,14 +131,14 @@ construct_wallet_account(CurrencyCode) ->
     dmsl_domain_thrift:'PaymentInstitutionRef'(),
     dmsl_domain_thrift:'WalletAccount'(),
     dmsl_domain_thrift:'PartyID'()
-) -> dmsl_domain_thrift:'WalletConfigObject'().
+) -> {wallet_config, dmsl_domain_thrift:'WalletConfigObject'()}.
 construct_wallet(WalletID, PaymentInstitutionRef, WalletAccount, PartyID) ->
     {wallet_config, #domain_WalletConfigObject{
         ref = #domain_WalletConfigRef{id = WalletID},
         data = #domain_WalletConfig{
             name = WalletID,
-            block = {unblocked, #domain_Unblocked{}},
-            suspension = {active, #domain_Active{}},
+            block = make_unblocked(),
+            suspension = make_active(),
             payment_institution = PaymentInstitutionRef,
             account = WalletAccount,
             party_id = PartyID
@@ -408,3 +409,11 @@ construct_payment_routing_ruleset(Ref, Name, Decisions) ->
             decisions = Decisions
         }
     }}.
+
+%%
+
+make_unblocked() ->
+    {unblocked, #domain_Unblocked{reason = ~"whatever reason", since = ~"1970-01-01T00:00:00Z"}}.
+
+make_active() ->
+    {active, #domain_Active{since = ~"1970-01-01T00:00:00Z"}}.

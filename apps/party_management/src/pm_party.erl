@@ -31,8 +31,16 @@
 
 -spec get_shop_account(shop_id(), party_id(), revision()) -> shop_account().
 get_shop_account(ShopID, PartyID, DomainRevision) ->
-    #domain_PartyConfig{shops = Shops} = ensure_found(#domain_PartyConfigRef{id = PartyID}, DomainRevision),
-    case ensure_owned(#domain_ShopConfigRef{id = ShopID}, Shops, #payproc_ShopNotFound{}, DomainRevision) of
+    #domain_PartyConfig{shops = Shops} =
+        ensure_found({party_config, #domain_PartyConfigRef{id = PartyID}}, DomainRevision),
+    case
+        ensure_owned(
+            {shop_config, #domain_ShopConfigRef{id = ShopID}},
+            Shops,
+            #payproc_ShopNotFound{},
+            DomainRevision
+        )
+    of
         #domain_ShopConfig{account = Account, party_id = PartyID} ->
             Account;
         _ ->
@@ -41,8 +49,16 @@ get_shop_account(ShopID, PartyID, DomainRevision) ->
 
 -spec get_wallet_account(wallet_id(), party_id(), revision()) -> wallet_account().
 get_wallet_account(WalletID, PartyID, DomainRevision) ->
-    #domain_PartyConfig{wallets = Wallets} = ensure_found(#domain_PartyConfigRef{id = PartyID}, DomainRevision),
-    case ensure_owned(#domain_WalletConfigRef{id = WalletID}, Wallets, #payproc_WalletNotFound{}, DomainRevision) of
+    #domain_PartyConfig{wallets = Wallets} =
+        ensure_found({party_config, #domain_PartyConfigRef{id = PartyID}}, DomainRevision),
+    case
+        ensure_owned(
+            {wallet_config, #domain_WalletConfigRef{id = WalletID}},
+            Wallets,
+            #payproc_WalletNotFound{},
+            DomainRevision
+        )
+    of
         #domain_WalletConfig{account = Account, party_id = PartyID} ->
             Account;
         _ ->
@@ -53,8 +69,12 @@ get_wallet_account(WalletID, PartyID, DomainRevision) ->
     dmsl_payproc_thrift:'AccountState'().
 get_account_state(AccountID, PartyID, DomainRevision) ->
     #domain_PartyConfig{shops = Shops, wallets = Wallets} =
-        ensure_found(#domain_PartyConfigRef{id = PartyID}, DomainRevision),
-    ok = ensure_account(AccountID, Shops ++ Wallets, DomainRevision),
+        ensure_found({party_config, #domain_PartyConfigRef{id = PartyID}}, DomainRevision),
+    ok = ensure_account(
+        AccountID,
+        wrap_in_tag(shop_config, Shops) ++ wrap_in_tag(wallet_config, Wallets),
+        DomainRevision
+    ),
     Account = pm_accounting:get_account(AccountID),
     #{
         currency_code := CurrencyCode
@@ -75,6 +95,9 @@ get_account_state(AccountID, PartyID, DomainRevision) ->
         currency = Currency
     }.
 
+wrap_in_tag(Tag, Items) ->
+    lists:map(fun(Item) -> {Tag, Item} end, Items).
+
 ensure_found(Ref, DomainRevision) ->
     case pm_domain:find(DomainRevision, Ref) of
         notfound ->
@@ -85,7 +108,7 @@ ensure_found(Ref, DomainRevision) ->
 
 ensure_owned(_Ref, [], Exception, _DomainRevision) ->
     throw(Exception);
-ensure_owned(Ref, [Ref | _], _Exception, DomainRevision) ->
+ensure_owned({_Tag, Record} = Ref, [Record | _], _Exception, DomainRevision) ->
     ensure_found(Ref, DomainRevision);
 ensure_owned(Ref, [_ | Items], Exception, DomainRevision) ->
     ensure_owned(Ref, Items, Exception, DomainRevision).

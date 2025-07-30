@@ -5,7 +5,6 @@
 -export([start/2]).
 -export([stop/1]).
 
--export([compute_shop_terms/5]).
 -export([compute_payment_institution/4]).
 
 -export([get_shop_account/3]).
@@ -33,12 +32,9 @@
 -type shop_id() :: dmsl_domain_thrift:'ShopID'().
 -type wallet_id() :: dmsl_domain_thrift:'WalletID'().
 -type shop_account_id() :: dmsl_domain_thrift:'AccountID'().
--type timestamp() :: dmsl_base_thrift:'Timestamp'().
 
--type party_revision_param() :: dmsl_payproc_thrift:'PartyRevisionParam'().
 -type payment_intitution_ref() :: dmsl_domain_thrift:'PaymentInstitutionRef'().
 -type varset() :: dmsl_payproc_thrift:'Varset'().
--type shop_terms_varset() :: dmsl_payproc_thrift:'ComputeShopTermsVarset'().
 
 -type provider_ref() :: dmsl_domain_thrift:'ProviderRef'().
 -type terminal_ref() :: dmsl_domain_thrift:'TerminalRef'().
@@ -60,11 +56,6 @@ stop(Client) ->
     dmsl_domain_thrift:'TermSet'() | woody_error:business_error().
 compute_payment_institution(Ref, DomainRevision, Varset, Client) ->
     call(Client, 'ComputePaymentInstitution', [Ref, DomainRevision, Varset]).
-
--spec compute_shop_terms(shop_id(), timestamp(), party_revision_param(), shop_terms_varset(), pid()) ->
-    dmsl_domain_thrift:'TermSet'() | woody_error:business_error().
-compute_shop_terms(ID, Timestamp, PartyRevision, VS, Client) ->
-    call(Client, 'ComputeShopTerms', with_party_id([ID, Timestamp, PartyRevision, VS])).
 
 -spec get_account_state(shop_account_id(), domain_revision(), pid()) ->
     dmsl_payproc_thrift:'AccountState'() | woody_error:business_error().

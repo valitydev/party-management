@@ -21,7 +21,6 @@
 -export([get_wallet_account/1]).
 -export([get_account_state/1]).
 
--export([compute_payment_institution_terms/1]).
 -export([compute_payment_institution/1]).
 
 -export([compute_provider_ok/1]).
@@ -41,8 +40,6 @@
 -export([compute_pred_w_partial_all_of/1]).
 -export([compute_pred_w_irreducible_criterion/1]).
 -export([compute_pred_w_partially_irreducible_criterion/1]).
--export([check_all_payment_methods/1]).
--export([check_all_withdrawal_methods/1]).
 
 %% tests descriptions
 
@@ -103,9 +100,7 @@ groups() ->
             compute_pred_w_partial_all_of,
             compute_pred_w_irreducible_criterion,
             compute_pred_w_partially_irreducible_criterion,
-            compute_terms_w_criteria,
-            check_all_payment_methods,
-            check_all_withdrawal_methods
+            compute_terms_w_criteria
         ]}
     ].
 
@@ -154,7 +149,6 @@ end_per_testcase(_Name, _C) ->
 -spec get_wallet_account(config()) -> _ | no_return().
 -spec get_account_state(config()) -> _ | no_return().
 
--spec compute_payment_institution_terms(config()) -> _ | no_return().
 -spec compute_payment_institution(config()) -> _ | no_return().
 
 -spec compute_provider_ok(config()) -> _ | no_return().
@@ -205,34 +199,6 @@ get_account_state(C) ->
 
 %%
 
-compute_payment_institution_terms(C) ->
-    Client = cfg(client, C),
-    TermsFun = fun(Type, Object) ->
-        #domain_TermSet{} =
-            pm_client_party:compute_payment_institution_terms(
-                ?pinst(2),
-                #payproc_Varset{payment_method = ?pmt(Type, Object)},
-                Client
-            )
-    end,
-    T1 =
-        #domain_TermSet{} =
-        pm_client_party:compute_payment_institution_terms(
-            ?pinst(2),
-            #payproc_Varset{},
-            Client
-        ),
-    T2 = TermsFun(bank_card, ?bank_card(<<"visa">>)),
-    T3 = TermsFun(payment_terminal, ?pmt_srv(<<"euroset">>)),
-    T4 = TermsFun(bank_card, ?bank_card_no_cvv(<<"visa">>)),
-
-    ?assert_different_term_sets(T1, T2),
-    ?assert_different_term_sets(T1, T3),
-    ?assert_different_term_sets(T1, T4),
-    ?assert_different_term_sets(T2, T3),
-    ?assert_different_term_sets(T2, T4),
-    ?assert_different_term_sets(T3, T4).
-
 compute_payment_institution(C) ->
     Client = cfg(client, C),
     DomainRevision = pm_domain:head(),
@@ -248,104 +214,6 @@ compute_payment_institution(C) ->
     T1 = TermsFun(<<"12345">>),
     T2 = TermsFun(<<"67890">>),
     ?assert_different_term_sets(T1, T2).
-
--spec check_all_payment_methods(config()) -> _.
-check_all_payment_methods(C) ->
-    Client = cfg(client, C),
-    TermsFun0 = fun(Type, Object) ->
-        ?assertMatch(
-            #domain_TermSet{
-                payments = #domain_PaymentsServiceTerms{
-                    payment_methods =
-                        {value, [_]}
-                }
-            },
-            pm_client_party:compute_payment_institution_terms(
-                ?pinst(5),
-                #payproc_Varset{payment_method = ?pmt(Type, Object)},
-                Client
-            )
-        ),
-        ok
-    end,
-
-    TermsFun1 = fun(Type, Object, PaymentTool) ->
-        ?assertMatch(
-            #domain_TermSet{
-                payments = #domain_PaymentsServiceTerms{
-                    payment_methods =
-                        {value, [_]}
-                }
-            },
-            pm_client_party:compute_payment_institution_terms(
-                ?pinst(5),
-                #payproc_Varset{payment_method = ?pmt(Type, Object), payment_tool = PaymentTool},
-                Client
-            )
-        ),
-        ok
-    end,
-    #domain_TermSet{payments = #domain_PaymentsServiceTerms{payment_methods = {value, []}}} =
-        pm_client_party:compute_payment_institution_terms(
-            ?pinst(5),
-            #payproc_Varset{payment_method = ?pmt(digital_wallet, ?pmt_srv(<<"wrong-ref">>))},
-            Client
-        ),
-
-    TermsFun0(bank_card, ?bank_card(<<"visa">>)),
-    TermsFun0(payment_terminal, ?pmt_srv(<<"alipay">>)),
-    TermsFun0(digital_wallet, ?pmt_srv(<<"qiwi">>)),
-    TermsFun0(mobile, ?mob(<<"mts">>)),
-    TermsFun0(crypto_currency, ?crypta(<<"bitcoin">>)),
-    TermsFun0(bank_card, ?token_bank_card(<<"visa">>, <<"applepay">>)),
-    TermsFun0(bank_card, ?bank_card_no_cvv(<<"visa">>)),
-    TermsFun0(generic, ?gnrc(?pmt_srv(<<"generic">>))),
-    TermsFun1(
-        generic,
-        ?gnrc(?pmt_srv(<<"generic1">>)),
-        {generic,
-            ?gnrc_tool(?pmt_srv(<<"generic1">>), #base_Content{
-                type = <<"application/json">>,
-                data = jsx:encode(#{<<"some_path">> => <<"some_value">>})
-            })}
-    ).
-
--spec check_all_withdrawal_methods(config()) -> _.
-check_all_withdrawal_methods(C) ->
-    Client = cfg(client, C),
-    TermsFun = fun(Type, Object) ->
-        ?assertMatch(
-            #domain_TermSet{
-                wallets = #domain_WalletServiceTerms{
-                    withdrawals = #domain_WithdrawalServiceTerms{
-                        methods = {value, [?pmt(bank_card, ?bank_card(<<"visa">>))]}
-                    }
-                }
-            },
-            pm_client_party:compute_payment_institution_terms(
-                ?pinst(2),
-                #payproc_Varset{payment_method = ?pmt(Type, Object)},
-                Client
-            )
-        ),
-        ok
-    end,
-
-    #domain_TermSet{
-        wallets = #domain_WalletServiceTerms{
-            withdrawals = #domain_WithdrawalServiceTerms{methods = {value, []}}
-        }
-    } =
-        pm_client_party:compute_payment_institution_terms(
-            ?pinst(2),
-            #payproc_Varset{payment_method = ?pmt(bank_card, ?bank_card(<<"wrong-ref">>))},
-            Client
-        ),
-
-    TermsFun(bank_card, ?bank_card(<<"visa">>)),
-    TermsFun(digital_wallet, ?pmt_srv(<<"qiwi">>)),
-    TermsFun(mobile, ?mob(<<"mts">>)),
-    TermsFun(crypto_currency, ?crypta(<<"bitcoin">>)).
 
 %% Compute providers
 
@@ -768,99 +636,6 @@ construct_domain_fixture(PartyID) ->
         }
     },
 
-    AllMethodsTermSet = #domain_TermSet{
-        payments = #domain_PaymentsServiceTerms{
-            payment_methods =
-                {decisions, [
-                    %% For check_all_payment_methods
-                    mk_payment_decision(
-                        {bank_card, #domain_BankCardCondition{
-                            definition = {
-                                payment_system,
-                                #domain_PaymentSystemCondition{
-                                    payment_system_is = ?pmt_sys(<<"visa">>)
-                                }
-                            }
-                        }},
-                        [?pmt(bank_card, ?bank_card(<<"visa">>))]
-                    ),
-                    mk_payment_decision(
-                        {payment_terminal, #domain_PaymentTerminalCondition{
-                            definition = {
-                                payment_service_is,
-                                ?pmt_srv(<<"alipay">>)
-                            }
-                        }},
-                        [?pmt(payment_terminal, ?pmt_srv(<<"alipay">>))]
-                    ),
-                    mk_payment_decision(
-                        {digital_wallet, #domain_DigitalWalletCondition{
-                            definition =
-                                {payment_service_is, ?pmt_srv(<<"qiwi">>)}
-                        }},
-                        [?pmt(digital_wallet, ?pmt_srv(<<"qiwi">>))]
-                    ),
-                    mk_payment_decision(
-                        {mobile_commerce, #domain_MobileCommerceCondition{
-                            definition = {operator_is, ?mob(<<"mts">>)}
-                        }},
-                        [?pmt(mobile, ?mob(<<"mts">>))]
-                    ),
-                    mk_payment_decision(
-                        {crypto_currency, #domain_CryptoCurrencyCondition{
-                            definition = {crypto_currency_is, ?crypta(<<"bitcoin">>)}
-                        }},
-                        [?pmt(crypto_currency, ?crypta(<<"bitcoin">>))]
-                    ),
-                    mk_payment_decision(
-                        {bank_card, #domain_BankCardCondition{
-                            definition =
-                                {payment_system, #domain_PaymentSystemCondition{
-                                    token_service_is = ?token_srv(<<"applepay">>)
-                                }}
-                        }},
-                        [?pmt(bank_card, ?token_bank_card(<<"visa">>, <<"applepay">>))]
-                    ),
-                    mk_payment_decision(
-                        {generic, {payment_service_is, ?pmt_srv(<<"generic">>)}},
-                        [?pmt(generic, ?gnrc(?pmt_srv(<<"generic">>)))]
-                    ),
-                    mk_payment_decision(
-                        {generic, {resource_field_matches, ?gnrc_cond([<<"some_path">>], <<"some_value">>)}},
-                        [?pmt(generic, ?gnrc(?pmt_srv(<<"generic1">>)))]
-                    ),
-                    #domain_PaymentMethodDecision{
-                        if_ = {condition, {payment_tool, {bank_card, #domain_BankCardCondition{}}}},
-                        then_ =
-                            {value, ordsets:from_list([?pmt(bank_card, ?bank_card(<<"mastercard">>))])}
-                    },
-                    #domain_PaymentMethodDecision{
-                        if_ =
-                            {condition, {payment_tool, {payment_terminal, #domain_PaymentTerminalCondition{}}}},
-                        then_ =
-                            {value, ordsets:from_list([?pmt(payment_terminal, ?pmt_srv(<<"euroset">>))])}
-                    },
-                    #domain_PaymentMethodDecision{
-                        if_ = {constant, true},
-                        then_ = {value, ordsets:from_list([])}
-                    }
-                ]},
-            cash_limit =
-                {value, #domain_CashRange{
-                    lower = {inclusive, #domain_Cash{amount = 1000, currency = ?cur(<<"RUB">>)}},
-                    upper = {exclusive, #domain_Cash{amount = 4200000, currency = ?cur(<<"RUB">>)}}
-                }},
-            fees =
-                {value, [
-                    ?cfpost(
-                        {merchant, settlement},
-                        {system, settlement},
-                        ?share(45, 1000, operation_amount)
-                    )
-                ]}
-        }
-    },
-
     TermSet = #domain_TermSet{
         recurrent_paytools = #domain_RecurrentPaytoolsServiceTerms{
             payment_methods =
@@ -1135,18 +910,6 @@ construct_domain_fixture(PartyID) ->
             }
         }},
 
-        %% For check_all_payment_methods
-        {payment_institution, #domain_PaymentInstitutionObject{
-            ref = ?pinst(5),
-            data = #domain_PaymentInstitution{
-                name = <<"All Payments GmbH">>,
-                system_account_set = {value, ?sas(2)},
-                inspector = {value, ?insp(1)},
-                residences = [],
-                realm = live
-            }
-        }},
-
         %% Party, shop and wallet
         pm_ct_fixture:construct_shop(
             ?SHOP_ID,
@@ -1202,16 +965,6 @@ construct_domain_fixture(PartyID) ->
                 }
             }
         ),
-        %% For check_all_payment_methods
-        pm_ct_fixture:construct_term_set_hierarchy(?trms(5), ?trms(2), AllMethodsTermSet),
-        {bank, #domain_BankObject{
-            ref = ?bank(1),
-            data = #domain_Bank{
-                name = <<"Test BIN range">>,
-                description = <<"Test BIN range">>,
-                bins = ordsets:from_list([<<"1234">>, <<"5678">>])
-            }
-        }},
 
         {provider, #domain_ProviderObject{
             ref = ?prv(1),

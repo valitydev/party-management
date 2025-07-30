@@ -22,8 +22,6 @@
 }.
 
 -type encoded_varset() :: dmsl_payproc_thrift:'Varset'().
--type contract_terms_varset() :: dmsl_payproc_thrift:'ComputeContractTermsVarset'().
--type shop_terms_varset() :: dmsl_payproc_thrift:'ComputeShopTermsVarset'().
 
 -spec encode_varset(varset()) -> encoded_varset().
 encode_varset(Varset) ->
@@ -42,7 +40,7 @@ encode_varset(Varset) ->
 -spec decode_varset(encoded_varset()) -> varset().
 decode_varset(Varset) ->
     decode_varset(Varset, #{}).
--spec decode_varset(encoded_varset() | contract_terms_varset() | shop_terms_varset(), varset()) -> varset().
+-spec decode_varset(encoded_varset(), varset()) -> varset().
 decode_varset(#payproc_Varset{} = Varset, VS) ->
     genlib_map:compact(VS#{
         category => Varset#payproc_Varset.category,
