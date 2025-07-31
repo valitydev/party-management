@@ -403,7 +403,7 @@ construct_term_set_hierarchy(Ref, ParentRef, TermSet) ->
         ref = Ref,
         data = #domain_TermSetHierarchy{
             parent_terms = ParentRef,
-            term_sets = [TermSet]
+            term_set = TermSet
         }
     }}.
 
