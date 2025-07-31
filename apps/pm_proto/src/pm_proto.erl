@@ -16,12 +16,8 @@
 -type service_spec() :: {Path :: string(), service()}.
 
 -spec get_service(Name :: atom()) -> service().
-get_service(claim_committer) ->
-    {dmsl_claimmgmt_thrift, 'ClaimCommitter'};
 get_service(party_management) ->
     {dmsl_payproc_thrift, 'PartyManagement'};
-get_service(party_config) ->
-    {dmsl_payproc_thrift, 'PartyConfigManagement'};
 get_service(accounter) ->
     {dmsl_accounter_thrift, 'Accounter'}.
 
@@ -30,9 +26,5 @@ get_service_spec(Name) ->
     get_service_spec(Name, #{}).
 
 -spec get_service_spec(Name :: atom(), Opts :: #{namespace => binary()}) -> service_spec().
-get_service_spec(Name = claim_committer, #{}) ->
-    {?VERSION_PREFIX ++ "/processing/claim_committer", get_service(Name)};
 get_service_spec(Name = party_management, #{}) ->
-    {?VERSION_PREFIX ++ "/processing/partymgmt", get_service(Name)};
-get_service_spec(Name = party_config, #{}) ->
-    {?VERSION_PREFIX ++ "/processing/partycfg", get_service(Name)}.
+    {?VERSION_PREFIX ++ "/processing/partymgmt", get_service(Name)}.

@@ -27,11 +27,6 @@ reduce_payment_institution(PaymentInstitution, VS, Revision) ->
             VS,
             Revision
         ),
-        default_contract_template = reduce_if_defined(
-            PaymentInstitution#domain_PaymentInstitution.default_contract_template,
-            VS,
-            Revision
-        ),
         inspector = reduce_if_defined(
             PaymentInstitution#domain_PaymentInstitution.inspector,
             VS,
@@ -39,11 +34,6 @@ reduce_payment_institution(PaymentInstitution, VS, Revision) ->
         ),
         wallet_system_account_set = reduce_if_defined(
             PaymentInstitution#domain_PaymentInstitution.wallet_system_account_set,
-            VS,
-            Revision
-        ),
-        providers = reduce_if_defined(
-            PaymentInstitution#domain_PaymentInstitution.providers,
             VS,
             Revision
         ),

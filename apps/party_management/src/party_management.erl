@@ -17,9 +17,6 @@
 -export([start/2]).
 -export([stop/1]).
 
-% 30 seconds
--define(DEFAULT_HANDLING_TIMEOUT, 30000).
-
 %%
 %% API
 %%
@@ -40,7 +37,6 @@ init([]) ->
         {
             #{strategy => one_for_all, intensity => 6, period => 30},
             [
-                pm_party_cache:cache_child_spec(party_cache, Options),
                 get_api_child_spec(Options)
             ]
         }}.
@@ -61,66 +57,12 @@ get_api_child_spec(Opts) ->
             event_handler => EventHandlers,
             handlers =>
                 [
-                    construct_service_handler(claim_committer, pm_claim_committer_handler, Opts),
-                    construct_service_handler(party_management, pm_party_handler, Opts),
-                    construct_service_handler(party_config, pm_party_config_handler, Opts)
+                    construct_service_handler(party_management, pm_party_handler, Opts)
                 ],
-            additional_routes => get_routes(EventHandlers, genlib_app:env(?MODULE, machinery_backend)) ++
-                [PrometeusRoute | HealthRoutes],
+            additional_routes => [PrometeusRoute | HealthRoutes],
             shutdown_timeout => genlib_app:env(?MODULE, shutdown_timeout, 0)
         }
     ).
-
-get_routes(_EventHandlers, progressor) ->
-    [];
-get_routes(EventHandlers, Mode) when Mode == machinegun orelse Mode == hybrid ->
-    Schema = party_management_machinery_schema,
-    Backend = construct_machinery_backend_spec(Schema),
-    ok = application:set_env(?MODULE, backends, #{pm_party_machine:namespace() => Backend}),
-
-    MachineHandler = construct_machinery_handler_spec(pm_party_machine, Schema),
-    ModernizerHandler = construct_machinery_modernizer_spec(Schema),
-
-    RouteOptsEnv = genlib_app:env(?MODULE, route_opts, #{}),
-    RouteOpts = RouteOptsEnv#{event_handler => EventHandlers},
-
-    machinery_mg_backend:get_routes([MachineHandler], RouteOpts) ++
-        machinery_modernizer_mg_backend:get_routes([ModernizerHandler], RouteOpts).
-
-construct_machinery_backend_spec(Schema) ->
-    {machinery_mg_backend, #{
-        schema => Schema,
-        client => get_service_client(automaton)
-    }}.
-
-construct_machinery_handler_spec(Handler, Schema) ->
-    {Handler, #{
-        path => "/v1/stateproc/party",
-        backend_config => #{schema => Schema}
-    }}.
-
-construct_machinery_modernizer_spec(Schema) ->
-    #{
-        path => "/v1/modernizer",
-        backend_config => #{schema => Schema}
-    }.
-
-get_service_client(ServiceName) ->
-    case get_service_client_url(ServiceName) of
-        undefined ->
-            error({unknown_service, ServiceName});
-        Url ->
-            genlib_map:compact(#{
-                url => Url,
-                event_handler => genlib_app:env(party_management, woody_event_handlers, [
-                    {scoper_woody_event_handler, #{}}
-                ])
-            })
-    end.
-
-get_service_client_url(ServiceName) ->
-    ServiceClients = genlib_app:env(party_management, services, #{}),
-    maps:get(ServiceName, ServiceClients, undefined).
 
 construct_health_routes(Check) ->
     [erl_health_handle:get_route(enable_health_logging(Check))].

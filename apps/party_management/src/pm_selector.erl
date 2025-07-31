@@ -19,7 +19,6 @@
     | dmsl_domain_thrift:'CashLimitSelector'()
     | dmsl_domain_thrift:'CashFlowSelector'()
     | dmsl_domain_thrift:'PaymentMethodSelector'()
-    | dmsl_domain_thrift:'ProviderSelector'()
     | dmsl_domain_thrift:'SystemAccountSetSelector'()
     | dmsl_domain_thrift:'ExternalAccountSetSelector'()
     | dmsl_domain_thrift:'HoldLifetimeSelector'()
@@ -42,8 +41,7 @@
     shop_id => dmsl_domain_thrift:'ShopID'(),
     risk_score => dmsl_domain_thrift:'RiskScore'(),
     flow => instant | {hold, dmsl_domain_thrift:'HoldLifetime'()},
-    wallet_id => dmsl_domain_thrift:'WalletID'(),
-    identification_level => dmsl_domain_thrift:'ContractorIdentificationLevel'()
+    wallet_id => dmsl_domain_thrift:'WalletID'()
 }.
 
 -type predicate() :: dmsl_domain_thrift:'Predicate'().

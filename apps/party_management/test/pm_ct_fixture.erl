@@ -7,6 +7,11 @@
 
 %%
 
+-export([construct_party/3]).
+-export([construct_shop_account/1]).
+-export([construct_shop/6]).
+-export([construct_wallet_account/1]).
+-export([construct_wallet/4]).
 -export([construct_currency/1]).
 -export([construct_currency/2]).
 -export([construct_category/2]).
@@ -17,8 +22,6 @@
 -export([construct_inspector/3]).
 -export([construct_inspector/4]).
 -export([construct_inspector/5]).
--export([construct_contract_template/2]).
--export([construct_contract_template/4]).
 -export([construct_provider_account_set/1]).
 -export([construct_system_account_set/1]).
 -export([construct_system_account_set/3]).
@@ -33,6 +36,7 @@
 -export([construct_payment_service/2]).
 -export([construct_crypto_currency/2]).
 -export([construct_tokenized_service/2]).
+
 %%
 
 -type name() :: binary().
@@ -41,9 +45,6 @@
 -type proxy() :: dmsl_domain_thrift:'ProxyRef'().
 -type inspector() :: dmsl_domain_thrift:'InspectorRef'().
 -type risk_score() :: dmsl_domain_thrift:'RiskScore'().
--type template() :: dmsl_domain_thrift:'ContractTemplateRef'().
--type terms() :: dmsl_domain_thrift:'TermSetHierarchyRef'().
--type lifetime() :: dmsl_domain_thrift:'Lifetime'() | undefined.
 -type payment_routing_ruleset() :: dmsl_domain_thrift:'RoutingRulesetRef'().
 
 -type payment_system() :: dmsl_domain_thrift:'PaymentSystemRef'().
@@ -68,6 +69,88 @@
 -define(EVERY, {every, #'base_ScheduleEvery'{}}).
 
 %%
+
+-spec construct_party(
+    dmsl_domain_thrift:'PartyID'(),
+    [dmsl_domain_thrift:'ShopConfigRef'()],
+    [dmsl_domain_thrift:'WalletConfigRef'()]
+) -> {party_config, dmsl_domain_thrift:'PartyConfigObject'()}.
+construct_party(PartyID, ShopRefs, WalletRefs) ->
+    {party_config, #domain_PartyConfigObject{
+        ref = #domain_PartyConfigRef{id = PartyID},
+        data = #domain_PartyConfig{
+            name = PartyID,
+            block = make_unblocked(),
+            suspension = make_active(),
+            shops = ShopRefs,
+            wallets = WalletRefs,
+            contact_info = #domain_PartyContactInfo{registration_email = <<"party@example.com">>}
+        }
+    }}.
+
+-spec construct_shop_account(dmsl_domain_thrift:'CurrencySymbolicCode'()) -> dmsl_domain_thrift:'ShopAccount'().
+construct_shop_account(CurrencyCode) ->
+    ok = pm_context:save(pm_context:create()),
+    Settlement = pm_accounting:create_account(CurrencyCode),
+    Guarantee = pm_accounting:create_account(CurrencyCode),
+    _ = pm_context:cleanup(),
+    #domain_ShopAccount{
+        currency = ?cur(CurrencyCode),
+        settlement = Settlement,
+        guarantee = Guarantee
+    }.
+
+-spec construct_shop(
+    dmsl_domain_thrift:'ShopID'(),
+    dmsl_domain_thrift:'PaymentInstitutionRef'(),
+    dmsl_domain_thrift:'ShopAccount'(),
+    dmsl_domain_thrift:'PartyID'(),
+    binary(),
+    dmsl_domain_thrift:'CategoryRef'()
+) -> {shop_config, dmsl_domain_thrift:'ShopConfigObject'()}.
+construct_shop(ShopID, PaymentInstitutionRef, ShopAccount, PartyID, ShopLocation, CategoryRef) ->
+    {shop_config, #domain_ShopConfigObject{
+        ref = #domain_ShopConfigRef{id = ShopID},
+        data = #domain_ShopConfig{
+            name = ShopID,
+            block = make_unblocked(),
+            suspension = make_active(),
+            payment_institution = PaymentInstitutionRef,
+            account = ShopAccount,
+            party_id = PartyID,
+            location = {url, ShopLocation},
+            category = CategoryRef
+        }
+    }}.
+
+-spec construct_wallet_account(dmsl_domain_thrift:'CurrencySymbolicCode'()) -> dmsl_domain_thrift:'WalletAccount'().
+construct_wallet_account(CurrencyCode) ->
+    ok = pm_context:save(pm_context:create()),
+    Settlement = pm_accounting:create_account(CurrencyCode),
+    _ = pm_context:cleanup(),
+    #domain_WalletAccount{
+        currency = ?cur(CurrencyCode),
+        settlement = Settlement
+    }.
+
+-spec construct_wallet(
+    dmsl_domain_thrift:'WalletID'(),
+    dmsl_domain_thrift:'PaymentInstitutionRef'(),
+    dmsl_domain_thrift:'WalletAccount'(),
+    dmsl_domain_thrift:'PartyID'()
+) -> {wallet_config, dmsl_domain_thrift:'WalletConfigObject'()}.
+construct_wallet(WalletID, PaymentInstitutionRef, WalletAccount, PartyID) ->
+    {wallet_config, #domain_WalletConfigObject{
+        ref = #domain_WalletConfigRef{id = WalletID},
+        data = #domain_WalletConfig{
+            name = WalletID,
+            block = make_unblocked(),
+            suspension = make_active(),
+            payment_institution = PaymentInstitutionRef,
+            account = WalletAccount,
+            party_id = PartyID
+        }
+    }}.
 
 -spec construct_currency(currency()) -> {currency, dmsl_domain_thrift:'CurrencyObject'()}.
 construct_currency(Ref) ->
@@ -219,23 +302,6 @@ construct_inspector(Ref, Name, ProxyRef, Additional, FallBackScore) ->
         }
     }}.
 
--spec construct_contract_template(template(), terms()) ->
-    {contract_template, dmsl_domain_thrift:'ContractTemplateObject'()}.
-construct_contract_template(Ref, TermsRef) ->
-    construct_contract_template(Ref, TermsRef, undefined, undefined).
-
--spec construct_contract_template(template(), terms(), ValidSince :: lifetime(), ValidUntil :: lifetime()) ->
-    {contract_template, dmsl_domain_thrift:'ContractTemplateObject'()}.
-construct_contract_template(Ref, TermsRef, ValidSince, ValidUntil) ->
-    {contract_template, #domain_ContractTemplateObject{
-        ref = Ref,
-        data = #domain_ContractTemplate{
-            valid_since = ValidSince,
-            valid_until = ValidUntil,
-            terms = TermsRef
-        }
-    }}.
-
 -spec construct_provider_account_set([currency()]) -> dmsl_domain_thrift:'ProviderAccountSet'().
 construct_provider_account_set(Currencies) ->
     ok = pm_context:save(pm_context:create()),
@@ -337,12 +403,7 @@ construct_term_set_hierarchy(Ref, ParentRef, TermSet) ->
         ref = Ref,
         data = #domain_TermSetHierarchy{
             parent_terms = ParentRef,
-            term_sets = [
-                #domain_TimedTermSet{
-                    action_time = #base_TimestampInterval{},
-                    terms = TermSet
-                }
-            ]
+            term_sets = [TermSet]
         }
     }}.
 
@@ -355,3 +416,11 @@ construct_payment_routing_ruleset(Ref, Name, Decisions) ->
             decisions = Decisions
         }
     }}.
+
+%%
+
+make_unblocked() ->
+    {unblocked, #domain_Unblocked{reason = ~"whatever reason", since = ~"1970-01-01T00:00:00Z"}}.
+
+make_active() ->
+    {active, #domain_Active{since = ~"1970-01-01T00:00:00Z"}}.

@@ -7,6 +7,8 @@
 
 -define(ordset(Es), ordsets:from_list(Es)).
 
+-define(shop(ID), #domain_ShopConfigRef{id = ID}).
+-define(wallet(ID), #domain_WalletConfigRef{id = ID}).
 -define(cur(ID), #domain_CurrencyRef{symbolic_code = ID}).
 -define(pmt(C, T), #domain_PaymentMethodRef{id = {C, T}}).
 -define(pmt_sys(ID), #domain_PaymentSystemRef{id = ID}).
