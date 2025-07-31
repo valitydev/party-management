@@ -74,7 +74,7 @@
     dmsl_domain_thrift:'PartyID'(),
     [dmsl_domain_thrift:'ShopConfigRef'()],
     [dmsl_domain_thrift:'WalletConfigRef'()]
-) -> dmsl_domain_thrift:'PartyConfigObject'().
+) -> {party_config, dmsl_domain_thrift:'PartyConfigObject'()}.
 construct_party(PartyID, ShopRefs, WalletRefs) ->
     {party_config, #domain_PartyConfigObject{
         ref = #domain_PartyConfigRef{id = PartyID},
