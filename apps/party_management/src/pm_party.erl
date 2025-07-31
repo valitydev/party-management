@@ -185,9 +185,8 @@ get_terms_struct_info(Type) ->
 get_term_set(TermsRef, Revision) ->
     #domain_TermSetHierarchy{
         parent_terms = ParentRef,
-        term_sets = TermSets
+        term_set = TermSet
     } = pm_domain:get(Revision, {term_set_hierarchy, TermsRef}),
-    TermSet = lists:last(TermSets),
     case ParentRef of
         undefined ->
             TermSet;
