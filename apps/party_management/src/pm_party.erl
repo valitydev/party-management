@@ -183,16 +183,17 @@ get_terms_struct_info(Type) ->
 
 -spec get_term_set(termset_ref(), revision()) -> dmsl_domain_thrift:'TermSet'() | no_return().
 get_term_set(TermsRef, Revision) ->
-    #domain_TermSetHierarchy{
-        parent_terms = ParentRef,
-        term_set = TermSet
-    } = pm_domain:get(Revision, {term_set_hierarchy, TermsRef}),
-    case ParentRef of
-        undefined ->
-            TermSet;
-        #domain_TermSetHierarchyRef{} ->
-            ParentTermSet = get_term_set(ParentRef, Revision),
-            merge_terms([ParentTermSet, TermSet])
+    case pm_domain:find(Revision, {term_set_hierarchy, TermsRef}) of
+        #domain_TermSetHierarchy{parent_terms = ParentRef, term_set = TermSet} ->
+            case ParentRef of
+                undefined ->
+                    TermSet;
+                #domain_TermSetHierarchyRef{} ->
+                    ParentTermSet = get_term_set(ParentRef, Revision),
+                    merge_terms([ParentTermSet, TermSet])
+            end;
+        notfound ->
+            throw(#payproc_TermSetHierarchyNotFound{})
     end.
 
 merge_terms(TermSets) when is_list(TermSets) ->
