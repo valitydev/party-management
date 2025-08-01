@@ -5,6 +5,7 @@
 -export([start/2]).
 -export([stop/1]).
 
+-export([compute_terms/4]).
 -export([compute_payment_institution/4]).
 
 -export([get_shop_account/3]).
@@ -33,6 +34,7 @@
 -type wallet_id() :: dmsl_domain_thrift:'WalletID'().
 -type shop_account_id() :: dmsl_domain_thrift:'AccountID'().
 
+-type termset_hierarchy_ref() :: dmsl_domain_thrift:'TermSetHierarchyRef'().
 -type payment_intitution_ref() :: dmsl_domain_thrift:'PaymentInstitutionRef'().
 -type varset() :: dmsl_payproc_thrift:'Varset'().
 
@@ -52,8 +54,13 @@ stop(Client) ->
 
 %%
 
--spec compute_payment_institution(payment_intitution_ref(), domain_revision(), varset(), pid()) ->
+-spec compute_terms(termset_hierarchy_ref(), domain_revision(), varset(), pid()) ->
     dmsl_domain_thrift:'TermSet'() | woody_error:business_error().
+compute_terms(Ref, DomainRevision, Varset, Client) ->
+    call(Client, 'ComputeTerms', [Ref, DomainRevision, Varset]).
+
+-spec compute_payment_institution(payment_intitution_ref(), domain_revision(), varset(), pid()) ->
+    dmsl_domain_thrift:'PaymentInstitution'() | woody_error:business_error().
 compute_payment_institution(Ref, DomainRevision, Varset, Client) ->
     call(Client, 'ComputePaymentInstitution', [Ref, DomainRevision, Varset]).
 

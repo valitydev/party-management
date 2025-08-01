@@ -21,6 +21,8 @@
 -export([get_wallet_account/1]).
 -export([get_account_state/1]).
 
+-export([compute_terms_ok/1]).
+-export([compute_terms_hierarchy_not_found/1]).
 -export([compute_payment_institution/1]).
 
 -export([compute_provider_ok/1]).
@@ -75,6 +77,8 @@ groups() ->
             get_account_state
         ]},
         {compute, [parallel], [
+            compute_terms_ok,
+            compute_terms_hierarchy_not_found,
             compute_payment_institution,
             compute_provider_ok,
             compute_provider_not_found,
@@ -142,6 +146,8 @@ end_per_testcase(_Name, _C) ->
 -spec get_wallet_account(config()) -> _ | no_return().
 -spec get_account_state(config()) -> _ | no_return().
 
+-spec compute_terms_ok(config()) -> _ | no_return().
+-spec compute_terms_hierarchy_not_found(config()) -> _ | no_return().
 -spec compute_payment_institution(config()) -> _ | no_return().
 
 -spec compute_provider_ok(config()) -> _ | no_return().
@@ -191,6 +197,35 @@ get_account_state(C) ->
     ).
 
 %%
+
+compute_terms_ok(C) ->
+    Client = cfg(client, C),
+    DomainRevision = pm_domain:head(),
+    Varset = #payproc_Varset{
+        payment_tool = {bank_card, #domain_BankCard{token = <<>>, bin = <<>>, last_digits = <<>>}},
+        currency = ?cur(<<"RUB">>),
+        amount = ?cash(100, <<"RUB">>),
+        party_id = <<"PARTYID1">>
+    },
+    ?assertMatch(
+        #domain_TermSet{
+            payments = #domain_PaymentsServiceTerms{
+                currencies = {value, _},
+                categories = {value, _},
+                payment_methods = {value, _},
+                cash_limit = {value, _}
+            }
+        },
+        pm_client_party:compute_terms(?trms(4), DomainRevision, Varset, Client)
+    ).
+
+compute_terms_hierarchy_not_found(C) ->
+    Client = cfg(client, C),
+    DomainRevision = pm_domain:head(),
+    ?assertMatch(
+        {exception, #payproc_TermSetHierarchyNotFound{}},
+        pm_client_party:compute_terms(?trms(42), DomainRevision, #payproc_Varset{}, Client)
+    ).
 
 compute_payment_institution(C) ->
     Client = cfg(client, C),
