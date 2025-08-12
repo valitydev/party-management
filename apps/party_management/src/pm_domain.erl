@@ -40,6 +40,8 @@ get(Revision, Ref) ->
     try
         extract_data(dmt_client:checkout_object(Revision, Ref))
     catch
+        error:version_not_found ->
+            error({object_not_found, {Revision, Ref}});
         throw:#domain_conf_v2_ObjectNotFound{} ->
             error({object_not_found, {Revision, Ref}})
     end.
@@ -49,6 +51,8 @@ find(Revision, Ref) ->
     try
         extract_data(dmt_client:checkout_object(Revision, Ref))
     catch
+        error:version_not_found ->
+            notfound;
         throw:#domain_conf_v2_ObjectNotFound{} ->
             notfound
     end.

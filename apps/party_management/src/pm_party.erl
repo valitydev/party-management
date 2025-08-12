@@ -234,6 +234,6 @@ ensure_account(AccountID, [Ref | Items], DomainRevision) ->
             ok;
         #domain_WalletConfig{account = #domain_WalletAccount{settlement = AccountID}} ->
             ok;
-        notfound ->
+        _ ->
             ensure_account(AccountID, Items, DomainRevision)
     end.

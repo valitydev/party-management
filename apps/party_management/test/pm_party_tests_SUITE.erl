@@ -18,8 +18,12 @@
 -export([end_per_testcase/2]).
 
 -export([get_shop_account/1]).
+-export([get_shop_account_non_existant_version/1]).
 -export([get_wallet_account/1]).
+-export([get_wallet_account_non_existant_version/1]).
 -export([get_account_state/1]).
+-export([get_account_state_non_existant_version/1]).
+-export([get_account_state_account_notfound/1]).
 
 -export([compute_terms_ok/1]).
 -export([compute_terms_hierarchy_not_found/1]).
@@ -71,10 +75,13 @@ all() ->
 groups() ->
     [
         {accounts, [parallel], [
-            %% TODO Add failure cases for each of these
             get_shop_account,
+            get_shop_account_non_existant_version,
             get_wallet_account,
-            get_account_state
+            get_wallet_account_non_existant_version,
+            get_account_state,
+            get_account_state_non_existant_version,
+            get_account_state_account_notfound
         ]},
         {compute, [parallel], [
             compute_terms_ok,
@@ -143,8 +150,12 @@ end_per_testcase(_Name, _C) ->
 -define(WRONG_DMT_OBJ_ID, 99999).
 
 -spec get_shop_account(config()) -> _ | no_return().
+-spec get_shop_account_non_existant_version(config()) -> _ | no_return().
 -spec get_wallet_account(config()) -> _ | no_return().
+-spec get_wallet_account_non_existant_version(config()) -> _ | no_return().
 -spec get_account_state(config()) -> _ | no_return().
+-spec get_account_state_non_existant_version(config()) -> _ | no_return().
+-spec get_account_state_account_notfound(config()) -> _ | no_return().
 
 -spec compute_terms_ok(config()) -> _ | no_return().
 -spec compute_terms_hierarchy_not_found(config()) -> _ | no_return().
@@ -170,12 +181,22 @@ end_per_testcase(_Name, _C) ->
 
 %% Accounts
 
+-define(NON_EXISTANT_DOMAIN_REVISION, 42_000_000).
+-define(NON_EXISTANT_ACCOUNT_ID, 42_000).
+
 get_shop_account(C) ->
     Client = cfg(client, C),
     DomainRevision = pm_domain:head(),
     ?assertMatch(
         #domain_ShopAccount{},
         pm_client_party:get_shop_account(?SHOP_ID, DomainRevision, Client)
+    ).
+
+get_shop_account_non_existant_version(C) ->
+    Client = cfg(client, C),
+    ?assertMatch(
+        {exception, #payproc_PartyNotFound{}},
+        pm_client_party:get_shop_account(?SHOP_ID, ?NON_EXISTANT_DOMAIN_REVISION, Client)
     ).
 
 get_wallet_account(C) ->
@@ -186,6 +207,13 @@ get_wallet_account(C) ->
         pm_client_party:get_wallet_account(?WALLET_ID, DomainRevision, Client)
     ).
 
+get_wallet_account_non_existant_version(C) ->
+    Client = cfg(client, C),
+    ?assertMatch(
+        {exception, #payproc_PartyNotFound{}},
+        pm_client_party:get_wallet_account(?WALLET_ID, ?NON_EXISTANT_DOMAIN_REVISION, Client)
+    ).
+
 get_account_state(C) ->
     Client = cfg(client, C),
     DomainRevision = pm_domain:head(),
@@ -194,6 +222,21 @@ get_account_state(C) ->
     ?assertMatch(
         #payproc_AccountState{account_id = AccountID},
         pm_client_party:get_account_state(AccountID, DomainRevision, Client)
+    ).
+
+get_account_state_non_existant_version(C) ->
+    Client = cfg(client, C),
+    ?assertMatch(
+        {exception, #payproc_PartyNotFound{}},
+        pm_client_party:get_account_state(42, ?NON_EXISTANT_DOMAIN_REVISION, Client)
+    ).
+
+get_account_state_account_notfound(C) ->
+    Client = cfg(client, C),
+    DomainRevision = pm_domain:head(),
+    ?assertMatch(
+        {exception, #payproc_AccountNotFound{}},
+        pm_client_party:get_account_state(?NON_EXISTANT_ACCOUNT_ID, DomainRevision, Client)
     ).
 
 %%
