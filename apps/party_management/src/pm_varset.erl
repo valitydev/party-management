@@ -17,7 +17,7 @@
     wallet_id => dmsl_domain_thrift:'WalletID'(),
     shop_id => dmsl_domain_thrift:'ShopID'(),
     payment_tool => dmsl_domain_thrift:'PaymentTool'(),
-    party_id => dmsl_domain_thrift:'PartyID'(),
+    party_ref => dmsl_domain_thrift:'PartyConfigRef'(),
     bin_data => dmsl_domain_thrift:'BinData'()
 }.
 
@@ -33,7 +33,7 @@ encode_varset(Varset) ->
         wallet_id = genlib_map:get(wallet_id, Varset),
         shop_id = genlib_map:get(shop_id, Varset),
         payment_tool = genlib_map:get(payment_tool, Varset),
-        party_id = genlib_map:get(party_id, Varset),
+        party_ref = genlib_map:get(party_ref, Varset),
         bin_data = genlib_map:get(bin_data, Varset)
     }.
 
@@ -53,7 +53,7 @@ decode_varset(#payproc_Varset{} = Varset, VS) ->
             Varset#payproc_Varset.payment_method,
             Varset#payproc_Varset.payment_tool
         ),
-        party_id => Varset#payproc_Varset.party_id,
+        party_ref => Varset#payproc_Varset.party_ref,
         bin_data => Varset#payproc_Varset.bin_data
     }).
 
@@ -91,12 +91,12 @@ encode_decode_test() ->
                 payment_service = #domain_PaymentServiceRef{id = <<"qiwi">>},
                 id = <<"digital_wallet_id">>
             }},
-        party_id => <<"party_id">>,
+        party_ref => #domain_PartyConfigRef{id = <<"party_id">>},
         bin_data => #domain_BinData{
             payment_system = <<"payment_system">>,
             bank_name = <<"bank_name">>
         }
     },
-    Varset = decode_varset(encode_varset(Varset)).
+    ?assertEqual(Varset, decode_varset(encode_varset(Varset))).
 
 -endif.

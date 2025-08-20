@@ -7,6 +7,7 @@
 
 -define(ordset(Es), ordsets:from_list(Es)).
 
+-define(party(ID), #domain_PartyConfigRef{id = ID}).
 -define(shop(ID), #domain_ShopConfigRef{id = ID}).
 -define(wallet(ID), #domain_WalletConfigRef{id = ID}).
 -define(cur(ID), #domain_CurrencyRef{symbolic_code = ID}).
@@ -47,7 +48,9 @@
 -define(cashrng(Lower, Upper), #domain_CashRange{lower = Lower, upper = Upper}).
 
 -define(prvacc(Stl), #domain_ProviderAccount{settlement = Stl}).
--define(partycond(ID, Def), {condition, {party, #domain_PartyCondition{id = ID, definition = Def}}}).
+-define(partycond(ID, Def),
+    {condition, {party, #domain_PartyCondition{party_ref = ?party(ID), definition = Def}}}
+).
 
 -define(fixed(Amount, Currency),
     {fixed, #domain_CashVolumeFixed{

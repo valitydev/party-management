@@ -7,7 +7,7 @@
 
 %%
 
--export([construct_party/3]).
+-export([construct_party/1]).
 -export([construct_shop_account/1]).
 -export([construct_shop/6]).
 -export([construct_wallet_account/1]).
@@ -70,20 +70,15 @@
 
 %%
 
--spec construct_party(
-    dmsl_domain_thrift:'PartyID'(),
-    [dmsl_domain_thrift:'ShopConfigRef'()],
-    [dmsl_domain_thrift:'WalletConfigRef'()]
-) -> {party_config, dmsl_domain_thrift:'PartyConfigObject'()}.
-construct_party(PartyID, ShopRefs, WalletRefs) ->
+-spec construct_party(dmsl_domain_thrift:'PartyConfigRef'()) ->
+    {party_config, dmsl_domain_thrift:'PartyConfigObject'()}.
+construct_party(PartyRef) ->
     {party_config, #domain_PartyConfigObject{
-        ref = #domain_PartyConfigRef{id = PartyID},
+        ref = PartyRef,
         data = #domain_PartyConfig{
-            name = PartyID,
+            name = PartyRef#domain_PartyConfigRef.id,
             block = make_unblocked(),
             suspension = make_active(),
-            shops = ShopRefs,
-            wallets = WalletRefs,
             contact_info = #domain_PartyContactInfo{registration_email = <<"party@example.com">>}
         }
     }}.
@@ -104,11 +99,11 @@ construct_shop_account(CurrencyCode) ->
     dmsl_domain_thrift:'ShopID'(),
     dmsl_domain_thrift:'PaymentInstitutionRef'(),
     dmsl_domain_thrift:'ShopAccount'(),
-    dmsl_domain_thrift:'PartyID'(),
+    dmsl_domain_thrift:'PartyConfigRef'(),
     binary(),
     dmsl_domain_thrift:'CategoryRef'()
 ) -> {shop_config, dmsl_domain_thrift:'ShopConfigObject'()}.
-construct_shop(ShopID, PaymentInstitutionRef, ShopAccount, PartyID, ShopLocation, CategoryRef) ->
+construct_shop(ShopID, PaymentInstitutionRef, ShopAccount, PartyRef, ShopLocation, CategoryRef) ->
     {shop_config, #domain_ShopConfigObject{
         ref = #domain_ShopConfigRef{id = ShopID},
         data = #domain_ShopConfig{
@@ -117,7 +112,7 @@ construct_shop(ShopID, PaymentInstitutionRef, ShopAccount, PartyID, ShopLocation
             suspension = make_active(),
             payment_institution = PaymentInstitutionRef,
             account = ShopAccount,
-            party_id = PartyID,
+            party_ref = PartyRef,
             location = {url, ShopLocation},
             category = CategoryRef
         }
@@ -137,9 +132,9 @@ construct_wallet_account(CurrencyCode) ->
     dmsl_domain_thrift:'WalletID'(),
     dmsl_domain_thrift:'PaymentInstitutionRef'(),
     dmsl_domain_thrift:'WalletAccount'(),
-    dmsl_domain_thrift:'PartyID'()
+    dmsl_domain_thrift:'PartyConfigRef'()
 ) -> {wallet_config, dmsl_domain_thrift:'WalletConfigObject'()}.
-construct_wallet(WalletID, PaymentInstitutionRef, WalletAccount, PartyID) ->
+construct_wallet(WalletID, PaymentInstitutionRef, WalletAccount, PartyRef) ->
     {wallet_config, #domain_WalletConfigObject{
         ref = #domain_WalletConfigRef{id = WalletID},
         data = #domain_WalletConfig{
@@ -148,7 +143,7 @@ construct_wallet(WalletID, PaymentInstitutionRef, WalletAccount, PartyID) ->
             suspension = make_active(),
             payment_institution = PaymentInstitutionRef,
             account = WalletAccount,
-            party_id = PartyID
+            party_ref = PartyRef
         }
     }}.
 

@@ -14,6 +14,7 @@
 -export([get/2]).
 -export([find/2]).
 -export([exists/2]).
+-export([find_shops_and_wallets/2]).
 
 -export([insert/1]).
 -export([update/1]).
@@ -72,6 +73,30 @@ extract_data(#domain_conf_v2_VersionedObject{object = {_Tag, {_Name, _Ref, Data}
 
 commit(Revision, Operations, AuthorID) ->
     dmt_client:commit(Revision, Operations, AuthorID).
+
+-spec find_shops_and_wallets(revision(), dmsl_domain_thrift:'PartyConfigRef'()) -> [dmt_client:object_ref()].
+find_shops_and_wallets(Revision, PartyRef) ->
+    Request = #domain_conf_v2_RelatedGraphRequest{
+        ref = {party_config, PartyRef},
+        type = undefined,
+        version = Revision,
+        include_inbound = true,
+        include_outbound = false,
+        depth = 1
+    },
+    #domain_conf_v2_RelatedGraph{nodes = Nodes} = dmt_client:get_related_graph(Request),
+    lists:foldl(
+        fun
+            (#domain_conf_v2_LimitedVersionedObject{ref = {Type, _} = Ref}, Acc) when
+                Type =:= shop_config orelse Type =:= wallet_config
+            ->
+                [Ref | Acc];
+            (_, Acc) ->
+                Acc
+        end,
+        [],
+        Nodes
+    ).
 
 -spec insert(object() | [object()]) -> {revision(), [ref()]} | no_return().
 insert(Objects) ->

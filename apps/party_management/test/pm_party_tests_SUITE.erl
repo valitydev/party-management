@@ -113,9 +113,9 @@ groups() ->
 -spec init_per_suite(config()) -> config().
 init_per_suite(C) ->
     {Apps, _Ret} = pm_ct_helper:start_apps([woody, scoper, dmt_client, party_management]),
-    PartyID = list_to_binary(lists:concat(["party.", erlang:system_time()])),
-    {_Rev, ObjIds} = pm_domain:insert(construct_domain_fixture(PartyID)),
-    [{apps, Apps}, {objects_ids, ObjIds}, {party_id, PartyID} | C].
+    PartyRef = ?party(list_to_binary(lists:concat(["party.", erlang:system_time()]))),
+    {_Rev, ObjIds} = pm_domain:insert(construct_domain_fixture(PartyRef)),
+    [{apps, Apps}, {objects_ids, ObjIds}, {party_ref, PartyRef} | C].
 
 -spec end_per_suite(config()) -> _.
 end_per_suite(C) ->
@@ -127,7 +127,7 @@ end_per_suite(C) ->
 -spec init_per_group(group_name(), config()) -> config().
 init_per_group(_Group, C) ->
     ApiClient = pm_ct_helper:create_client(),
-    Client = pm_client_party:start(cfg(party_id, C), ApiClient),
+    Client = pm_client_party:start(cfg(party_ref, C), ApiClient),
     [{client, Client} | C].
 
 -spec end_per_group(group_name(), config()) -> _.
@@ -248,7 +248,7 @@ compute_terms_ok(C) ->
         payment_tool = {bank_card, #domain_BankCard{token = <<>>, bin = <<>>, last_digits = <<>>}},
         currency = ?cur(<<"RUB">>),
         amount = ?cash(100, <<"RUB">>),
-        party_id = <<"PARTYID1">>
+        party_ref = ?party(<<"PARTYID1">>)
     },
     ?assertMatch(
         #domain_TermSet{
@@ -273,17 +273,17 @@ compute_terms_hierarchy_not_found(C) ->
 compute_payment_institution(C) ->
     Client = cfg(client, C),
     DomainRevision = pm_domain:head(),
-    TermsFun = fun(PartyID) ->
+    TermsFun = fun(PartyRef) ->
         #domain_PaymentInstitution{} =
             pm_client_party:compute_payment_institution(
                 ?pinst(4),
                 DomainRevision,
-                #payproc_Varset{party_id = PartyID},
+                #payproc_Varset{party_ref = PartyRef},
                 Client
             )
     end,
-    T1 = TermsFun(<<"12345">>),
-    T2 = TermsFun(<<"67890">>),
+    T1 = TermsFun(?party(<<"12345">>)),
+    T2 = TermsFun(?party(<<"67890">>)),
     ?assert_different_term_sets(T1, T2).
 
 %% Compute providers
@@ -383,7 +383,7 @@ compute_provider_terminal_terms_global_allow_ok(C) ->
     DomainRevision = pm_domain:head(),
     Varset0 = #payproc_Varset{
         amount = ?cash(100, <<"RUB">>),
-        party_id = <<"PARTYID1">>
+        party_ref = ?party(<<"PARTYID1">>)
     },
     ?assertEqual(
         #domain_ProvisionTermSet{
@@ -396,7 +396,7 @@ compute_provider_terminal_terms_global_allow_ok(C) ->
             ?prv(3), ?trm(5), DomainRevision, Varset0, Client
         )
     ),
-    Varset1 = Varset0#payproc_Varset{party_id = <<"PARTYID2">>},
+    Varset1 = Varset0#payproc_Varset{party_ref = ?party(<<"PARTYID2">>)},
     ?assertEqual(
         #domain_ProvisionTermSet{
             payments = #domain_PaymentsProvisionTerms{
@@ -564,7 +564,7 @@ compute_payment_routing_ruleset_ok(C) ->
     Client = cfg(client, C),
     DomainRevision = pm_domain:head(),
     Varset = #payproc_Varset{
-        party_id = <<"67890">>
+        party_ref = ?party(<<"67890">>)
     },
     #domain_RoutingRuleset{
         name = <<"Rule#1">>,
@@ -594,11 +594,13 @@ compute_payment_routing_ruleset_irreducible(C) ->
         decisions =
             {delegates, [
                 #domain_RoutingDelegate{
-                    allowed = {condition, {party, #domain_PartyCondition{id = <<"12345">>}}},
+                    allowed =
+                        {condition, {party, #domain_PartyCondition{party_ref = ?party(<<"12345">>)}}},
                     ruleset = ?ruleset(2)
                 },
                 #domain_RoutingDelegate{
-                    allowed = {condition, {party, #domain_PartyCondition{id = <<"67890">>}}},
+                    allowed =
+                        {condition, {party, #domain_PartyCondition{party_ref = ?party(<<"67890">>)}}},
                     ruleset = ?ruleset(3)
                 },
                 #domain_RoutingDelegate{
@@ -677,8 +679,8 @@ compute_pred_w_partially_irreducible_criterion(_) ->
 
 %%
 
--spec construct_domain_fixture(binary()) -> [pm_domain:object()].
-construct_domain_fixture(PartyID) ->
+-spec construct_domain_fixture(dmsl_domain_thrift:'PartyConfigRef'()) -> [pm_domain:object()].
+construct_domain_fixture(PartyRef) ->
     TestTermSet = #domain_TermSet{
         payments = #domain_PaymentsServiceTerms{
             currencies = {value, ordsets:from_list([?cur(<<"RUB">>)])},
@@ -820,11 +822,13 @@ construct_domain_fixture(PartyID) ->
     Decision1 =
         {delegates, [
             #domain_RoutingDelegate{
-                allowed = {condition, {party, #domain_PartyCondition{id = <<"12345">>}}},
+                allowed =
+                    {condition, {party, #domain_PartyCondition{party_ref = ?party(<<"12345">>)}}},
                 ruleset = ?ruleset(2)
             },
             #domain_RoutingDelegate{
-                allowed = {condition, {party, #domain_PartyCondition{id = <<"67890">>}}},
+                allowed =
+                    {condition, {party, #domain_PartyCondition{party_ref = ?party(<<"67890">>)}}},
                 ruleset = ?ruleset(3)
             },
             #domain_RoutingDelegate{
@@ -842,7 +846,8 @@ construct_domain_fixture(PartyID) ->
     Decision3 =
         {candidates, [
             #domain_RoutingCandidate{
-                allowed = {condition, {party, #domain_PartyCondition{id = <<"67890">>}}},
+                allowed =
+                    {condition, {party, #domain_PartyCondition{party_ref = ?party(<<"67890">>)}}},
                 terminal = ?trm(2)
             },
             #domain_RoutingCandidate{
@@ -982,12 +987,12 @@ construct_domain_fixture(PartyID) ->
         }},
 
         %% Party, shop and wallet
-        pm_ct_fixture:construct_party(PartyID, [?shop(?SHOP_ID)], [?wallet(?WALLET_ID)]),
+        pm_ct_fixture:construct_party(PartyRef),
         pm_ct_fixture:construct_shop(
             ?SHOP_ID,
             ?pinst(1),
             pm_ct_fixture:construct_shop_account(<<"RUB">>),
-            PartyID,
+            PartyRef,
             <<"http://example.com">>,
             ?cat(1)
         ),
@@ -995,7 +1000,7 @@ construct_domain_fixture(PartyID) ->
             ?WALLET_ID,
             ?pinst(1),
             pm_ct_fixture:construct_wallet_account(<<"RUB">>),
-            PartyID
+            PartyRef
         ),
 
         {globals, #domain_GlobalsObject{
