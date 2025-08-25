@@ -85,7 +85,10 @@ commit(Revision, Operations, AuthorID) ->
     | {error, notfound}.
 find_party_with_shops_and_wallets(Revision, PartyRef) ->
     try
-        #domain_conf_v2_VersionedObjectWithReferences{object = Object, referenced_by = ReferencedBy} =
+        #domain_conf_v2_VersionedObjectWithReferences{
+            object = #domain_conf_v2_VersionedObject{object = {party_config, Object}},
+            referenced_by = ReferencedBy
+        } =
             dmt_client:checkout_object_with_references(Revision, {party_config, PartyRef}),
         {Shops, Wallets} = lists:foldl(
             fun

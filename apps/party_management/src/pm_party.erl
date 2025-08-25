@@ -27,22 +27,30 @@
 
 -spec get_shop_account(shop_ref(), party_ref(), revision()) -> shop_account() | no_return().
 get_shop_account(ShopRef, PartyRef, DomainRevision) ->
-    #domain_PartyConfig{} = ensure_found({party_config, PartyRef}, DomainRevision, #payproc_PartyNotFound{}),
-    case ensure_found({shop_config, ShopRef}, DomainRevision, #payproc_ShopNotFound{}) of
-        #domain_ShopConfig{account = Account, party_ref = PartyRef} ->
-            Account;
-        _ ->
-            throw(#payproc_ShopNotFound{})
+    case pm_domain:find_party_with_shops_and_wallets(DomainRevision, PartyRef) of
+        {ok, _Party, Shops, _Wallets} ->
+            case lists:search(fun(#domain_ShopConfigObject{ref = Ref}) -> Ref =:= ShopRef end, Shops) of
+                {value, #domain_ShopConfigObject{data = #domain_ShopConfig{account = Account}}} ->
+                    Account;
+                false ->
+                    throw(#payproc_ShopNotFound{})
+            end;
+        {error, notfound} ->
+            throw(#payproc_PartyNotFound{})
     end.
 
 -spec get_wallet_account(wallet_ref(), party_ref(), revision()) -> wallet_account() | no_return().
 get_wallet_account(WalletRef, PartyRef, DomainRevision) ->
-    #domain_PartyConfig{} = ensure_found({party_config, PartyRef}, DomainRevision, #payproc_PartyNotFound{}),
-    case ensure_found({wallet_config, WalletRef}, DomainRevision, #payproc_WalletNotFound{}) of
-        #domain_WalletConfig{account = Account, party_ref = PartyRef} ->
-            Account;
-        _ ->
-            throw(#payproc_WalletNotFound{})
+    case pm_domain:find_party_with_shops_and_wallets(DomainRevision, PartyRef) of
+        {ok, _Party, _Shops, Wallets} ->
+            case lists:search(fun(#domain_WalletConfigObject{ref = Ref}) -> Ref =:= WalletRef end, Wallets) of
+                {value, #domain_WalletConfigObject{data = #domain_WalletConfig{account = Account}}} ->
+                    Account;
+                false ->
+                    throw(#payproc_WalletNotFound{})
+            end;
+        {error, notfound} ->
+            throw(#payproc_PartyNotFound{})
     end.
 
 -spec get_account_state(dmsl_accounter_thrift:'AccountID'(), party_ref(), revision()) ->
@@ -64,14 +72,6 @@ get_account_state(AccountID, PartyRef, DomainRevision) ->
             };
         {error, notfound} ->
             throw(#payproc_PartyNotFound{})
-    end.
-
-ensure_found(Ref, DomainRevision, NotFoundException) ->
-    case pm_domain:find(DomainRevision, Ref) of
-        notfound ->
-            throw(NotFoundException);
-        ObjectData ->
-            ObjectData
     end.
 
 %% Internals
