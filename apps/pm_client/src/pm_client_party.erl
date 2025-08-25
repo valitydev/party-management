@@ -1,7 +1,5 @@
 -module(pm_client_party).
 
--include_lib("damsel/include/dmsl_payproc_thrift.hrl").
-
 -export([start/2]).
 -export([stop/1]).
 
@@ -28,10 +26,10 @@
 
 %%
 
--type party_id() :: dmsl_domain_thrift:'PartyID'().
+-type party_ref() :: dmsl_domain_thrift:'PartyConfigRef'().
 -type domain_revision() :: dmsl_domain_thrift:'DataRevision'().
--type shop_id() :: dmsl_domain_thrift:'ShopID'().
--type wallet_id() :: dmsl_domain_thrift:'WalletID'().
+-type shop_ref() :: dmsl_domain_thrift:'ShopConfigRef'().
+-type wallet_ref() :: dmsl_domain_thrift:'WalletConfigRef'().
 -type shop_account_id() :: dmsl_domain_thrift:'AccountID'().
 
 -type termset_hierarchy_ref() :: dmsl_domain_thrift:'TermSetHierarchyRef'().
@@ -42,9 +40,9 @@
 -type terminal_ref() :: dmsl_domain_thrift:'TerminalRef'().
 -type routing_ruleset_ref() :: dmsl_domain_thrift:'RoutingRulesetRef'().
 
--spec start(party_id(), pm_client_api:t()) -> pid().
-start(PartyID, ApiClient) ->
-    {ok, Pid} = gen_server:start(?MODULE, {PartyID, ApiClient}, []),
+-spec start(party_ref(), pm_client_api:t()) -> pid().
+start(PartyRef, ApiClient) ->
+    {ok, Pid} = gen_server:start(?MODULE, {PartyRef, ApiClient}, []),
     Pid.
 
 -spec stop(pid()) -> ok.
@@ -67,17 +65,17 @@ compute_payment_institution(Ref, DomainRevision, Varset, Client) ->
 -spec get_account_state(shop_account_id(), domain_revision(), pid()) ->
     dmsl_payproc_thrift:'AccountState'() | woody_error:business_error().
 get_account_state(AccountID, DomainRevision, Client) ->
-    call(Client, 'GetAccountState', with_party_id([AccountID, DomainRevision])).
+    call(Client, 'GetAccountState', with_party_ref([AccountID, DomainRevision])).
 
--spec get_shop_account(shop_id(), domain_revision(), pid()) ->
+-spec get_shop_account(shop_ref(), domain_revision(), pid()) ->
     dmsl_domain_thrift:'ShopAccount'() | woody_error:business_error().
-get_shop_account(ShopID, DomainRevision, Client) ->
-    call(Client, 'GetShopAccount', with_party_id([ShopID, DomainRevision])).
+get_shop_account(ShopRef, DomainRevision, Client) ->
+    call(Client, 'GetShopAccount', with_party_ref([ShopRef, DomainRevision])).
 
--spec get_wallet_account(wallet_id(), domain_revision(), pid()) ->
+-spec get_wallet_account(wallet_ref(), domain_revision(), pid()) ->
     dmsl_domain_thrift:'WalletAccount'() | woody_error:business_error().
-get_wallet_account(ShopID, DomainRevision, Client) ->
-    call(Client, 'GetWalletAccount', with_party_id([ShopID, DomainRevision])).
+get_wallet_account(WalletRef, DomainRevision, Client) ->
+    call(Client, 'GetWalletAccount', with_party_ref([WalletRef, DomainRevision])).
 
 -spec compute_provider(provider_ref(), domain_revision(), varset(), pid()) ->
     dmsl_domain_thrift:'Provider'() | woody_error:business_error().
@@ -126,26 +124,19 @@ map_result_error({error, Error}) ->
 
 %%
 
--type event() :: dmsl_payproc_thrift:'Event'().
-
 -record(state, {
-    party_id :: party_id(),
-    poller :: pm_client_event_poller:st(event()),
+    party_ref :: party_ref(),
     client :: pm_client_api:t()
 }).
 
 -type state() :: #state{}.
 -type callref() :: {pid(), Tag :: reference()}.
 
--spec init({party_id(), pm_client_api:t()}) -> {ok, state()}.
-init({PartyID, ApiClient}) ->
+-spec init({party_ref(), pm_client_api:t()}) -> {ok, state()}.
+init({PartyRef, ApiClient}) ->
     {ok, #state{
-        party_id = PartyID,
-        client = ApiClient,
-        poller = pm_client_event_poller:new(
-            {party_management, 'GetEvents', [undefined, PartyID]},
-            fun(Event) -> Event#payproc_Event.id end
-        )
+        party_ref = PartyRef,
+        client = ApiClient
     }}.
 
 -spec handle_call(term(), callref(), state()) -> {reply, term(), state()} | {noreply, state()}.
@@ -159,17 +150,6 @@ handle_call({call, Function, ArgsIn}, _From, St = #state{client = Client}) ->
     ),
     Result = pm_client_api:call(party_management, Function, Args, Client),
     {reply, Result, St};
-handle_call({pull_event, Timeout}, _From, St = #state{poller = Poller, client = Client}) ->
-    {Result, PollerNext} = pm_client_event_poller:poll(1, Timeout, Client, Poller),
-    StNext = St#state{poller = PollerNext},
-    case Result of
-        [] ->
-            {reply, timeout, StNext};
-        [#payproc_Event{payload = Payload}] ->
-            {reply, Payload, StNext};
-        Error ->
-            {reply, Error, StNext}
-    end;
 handle_call(Call, _From, State) ->
     _ = logger:warning("unexpected call received: ~tp", [Call]),
     {noreply, State}.
@@ -179,5 +159,5 @@ handle_cast(Cast, State) ->
     _ = logger:warning("unexpected cast received: ~tp", [Cast]),
     {noreply, State}.
 
-with_party_id(Args) ->
-    [fun(St) -> St#state.party_id end | Args].
+with_party_ref(Args) ->
+    [fun(St) -> St#state.party_ref end | Args].

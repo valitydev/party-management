@@ -14,9 +14,11 @@
 -export([get/2]).
 -export([find/2]).
 -export([exists/2]).
+-export([find_party_with_shops_and_wallets/2]).
 
 -export([insert/1]).
 -export([update/1]).
+-export([upsert/1]).
 -export([cleanup/1]).
 
 %%
@@ -73,6 +75,38 @@ extract_data(#domain_conf_v2_VersionedObject{object = {_Tag, {_Name, _Ref, Data}
 commit(Revision, Operations, AuthorID) ->
     dmt_client:commit(Revision, Operations, AuthorID).
 
+-spec find_party_with_shops_and_wallets(revision(), dmsl_domain_thrift:'PartyConfigRef'()) ->
+    {
+        ok,
+        dmsl_domain_thrift:'PartyConfigObject'(),
+        [dmsl_domain_thrift:'ShopConfigObject'()],
+        [dmsl_domain_thrift:'WalletConfigObject'()]
+    }
+    | {error, notfound}.
+find_party_with_shops_and_wallets(Revision, PartyRef) ->
+    try
+        #domain_conf_v2_VersionedObjectWithReferences{
+            object = #domain_conf_v2_VersionedObject{object = {party_config, Object}},
+            referenced_by = ReferencedBy
+        } =
+            dmt_client:checkout_object_with_references(Revision, {party_config, PartyRef}),
+        {Shops, Wallets} = lists:foldl(
+            fun
+                (#domain_conf_v2_VersionedObject{object = {shop_config, O}}, {S, W}) -> {[O | S], W};
+                (#domain_conf_v2_VersionedObject{object = {wallet_config, O}}, {S, W}) -> {S, [O | W]};
+                (_, Acc) -> Acc
+            end,
+            {[], []},
+            ReferencedBy
+        ),
+        {ok, Object, Shops, Wallets}
+    catch
+        error:version_not_found ->
+            {error, notfound};
+        throw:#domain_conf_v2_ObjectNotFound{} ->
+            {error, notfound}
+    end.
+
 -spec insert(object() | [object()]) -> {revision(), [ref()]} | no_return().
 insert(Objects) ->
     insert(Objects, generate_author()).
@@ -103,6 +137,14 @@ update(NewObject) when not is_list(NewObject) ->
 -spec update(object() | [object()], binary()) -> revision() | no_return().
 update(Objects, AuthorID) ->
     dmt_client:update(Objects, AuthorID).
+
+-spec upsert([object()]) -> revision() | no_return().
+upsert(Objects) ->
+    upsert(Objects, generate_author()).
+
+-spec upsert([object()], binary()) -> revision() | no_return().
+upsert(Objects, AuthorID) ->
+    dmt_client:upsert(Objects, AuthorID).
 
 -spec cleanup([ref()]) -> revision() | no_return().
 cleanup(Refs) ->

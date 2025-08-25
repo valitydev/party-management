@@ -36,8 +36,8 @@ test({payment_tool, C}, #{payment_tool := V}, Rev) ->
     pm_payment_tool:test_condition(C, V, Rev);
 test({shop_location_is, V}, #{shop := S}, _) ->
     V =:= S#domain_ShopConfig.location;
-test({party, V}, #{party_id := PartyID} = VS, _) ->
-    test_party(V, PartyID, VS);
+test({party, V}, #{party_ref := PartyRef} = VS, _) ->
+    test_party(V, PartyRef, VS);
 test({identification_level_is, V1}, #{identification_level := V2}, _) ->
     V1 =:= V2;
 test({bin_data, #domain_BinDataCondition{} = C}, #{bin_data := #domain_BinData{} = V}, Rev) ->
@@ -45,7 +45,7 @@ test({bin_data, #domain_BinDataCondition{} = C}, #{bin_data := #domain_BinData{}
 test(_, #{}, _) ->
     undefined.
 
-test_party(#domain_PartyCondition{id = PartyID, definition = Def}, PartyID, VS) ->
+test_party(#domain_PartyCondition{party_ref = PartyRef, definition = Def}, PartyRef, VS) ->
     test_party_definition(Def, VS);
 test_party(_, _, _) ->
     false.

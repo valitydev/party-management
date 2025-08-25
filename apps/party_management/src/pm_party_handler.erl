@@ -19,15 +19,15 @@ handle_function(Func, Args, Opts) ->
 
 -spec handle_function_(woody:func(), woody:args(), pm_woody_wrapper:handler_opts()) -> term() | no_return().
 %% Accounts
-handle_function_('GetShopAccount', {PartyID, ShopID, DomainRevision}, _Opts) ->
-    _ = set_party_mgmt_meta(PartyID),
-    pm_party:get_shop_account(ShopID, PartyID, DomainRevision);
-handle_function_('GetWalletAccount', {PartyID, WalletID, DomainRevision}, _Opts) ->
-    _ = set_party_mgmt_meta(PartyID),
-    pm_party:get_wallet_account(WalletID, PartyID, DomainRevision);
-handle_function_('GetAccountState', {PartyID, AccountID, DomainRevision}, _Opts) ->
-    _ = set_party_mgmt_meta(PartyID),
-    pm_party:get_account_state(AccountID, PartyID, DomainRevision);
+handle_function_('GetShopAccount', {PartyRef, ShopRef, DomainRevision}, _Opts) ->
+    _ = set_party_mgmt_meta(PartyRef),
+    pm_party:get_shop_account(ShopRef, PartyRef, DomainRevision);
+handle_function_('GetWalletAccount', {PartyRef, WalletRef, DomainRevision}, _Opts) ->
+    _ = set_party_mgmt_meta(PartyRef),
+    pm_party:get_wallet_account(WalletRef, PartyRef, DomainRevision);
+handle_function_('GetAccountState', {PartyRef, AccountID, DomainRevision}, _Opts) ->
+    _ = set_party_mgmt_meta(PartyRef),
+    pm_party:get_account_state(AccountID, PartyRef, DomainRevision);
 %% Providers
 handle_function_('ComputeProvider', Args, _Opts) ->
     {ProviderRef, DomainRevision, Varset} = Args,
@@ -102,8 +102,8 @@ assert_provider_terms_reduced(#domain_ProvisionTermSet{}) ->
 assert_provider_terms_reduced(undefined) ->
     throw(#payproc_ProvisionTermSetUndefined{}).
 
-set_party_mgmt_meta(PartyID) ->
-    scoper:add_meta(#{party_id => PartyID}).
+set_party_mgmt_meta(PartyRef) ->
+    scoper:add_meta(#{party_ref => PartyRef}).
 
 get_payment_institution(PaymentInstitutionRef, Revision) ->
     case pm_domain:find(Revision, {payment_institution, PaymentInstitutionRef}) of
