@@ -96,18 +96,18 @@ construct_shop_account(CurrencyCode) ->
     }.
 
 -spec construct_shop(
-    dmsl_domain_thrift:'ShopID'(),
+    dmsl_domain_thrift:'ShopConfigRef'(),
     dmsl_domain_thrift:'PaymentInstitutionRef'(),
     dmsl_domain_thrift:'ShopAccount'(),
     dmsl_domain_thrift:'PartyConfigRef'(),
     binary(),
     dmsl_domain_thrift:'CategoryRef'()
 ) -> {shop_config, dmsl_domain_thrift:'ShopConfigObject'()}.
-construct_shop(ShopID, PaymentInstitutionRef, ShopAccount, PartyRef, ShopLocation, CategoryRef) ->
+construct_shop(ShopRef, PaymentInstitutionRef, ShopAccount, PartyRef, ShopLocation, CategoryRef) ->
     {shop_config, #domain_ShopConfigObject{
-        ref = #domain_ShopConfigRef{id = ShopID},
+        ref = ShopRef,
         data = #domain_ShopConfig{
-            name = ShopID,
+            name = ShopRef#domain_ShopConfigRef.id,
             block = make_unblocked(),
             suspension = make_active(),
             payment_institution = PaymentInstitutionRef,
@@ -129,16 +129,16 @@ construct_wallet_account(CurrencyCode) ->
     }.
 
 -spec construct_wallet(
-    dmsl_domain_thrift:'WalletID'(),
+    dmsl_domain_thrift:'WalletConfigRef'(),
     dmsl_domain_thrift:'PaymentInstitutionRef'(),
     dmsl_domain_thrift:'WalletAccount'(),
     dmsl_domain_thrift:'PartyConfigRef'()
 ) -> {wallet_config, dmsl_domain_thrift:'WalletConfigObject'()}.
-construct_wallet(WalletID, PaymentInstitutionRef, WalletAccount, PartyRef) ->
+construct_wallet(WalletRef, PaymentInstitutionRef, WalletAccount, PartyRef) ->
     {wallet_config, #domain_WalletConfigObject{
-        ref = #domain_WalletConfigRef{id = WalletID},
+        ref = WalletRef,
         data = #domain_WalletConfig{
-            name = WalletID,
+            name = WalletRef#domain_WalletConfigRef.id,
             block = make_unblocked(),
             suspension = make_active(),
             payment_institution = PaymentInstitutionRef,

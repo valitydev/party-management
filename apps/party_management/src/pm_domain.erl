@@ -18,6 +18,7 @@
 
 -export([insert/1]).
 -export([update/1]).
+-export([upsert/1]).
 -export([cleanup/1]).
 
 %%
@@ -128,6 +129,14 @@ update(NewObject) when not is_list(NewObject) ->
 -spec update(object() | [object()], binary()) -> revision() | no_return().
 update(Objects, AuthorID) ->
     dmt_client:update(Objects, AuthorID).
+
+-spec upsert([object()]) -> revision() | no_return().
+upsert(Objects) ->
+    upsert(Objects, generate_author()).
+
+-spec upsert([object()], binary()) -> revision() | no_return().
+upsert(Objects, AuthorID) ->
+    dmt_client:upsert(Objects, AuthorID).
 
 -spec cleanup([ref()]) -> revision() | no_return().
 cleanup(Refs) ->

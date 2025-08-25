@@ -16,29 +16,29 @@
 
 -type party_ref() :: dmsl_domain_thrift:'PartyConfigRef'().
 -type termset_ref() :: dmsl_domain_thrift:'TermSetHierarchyRef'().
--type shop_id() :: dmsl_domain_thrift:'ShopID'().
+-type shop_ref() :: dmsl_domain_thrift:'ShopConfigRef'().
 -type shop_account() :: dmsl_domain_thrift:'ShopAccount'().
--type wallet_id() :: dmsl_domain_thrift:'WalletID'().
+-type wallet_ref() :: dmsl_domain_thrift:'WalletConfigRef'().
 -type wallet_account() :: dmsl_domain_thrift:'WalletAccount'().
 
 -type revision() :: pm_domain:revision().
 
 %% Interface
 
--spec get_shop_account(shop_id(), party_ref(), revision()) -> shop_account().
-get_shop_account(ShopID, PartyRef, DomainRevision) ->
+-spec get_shop_account(shop_ref(), party_ref(), revision()) -> shop_account().
+get_shop_account(ShopRef, PartyRef, DomainRevision) ->
     #domain_PartyConfig{} = ensure_found({party_config, PartyRef}, DomainRevision),
-    case ensure_found({shop_config, #domain_ShopConfigRef{id = ShopID}}, DomainRevision) of
+    case ensure_found({shop_config, ShopRef}, DomainRevision) of
         #domain_ShopConfig{account = Account, party_ref = PartyRef} ->
             Account;
         _ ->
             throw(#payproc_ShopNotFound{})
     end.
 
--spec get_wallet_account(wallet_id(), party_ref(), revision()) -> wallet_account().
-get_wallet_account(WalletID, PartyRef, DomainRevision) ->
+-spec get_wallet_account(wallet_ref(), party_ref(), revision()) -> wallet_account().
+get_wallet_account(WalletRef, PartyRef, DomainRevision) ->
     #domain_PartyConfig{} = ensure_found({party_config, PartyRef}, DomainRevision),
-    case ensure_found({shop_config, #domain_WalletConfigRef{id = WalletID}}, DomainRevision) of
+    case ensure_found({wallet_config, WalletRef}, DomainRevision) of
         #domain_WalletConfig{account = Account, party_ref = PartyRef} ->
             Account;
         _ ->

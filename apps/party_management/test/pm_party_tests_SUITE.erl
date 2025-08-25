@@ -114,12 +114,11 @@ groups() ->
 init_per_suite(C) ->
     {Apps, _Ret} = pm_ct_helper:start_apps([woody, scoper, dmt_client, party_management]),
     PartyRef = ?party(list_to_binary(lists:concat(["party.", erlang:system_time()]))),
-    {_Rev, ObjIds} = pm_domain:insert(construct_domain_fixture(PartyRef)),
-    [{apps, Apps}, {objects_ids, ObjIds}, {party_ref, PartyRef} | C].
+    _Rev = pm_domain:upsert(construct_domain_fixture(PartyRef)),
+    [{apps, Apps}, {party_ref, PartyRef} | C].
 
 -spec end_per_suite(config()) -> _.
 end_per_suite(C) ->
-    _ = pm_domain:cleanup(cfg(objects_ids, C)),
     [application:stop(App) || App <- cfg(apps, C)].
 
 %% tests
@@ -189,14 +188,14 @@ get_shop_account(C) ->
     DomainRevision = pm_domain:head(),
     ?assertMatch(
         #domain_ShopAccount{},
-        pm_client_party:get_shop_account(?SHOP_ID, DomainRevision, Client)
+        pm_client_party:get_shop_account(?shop(?SHOP_ID), DomainRevision, Client)
     ).
 
 get_shop_account_non_existant_version(C) ->
     Client = cfg(client, C),
     ?assertMatch(
         {exception, #payproc_PartyNotFound{}},
-        pm_client_party:get_shop_account(?SHOP_ID, ?NON_EXISTANT_DOMAIN_REVISION, Client)
+        pm_client_party:get_shop_account(?shop(?SHOP_ID), ?NON_EXISTANT_DOMAIN_REVISION, Client)
     ).
 
 get_wallet_account(C) ->
@@ -204,21 +203,21 @@ get_wallet_account(C) ->
     DomainRevision = pm_domain:head(),
     ?assertMatch(
         #domain_WalletAccount{},
-        pm_client_party:get_wallet_account(?WALLET_ID, DomainRevision, Client)
+        pm_client_party:get_wallet_account(?wallet(?WALLET_ID), DomainRevision, Client)
     ).
 
 get_wallet_account_non_existant_version(C) ->
     Client = cfg(client, C),
     ?assertMatch(
         {exception, #payproc_PartyNotFound{}},
-        pm_client_party:get_wallet_account(?WALLET_ID, ?NON_EXISTANT_DOMAIN_REVISION, Client)
+        pm_client_party:get_wallet_account(?wallet(?WALLET_ID), ?NON_EXISTANT_DOMAIN_REVISION, Client)
     ).
 
 get_account_state(C) ->
     Client = cfg(client, C),
     DomainRevision = pm_domain:head(),
     #domain_ShopAccount{settlement = AccountID} =
-        pm_client_party:get_shop_account(?SHOP_ID, DomainRevision, Client),
+        pm_client_party:get_shop_account(?shop(?SHOP_ID), DomainRevision, Client),
     ?assertMatch(
         #payproc_AccountState{account_id = AccountID},
         pm_client_party:get_account_state(AccountID, DomainRevision, Client)
@@ -986,10 +985,25 @@ construct_domain_fixture(PartyRef) ->
             }
         }},
 
+        {payment_institution, #domain_PaymentInstitutionObject{
+            ref = ?pinst(5),
+            data = #domain_PaymentInstitution{
+                name = <<"N.E. Chetky Payments GmbH">>,
+                system_account_set = {value, ?sas(2)},
+                inspector = {value, ?insp(1)},
+                residences = [],
+                realm = live
+            }
+        }},
+
         %% Party, shop and wallet
+        pm_ct_fixture:construct_party(?party(<<"12345">>)),
+        pm_ct_fixture:construct_party(?party(<<"67890">>)),
+        pm_ct_fixture:construct_party(?party(<<"PARTYID1">>)),
+        pm_ct_fixture:construct_party(?party(<<"PARTYID2">>)),
         pm_ct_fixture:construct_party(PartyRef),
         pm_ct_fixture:construct_shop(
-            ?SHOP_ID,
+            ?shop(?SHOP_ID),
             ?pinst(1),
             pm_ct_fixture:construct_shop_account(<<"RUB">>),
             PartyRef,
@@ -997,7 +1011,7 @@ construct_domain_fixture(PartyRef) ->
             ?cat(1)
         ),
         pm_ct_fixture:construct_wallet(
-            ?WALLET_ID,
+            ?wallet(?WALLET_ID),
             ?pinst(1),
             pm_ct_fixture:construct_wallet_account(<<"RUB">>),
             PartyRef

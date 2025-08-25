@@ -28,8 +28,8 @@
 
 -type party_ref() :: dmsl_domain_thrift:'PartyConfigRef'().
 -type domain_revision() :: dmsl_domain_thrift:'DataRevision'().
--type shop_id() :: dmsl_domain_thrift:'ShopID'().
--type wallet_id() :: dmsl_domain_thrift:'WalletID'().
+-type shop_ref() :: dmsl_domain_thrift:'ShopConfigRef'().
+-type wallet_ref() :: dmsl_domain_thrift:'WalletConfigRef'().
 -type shop_account_id() :: dmsl_domain_thrift:'AccountID'().
 
 -type termset_hierarchy_ref() :: dmsl_domain_thrift:'TermSetHierarchyRef'().
@@ -67,15 +67,15 @@ compute_payment_institution(Ref, DomainRevision, Varset, Client) ->
 get_account_state(AccountID, DomainRevision, Client) ->
     call(Client, 'GetAccountState', with_party_ref([AccountID, DomainRevision])).
 
--spec get_shop_account(shop_id(), domain_revision(), pid()) ->
+-spec get_shop_account(shop_ref(), domain_revision(), pid()) ->
     dmsl_domain_thrift:'ShopAccount'() | woody_error:business_error().
-get_shop_account(ShopID, DomainRevision, Client) ->
-    call(Client, 'GetShopAccount', with_party_ref([ShopID, DomainRevision])).
+get_shop_account(ShopRef, DomainRevision, Client) ->
+    call(Client, 'GetShopAccount', with_party_ref([ShopRef, DomainRevision])).
 
--spec get_wallet_account(wallet_id(), domain_revision(), pid()) ->
+-spec get_wallet_account(wallet_ref(), domain_revision(), pid()) ->
     dmsl_domain_thrift:'WalletAccount'() | woody_error:business_error().
-get_wallet_account(ShopID, DomainRevision, Client) ->
-    call(Client, 'GetWalletAccount', with_party_ref([ShopID, DomainRevision])).
+get_wallet_account(WalletRef, DomainRevision, Client) ->
+    call(Client, 'GetWalletAccount', with_party_ref([WalletRef, DomainRevision])).
 
 -spec compute_provider(provider_ref(), domain_revision(), varset(), pid()) ->
     dmsl_domain_thrift:'Provider'() | woody_error:business_error().
