@@ -7,6 +7,7 @@
 -include_lib("damsel/include/dmsl_payproc_thrift.hrl").
 -include_lib("damsel/include/dmsl_domain_thrift.hrl").
 -include_lib("damsel/include/dmsl_base_thrift.hrl").
+-include_lib("damsel/include/dmsl_limiter_config_thrift.hrl").
 
 -export([all/0]).
 -export([groups/0]).
@@ -114,7 +115,8 @@ groups() ->
 init_per_suite(C) ->
     {Apps, _Ret} = pm_ct_helper:start_apps([woody, scoper, dmt_client, party_management]),
     PartyRef = ?party(list_to_binary(lists:concat(["party.", erlang:system_time()]))),
-    _Rev = pm_domain:upsert(construct_domain_fixture(PartyRef)),
+    LimitsRev = pm_domain:upsert(constuct_limits_domain_fixture()),
+    _Rev = pm_domain:upsert(construct_domain_fixture(PartyRef, LimitsRev)),
     [{apps, Apps}, {party_ref, PartyRef} | C].
 
 -spec end_per_suite(config()) -> _.
@@ -349,24 +351,24 @@ compute_provider_terminal_terms_ok(C) ->
                 {value, [
                     %% In ordset fashion
                     #domain_TurnoverLimit{
-                        id = <<"p_card_day_count">>,
+                        ref = ?lim(<<"p_card_day_count">>),
                         upper_boundary = 1,
-                        domain_revision = undefined
+                        domain_revision = _
                     },
                     #domain_TurnoverLimit{
-                        id = <<"payment_card_month_amount_rub">>,
+                        ref = ?lim(<<"payment_card_month_amount_rub">>),
                         upper_boundary = 7500000,
-                        domain_revision = undefined
+                        domain_revision = _
                     },
                     #domain_TurnoverLimit{
-                        id = <<"payment_card_month_count">>,
+                        ref = ?lim(<<"payment_card_month_count">>),
                         upper_boundary = 10,
-                        domain_revision = undefined
+                        domain_revision = _
                     },
                     #domain_TurnoverLimit{
-                        id = <<"payment_day_amount_rub">>,
+                        ref = ?lim(<<"payment_day_amount_rub">>),
                         upper_boundary = 5000000,
-                        domain_revision = undefined
+                        domain_revision = _
                     }
                 ]}
         },
@@ -678,8 +680,39 @@ compute_pred_w_partially_irreducible_criterion(_) ->
 
 %%
 
--spec construct_domain_fixture(dmsl_domain_thrift:'PartyConfigRef'()) -> [pm_domain:object()].
-construct_domain_fixture(PartyRef) ->
+-spec constuct_limits_domain_fixture() -> [pm_domain:object()].
+constuct_limits_domain_fixture() ->
+    [
+        {limit_config, #domain_LimitConfigObject{
+            ref = #domain_LimitConfigRef{id = LimitID},
+            data = #limiter_config_LimitConfig{
+                processor_type = <<"TurnoverProcessor">>,
+                started_at = <<"2000-01-01T00:00:00Z">>,
+                shard_size = 12,
+                time_range_type = {calendar, {month, #limiter_config_TimeRangeTypeCalendarMonth{}}},
+                context_type = {payment_processing, #limiter_config_LimitContextTypePaymentProcessing{}},
+                type =
+                    {turnover, #limiter_config_LimitTypeTurnover{
+                        metric = {amount, #limiter_config_LimitTurnoverAmount{currency = <<"RUB">>}}
+                    }},
+                scopes = ordsets:from_list([{shop, #limiter_config_LimitScopeEmptyDetails{}}]),
+                description = <<"description">>,
+                op_behaviour = #limiter_config_OperationLimitBehaviour{
+                    invoice_payment_refund = {subtraction, #limiter_config_Subtraction{}}
+                }
+            }
+        }}
+     || LimitID <- [
+            <<"payment_card_month_count">>,
+            <<"payment_card_month_amount_rub">>,
+            <<"payment_day_amount_rub">>,
+            <<"p_card_day_count">>
+        ]
+    ].
+
+-spec construct_domain_fixture(dmsl_domain_thrift:'PartyConfigRef'(), dmsl_domain_conf_v2_thrift:'Version'()) ->
+    [pm_domain:object()].
+construct_domain_fixture(PartyRef, PrevRev) ->
     TestTermSet = #domain_TermSet{
         payments = #domain_PaymentsServiceTerms{
             currencies = {value, ordsets:from_list([?cur(<<"RUB">>)])},
@@ -1005,6 +1038,7 @@ construct_domain_fixture(PartyRef) ->
         pm_ct_fixture:construct_shop(
             ?shop(?SHOP_ID),
             ?pinst(1),
+            ?trms(2),
             pm_ct_fixture:construct_shop_account(<<"RUB">>),
             PartyRef,
             <<"http://example.com">>,
@@ -1013,6 +1047,7 @@ construct_domain_fixture(PartyRef) ->
         pm_ct_fixture:construct_wallet(
             ?wallet(?WALLET_ID),
             ?pinst(1),
+            ?trms(2),
             pm_ct_fixture:construct_wallet_account(<<"RUB">>),
             PartyRef
         ),
@@ -1157,25 +1192,25 @@ construct_domain_fixture(PartyRef) ->
                                         {value,
                                             ?ordset([
                                                 #domain_TurnoverLimit{
-                                                    id = <<"payment_card_month_count">>,
+                                                    ref = ?lim(<<"payment_card_month_count">>),
                                                     upper_boundary = 5,
-                                                    domain_revision = undefined
+                                                    domain_revision = PrevRev
                                                 },
                                                 %% Common limits
                                                 #domain_TurnoverLimit{
-                                                    id = <<"payment_card_month_amount_rub">>,
+                                                    ref = ?lim(<<"payment_card_month_amount_rub">>),
                                                     upper_boundary = 7500000,
-                                                    domain_revision = undefined
+                                                    domain_revision = PrevRev
                                                 },
                                                 #domain_TurnoverLimit{
-                                                    id = <<"payment_day_amount_rub">>,
+                                                    ref = ?lim(<<"payment_day_amount_rub">>),
                                                     upper_boundary = 5000000,
-                                                    domain_revision = undefined
+                                                    domain_revision = PrevRev
                                                 },
                                                 #domain_TurnoverLimit{
-                                                    id = <<"p_card_day_count">>,
+                                                    ref = ?lim(<<"p_card_day_count">>),
                                                     upper_boundary = 1,
-                                                    domain_revision = undefined
+                                                    domain_revision = PrevRev
                                                 }
                                             ])}
                                 },
@@ -1194,25 +1229,25 @@ construct_domain_fixture(PartyRef) ->
                                         {value,
                                             ?ordset([
                                                 #domain_TurnoverLimit{
-                                                    id = <<"payment_card_month_count">>,
+                                                    ref = ?lim(<<"payment_card_month_count">>),
                                                     upper_boundary = 10,
-                                                    domain_revision = undefined
+                                                    domain_revision = PrevRev
                                                 },
                                                 %% Common limits
                                                 #domain_TurnoverLimit{
-                                                    id = <<"payment_card_month_amount_rub">>,
+                                                    ref = ?lim(<<"payment_card_month_amount_rub">>),
                                                     upper_boundary = 7500000,
-                                                    domain_revision = undefined
+                                                    domain_revision = PrevRev
                                                 },
                                                 #domain_TurnoverLimit{
-                                                    id = <<"payment_day_amount_rub">>,
+                                                    ref = ?lim(<<"payment_day_amount_rub">>),
                                                     upper_boundary = 5000000,
-                                                    domain_revision = undefined
+                                                    domain_revision = PrevRev
                                                 },
                                                 #domain_TurnoverLimit{
-                                                    id = <<"p_card_day_count">>,
+                                                    ref = ?lim(<<"p_card_day_count">>),
                                                     upper_boundary = 1,
-                                                    domain_revision = undefined
+                                                    domain_revision = PrevRev
                                                 }
                                             ])}
                                 }

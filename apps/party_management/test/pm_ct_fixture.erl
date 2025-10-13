@@ -9,9 +9,9 @@
 
 -export([construct_party/1]).
 -export([construct_shop_account/1]).
--export([construct_shop/6]).
+-export([construct_shop/7]).
 -export([construct_wallet_account/1]).
--export([construct_wallet/4]).
+-export([construct_wallet/5]).
 -export([construct_currency/1]).
 -export([construct_currency/2]).
 -export([construct_category/2]).
@@ -98,12 +98,13 @@ construct_shop_account(CurrencyCode) ->
 -spec construct_shop(
     dmsl_domain_thrift:'ShopConfigRef'(),
     dmsl_domain_thrift:'PaymentInstitutionRef'(),
+    dmsl_domain_thrift:'TermSetHierarchyRef'(),
     dmsl_domain_thrift:'ShopAccount'(),
     dmsl_domain_thrift:'PartyConfigRef'(),
     binary(),
     dmsl_domain_thrift:'CategoryRef'()
 ) -> {shop_config, dmsl_domain_thrift:'ShopConfigObject'()}.
-construct_shop(ShopRef, PaymentInstitutionRef, ShopAccount, PartyRef, ShopLocation, CategoryRef) ->
+construct_shop(ShopRef, PaymentInstitutionRef, TermSetHierarchyRef, ShopAccount, PartyRef, ShopLocation, CategoryRef) ->
     {shop_config, #domain_ShopConfigObject{
         ref = ShopRef,
         data = #domain_ShopConfig{
@@ -111,6 +112,7 @@ construct_shop(ShopRef, PaymentInstitutionRef, ShopAccount, PartyRef, ShopLocati
             block = make_unblocked(),
             suspension = make_active(),
             payment_institution = PaymentInstitutionRef,
+            terms = TermSetHierarchyRef,
             account = ShopAccount,
             party_ref = PartyRef,
             location = {url, ShopLocation},
@@ -131,10 +133,11 @@ construct_wallet_account(CurrencyCode) ->
 -spec construct_wallet(
     dmsl_domain_thrift:'WalletConfigRef'(),
     dmsl_domain_thrift:'PaymentInstitutionRef'(),
+    dmsl_domain_thrift:'TermSetHierarchyRef'(),
     dmsl_domain_thrift:'WalletAccount'(),
     dmsl_domain_thrift:'PartyConfigRef'()
 ) -> {wallet_config, dmsl_domain_thrift:'WalletConfigObject'()}.
-construct_wallet(WalletRef, PaymentInstitutionRef, WalletAccount, PartyRef) ->
+construct_wallet(WalletRef, PaymentInstitutionRef, TermSetHierarchyRef, WalletAccount, PartyRef) ->
     {wallet_config, #domain_WalletConfigObject{
         ref = WalletRef,
         data = #domain_WalletConfig{
@@ -142,6 +145,7 @@ construct_wallet(WalletRef, PaymentInstitutionRef, WalletAccount, PartyRef) ->
             block = make_unblocked(),
             suspension = make_active(),
             payment_institution = PaymentInstitutionRef,
+            terms = TermSetHierarchyRef,
             account = WalletAccount,
             party_ref = PartyRef
         }
