@@ -57,7 +57,8 @@ reduce_provision_term_set(ProvisionTermSet, VS, DomainRevision) ->
         wallet = pm_maybe:apply(
             fun(X) -> reduce_wallet_provision(X, VS, DomainRevision) end,
             ProvisionTermSet#domain_ProvisionTermSet.wallet
-        )
+        ),
+        extension = ProvisionTermSet#domain_ProvisionTermSet.extension
     }.
 
 reduce_payment_terms(undefined = PaymentTerms, _VS, _DomainRevision) ->
@@ -172,19 +173,22 @@ merge_provision_term_sets(
     #domain_ProvisionTermSet{
         payments = PPayments,
         recurrent_paytools = PRecurrents,
-        wallet = PWallet
+        wallet = PWallet,
+        extension = PExtension
     },
     #domain_ProvisionTermSet{
         payments = TPayments,
         % TODO: Allow to define recurrent terms in terminal
         recurrent_paytools = _TRecurrents,
-        wallet = TWallet
+        wallet = TWallet,
+        extension = TExtension
     }
 ) ->
     #domain_ProvisionTermSet{
         payments = merge_payment_terms(PPayments, TPayments),
         recurrent_paytools = PRecurrents,
-        wallet = merge_wallet_terms(PWallet, TWallet)
+        wallet = merge_wallet_terms(PWallet, TWallet),
+        extension = merge_extension_terms(PExtension, TExtension)
     };
 merge_provision_term_sets(ProviderTerms, TerminalTerms) ->
     pm_utils:select_defined(TerminalTerms, ProviderTerms).
@@ -251,6 +255,20 @@ merge_wallet_terms(
         withdrawals = merge_withdrawal_terms(PWithdrawal, TWithdrawal)
     };
 merge_wallet_terms(ProviderTerms, TerminalTerms) ->
+    pm_utils:select_defined(TerminalTerms, ProviderTerms).
+
+merge_extension_terms(
+    #domain_ExtendedProvisionTerms{
+        skip_recurrent = PSkipRecurrent
+    },
+    #domain_ExtendedProvisionTerms{
+        skip_recurrent = TSkipRecurrent
+    }
+) ->
+    #domain_ExtendedProvisionTerms{
+        skip_recurrent = pm_utils:select_defined(TSkipRecurrent, PSkipRecurrent)
+    };
+merge_extension_terms(ProviderTerms, TerminalTerms) ->
     pm_utils:select_defined(TerminalTerms, ProviderTerms).
 
 merge_withdrawal_terms(

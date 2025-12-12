@@ -313,6 +313,9 @@ compute_provider_ok(C) ->
             },
             recurrent_paytools = #domain_RecurrentPaytoolsProvisionTerms{
                 cash_value = {value, ?cash(1000, <<"RUB">>)}
+            },
+            extension = #domain_ExtendedProvisionTerms{
+                skip_recurrent = true
             }
         }
     } = pm_client_party:compute_provider(?prv(1), DomainRevision, Varset, Client).
@@ -374,6 +377,9 @@ compute_provider_terminal_terms_ok(C) ->
         },
         recurrent_paytools = #domain_RecurrentPaytoolsProvisionTerms{
             cash_value = {value, ?cash(1000, <<"RUB">>)}
+        },
+        extension = #domain_ExtendedProvisionTerms{
+            skip_recurrent = true
         }
     } = pm_client_party:compute_provider_terminal_terms(
         ?prv(1), ?trm(1), DomainRevision, Varset, Client
@@ -1272,6 +1278,9 @@ construct_domain_fixture(PartyRef, PrevRev) ->
                                     then_ = {value, ?cash(1000, <<"USD">>)}
                                 }
                             ]}
+                    },
+                    extension = #domain_ExtendedProvisionTerms{
+                        skip_recurrent = true
                     }
                 }
             }
