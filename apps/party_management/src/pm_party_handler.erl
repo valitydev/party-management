@@ -2,6 +2,7 @@
 
 -include_lib("damsel/include/dmsl_payproc_thrift.hrl").
 -include_lib("damsel/include/dmsl_domain_thrift.hrl").
+-include_lib("damsel/include/dmsl_domain_conf_v2_thrift.hrl").
 
 %% Woody handler called by pm_woody_wrapper
 
@@ -19,6 +20,15 @@ handle_function(Func, Args, Opts) ->
 
 -spec handle_function_(woody:func(), woody:args(), pm_woody_wrapper:handler_opts()) -> term() | no_return().
 %% Accounts
+handle_function_('GetShopAccountForVersion', {PartyRef, ShopRef, VersionReference}, Opts) ->
+    DomainRevision = version_reference_to_revision_number(VersionReference),
+    handle_function('GetShopAccount', {PartyRef, ShopRef, DomainRevision}, Opts);
+handle_function_('GetWalletAccountForVersion', {PartyRef, WalletRef, VersionReference}, Opts) ->
+    DomainRevision = version_reference_to_revision_number(VersionReference),
+    handle_function_('GetWalletAccount', {PartyRef, WalletRef, DomainRevision}, Opts);
+handle_function_('GetAccountStateForVersion', {PartyRef, AccountID, VersionReference}, Opts) ->
+    DomainRevision = version_reference_to_revision_number(VersionReference),
+    handle_function_('GetAccountState', {PartyRef, AccountID, DomainRevision}, Opts);
 handle_function_('GetShopAccount', {PartyRef, ShopRef, DomainRevision}, _Opts) ->
     _ = set_party_mgmt_meta(PartyRef),
     pm_party:get_shop_account(ShopRef, PartyRef, DomainRevision);
@@ -93,6 +103,15 @@ handle_function_('ComputeTerms', Args, _Opts) ->
     pm_party:reduce_terms(Terms, VS, Revision).
 
 %%
+
+version_reference_to_revision_number({head, #domain_conf_v2_Head{}}) ->
+    %% NOTE `dmt_client` is gonna normalize 'head' reference into integer-typed
+    %% version anyway.
+    dmt_client:get_latest_version();
+version_reference_to_revision_number({version, Version}) ->
+    Version;
+version_reference_to_revision_number(Arg) ->
+    erlang:error({badarg, Arg}).
 
 assert_provider_reduced(#domain_Provider{terms = Terms}) ->
     assert_provider_terms_reduced(Terms).
