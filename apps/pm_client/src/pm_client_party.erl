@@ -6,9 +6,9 @@
 -export([compute_terms/4]).
 -export([compute_payment_institution/4]).
 
--export([get_shop_account_for_version/3]).
--export([get_wallet_account_for_version/3]).
--export([get_account_state_for_version/3]).
+-export([get_shop_account_for_latest_version/2]).
+-export([get_wallet_account_for_latest_version/2]).
+-export([get_account_state_for_latest_version/2]).
 -export([get_shop_account/3]).
 -export([get_wallet_account/3]).
 -export([get_account_state/3]).
@@ -31,7 +31,6 @@
 
 -type party_ref() :: dmsl_domain_thrift:'PartyConfigRef'().
 -type domain_revision() :: dmsl_domain_thrift:'DataRevision'().
--type domain_version_reference() :: dmsl_domain_conf_v2_thrift:'VersionReference'().
 -type shop_ref() :: dmsl_domain_thrift:'ShopConfigRef'().
 -type wallet_ref() :: dmsl_domain_thrift:'WalletConfigRef'().
 -type shop_account_id() :: dmsl_domain_thrift:'AccountID'().
@@ -66,30 +65,30 @@ compute_terms(Ref, DomainRevision, Varset, Client) ->
 compute_payment_institution(Ref, DomainRevision, Varset, Client) ->
     call(Client, 'ComputePaymentInstitution', [Ref, DomainRevision, Varset]).
 
--spec get_account_state_for_version(shop_account_id(), domain_version_reference(), pid()) ->
+-spec get_account_state_for_latest_version(shop_account_id(), pid()) ->
     dmsl_payproc_thrift:'AccountState'() | woody_error:business_error().
-get_account_state_for_version(AccountID, VersionReference, Client) ->
-    call(Client, 'GetAccountStateForVersion', with_party_ref([AccountID, VersionReference])).
+get_account_state_for_latest_version(AccountID, Client) ->
+    call(Client, 'GetAccountStateForLatestVersion', with_party_ref([AccountID])).
 
 -spec get_account_state(shop_account_id(), domain_revision(), pid()) ->
     dmsl_payproc_thrift:'AccountState'() | woody_error:business_error().
 get_account_state(AccountID, DomainRevision, Client) ->
     call(Client, 'GetAccountState', with_party_ref([AccountID, DomainRevision])).
 
--spec get_shop_account_for_version(shop_ref(), domain_version_reference(), pid()) ->
+-spec get_shop_account_for_latest_version(shop_ref(), pid()) ->
     dmsl_domain_thrift:'ShopAccount'() | woody_error:business_error().
-get_shop_account_for_version(ShopRef, VersionReference, Client) ->
-    call(Client, 'GetShopAccountForVersion', with_party_ref([ShopRef, VersionReference])).
+get_shop_account_for_latest_version(ShopRef, Client) ->
+    call(Client, 'GetShopAccountForLatestVersion', with_party_ref([ShopRef])).
 
 -spec get_shop_account(shop_ref(), domain_revision(), pid()) ->
     dmsl_domain_thrift:'ShopAccount'() | woody_error:business_error().
 get_shop_account(ShopRef, DomainRevision, Client) ->
     call(Client, 'GetShopAccount', with_party_ref([ShopRef, DomainRevision])).
 
--spec get_wallet_account_for_version(wallet_ref(), domain_version_reference(), pid()) ->
+-spec get_wallet_account_for_latest_version(wallet_ref(), pid()) ->
     dmsl_domain_thrift:'WalletAccount'() | woody_error:business_error().
-get_wallet_account_for_version(WalletRef, VersionReference, Client) ->
-    call(Client, 'GetWalletAccountForVersion', with_party_ref([WalletRef, VersionReference])).
+get_wallet_account_for_latest_version(WalletRef, Client) ->
+    call(Client, 'GetWalletAccountForLatestVersion', with_party_ref([WalletRef])).
 
 -spec get_wallet_account(wallet_ref(), domain_revision(), pid()) ->
     dmsl_domain_thrift:'WalletAccount'() | woody_error:business_error().
