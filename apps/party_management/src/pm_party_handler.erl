@@ -20,13 +20,13 @@ handle_function(Func, Args, Opts) ->
 
 -spec handle_function_(woody:func(), woody:args(), pm_woody_wrapper:handler_opts()) -> term() | no_return().
 %% Accounts
-handle_function_('GetShopAccountForLatestVersion', {PartyRef, ShopRef}, Opts) ->
+handle_function_('GetShopAccountSimple', {PartyRef, ShopRef}, Opts) ->
     DomainRevision = dmt_client:get_latest_version(),
     handle_function('GetShopAccount', {PartyRef, ShopRef, DomainRevision}, Opts);
-handle_function_('GetWalletAccountForLatestVersion', {PartyRef, WalletRef}, Opts) ->
+handle_function_('GetWalletAccountSimple', {PartyRef, WalletRef}, Opts) ->
     DomainRevision = dmt_client:get_latest_version(),
     handle_function_('GetWalletAccount', {PartyRef, WalletRef, DomainRevision}, Opts);
-handle_function_('GetAccountStateForLatestVersion', {PartyRef, AccountID}, Opts) ->
+handle_function_('GetAccountStateSimple', {PartyRef, AccountID}, Opts) ->
     DomainRevision = dmt_client:get_latest_version(),
     handle_function_('GetAccountState', {PartyRef, AccountID, DomainRevision}, Opts);
 handle_function_('GetShopAccount', {PartyRef, ShopRef, DomainRevision}, _Opts) ->
