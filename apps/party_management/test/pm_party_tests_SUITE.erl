@@ -8,6 +8,7 @@
 -include_lib("damsel/include/dmsl_domain_thrift.hrl").
 -include_lib("damsel/include/dmsl_base_thrift.hrl").
 -include_lib("damsel/include/dmsl_limiter_config_thrift.hrl").
+-include_lib("damsel/include/dmsl_domain_conf_v2_thrift.hrl").
 
 -export([all/0]).
 -export([groups/0]).
@@ -18,6 +19,9 @@
 -export([init_per_testcase/2]).
 -export([end_per_testcase/2]).
 
+-export([get_shop_account_simple/1]).
+-export([get_wallet_account_simple/1]).
+-export([get_account_state_simple/1]).
 -export([get_shop_account/1]).
 -export([get_shop_account_non_existant_version/1]).
 -export([get_wallet_account/1]).
@@ -76,6 +80,9 @@ all() ->
 groups() ->
     [
         {accounts, [parallel], [
+            get_shop_account_simple,
+            get_wallet_account_simple,
+            get_account_state_simple,
             get_shop_account,
             get_shop_account_non_existant_version,
             get_wallet_account,
@@ -150,6 +157,9 @@ end_per_testcase(_Name, _C) ->
 
 -define(WRONG_DMT_OBJ_ID, 99999).
 
+-spec get_shop_account_simple(config()) -> _ | no_return().
+-spec get_wallet_account_simple(config()) -> _ | no_return().
+-spec get_account_state_simple(config()) -> _ | no_return().
 -spec get_shop_account(config()) -> _ | no_return().
 -spec get_shop_account_non_existant_version(config()) -> _ | no_return().
 -spec get_wallet_account(config()) -> _ | no_return().
@@ -184,6 +194,30 @@ end_per_testcase(_Name, _C) ->
 
 -define(NON_EXISTANT_DOMAIN_REVISION, 42_000_000).
 -define(NON_EXISTANT_ACCOUNT_ID, 42_000).
+
+get_shop_account_simple(C) ->
+    Client = cfg(client, C),
+    ?assertMatch(
+        #domain_ShopAccount{},
+        pm_client_party:get_shop_account_simple(?shop(?SHOP_ID), Client)
+    ).
+
+get_wallet_account_simple(C) ->
+    Client = cfg(client, C),
+    ?assertMatch(
+        #domain_WalletAccount{},
+        pm_client_party:get_wallet_account_simple(?wallet(?WALLET_ID), Client)
+    ).
+
+get_account_state_simple(C) ->
+    Client = cfg(client, C),
+    DomainRevision = pm_domain:head(),
+    #domain_ShopAccount{settlement = AccountID} =
+        pm_client_party:get_shop_account(?shop(?SHOP_ID), DomainRevision, Client),
+    ?assertMatch(
+        #payproc_AccountState{account_id = AccountID},
+        pm_client_party:get_account_state_simple(AccountID, Client)
+    ).
 
 get_shop_account(C) ->
     Client = cfg(client, C),

@@ -2,6 +2,7 @@
 
 -include_lib("damsel/include/dmsl_payproc_thrift.hrl").
 -include_lib("damsel/include/dmsl_domain_thrift.hrl").
+-include_lib("damsel/include/dmsl_domain_conf_v2_thrift.hrl").
 
 %% Woody handler called by pm_woody_wrapper
 
@@ -19,6 +20,15 @@ handle_function(Func, Args, Opts) ->
 
 -spec handle_function_(woody:func(), woody:args(), pm_woody_wrapper:handler_opts()) -> term() | no_return().
 %% Accounts
+handle_function_('GetShopAccountSimple', {PartyRef, ShopRef}, Opts) ->
+    DomainRevision = dmt_client:get_latest_version(),
+    handle_function('GetShopAccount', {PartyRef, ShopRef, DomainRevision}, Opts);
+handle_function_('GetWalletAccountSimple', {PartyRef, WalletRef}, Opts) ->
+    DomainRevision = dmt_client:get_latest_version(),
+    handle_function_('GetWalletAccount', {PartyRef, WalletRef, DomainRevision}, Opts);
+handle_function_('GetAccountStateSimple', {PartyRef, AccountID}, Opts) ->
+    DomainRevision = dmt_client:get_latest_version(),
+    handle_function_('GetAccountState', {PartyRef, AccountID, DomainRevision}, Opts);
 handle_function_('GetShopAccount', {PartyRef, ShopRef, DomainRevision}, _Opts) ->
     _ = set_party_mgmt_meta(PartyRef),
     pm_party:get_shop_account(ShopRef, PartyRef, DomainRevision);
