@@ -143,12 +143,30 @@ end_per_group(_Group, C) ->
     pm_client_party:stop(cfg(client, C)).
 
 -spec init_per_testcase(test_case_name(), config()) -> config().
-init_per_testcase(_Name, C) ->
-    C.
+init_per_testcase(Name, C) ->
+    trace_testcase(Name, C).
 
 -spec end_per_testcase(test_case_name(), config()) -> _.
-end_per_testcase(_Name, _C) ->
+end_per_testcase(_Name, C) ->
+    ok = maybe_end_trace(C),
     ok.
+
+%%
+
+trace_testcase(Name, C) ->
+    SpanName = iolist_to_binary([atom_to_binary(?MODULE), ":", atom_to_binary(Name), "/1"]),
+    SpanCtx = otel_tracer:start_span(opentelemetry:get_application_tracer(?MODULE), SpanName, #{kind => internal}),
+    _ = otel_tracer:set_current_span(SpanCtx),
+    [{span_ctx, SpanCtx} | C].
+
+maybe_end_trace(C) ->
+    case lists:keyfind(span_ctx, 1, C) of
+        {span_ctx, SpanCtx} ->
+            _ = otel_span:end_span(SpanCtx),
+            ok;
+        _ ->
+            ok
+    end.
 
 %%
 

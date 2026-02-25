@@ -9,6 +9,8 @@
 -export([create_client/0]).
 -export([create_client/1]).
 
+-export([make_trace_id/1]).
+
 -export_type([config/0]).
 -export_type([test_case_name/0]).
 -export_type([group_name/0]).
@@ -135,3 +137,10 @@ create_client(TraceID) ->
 
 create_client_w_context(WoodyCtx) ->
     pm_client_api:new(WoodyCtx).
+
+%%
+
+-spec make_trace_id(term()) -> woody:trace_id().
+make_trace_id(Prefix) ->
+    B = genlib:to_binary(Prefix),
+    iolist_to_binary([binary:part(B, 0, min(byte_size(B), 20)), $., pm_utils:unique_id()]).
