@@ -112,8 +112,10 @@ assert_provider_terms_reduced(#domain_ProvisionTermSet{}) ->
 assert_provider_terms_reduced(undefined) ->
     throw(#payproc_ProvisionTermSetUndefined{}).
 
-set_party_mgmt_meta(PartyRef) ->
-    scoper:add_meta(#{party_ref => PartyRef}).
+set_party_mgmt_meta(#domain_PartyConfigRef{id = PartyID}) ->
+    scoper:add_meta(#{party_id => PartyID});
+set_party_mgmt_meta(_PartyRef) ->
+    ok.
 
 get_payment_institution(PaymentInstitutionRef, Revision) ->
     case pm_domain:find(Revision, {payment_institution, PaymentInstitutionRef}) of
