@@ -47,6 +47,7 @@
 -export([compute_payment_routing_ruleset_ok/1]).
 -export([compute_payment_routing_ruleset_irreducible/1]).
 -export([compute_payment_routing_ruleset_not_found/1]).
+-export([compute_payment_routing_ruleset_with_trust_level_ok/1]).
 
 -export([compute_pred_w_partial_all_of/1]).
 -export([compute_pred_w_irreducible_criterion/1]).
@@ -106,6 +107,7 @@ groups() ->
             compute_provider_terminal_not_found,
             compute_globals_ok,
             compute_payment_routing_ruleset_ok,
+            compute_payment_routing_ruleset_with_trust_level_ok,
             compute_payment_routing_ruleset_irreducible,
             compute_payment_routing_ruleset_not_found
         ]},
@@ -626,6 +628,24 @@ compute_payment_routing_ruleset_ok(C) ->
             ]}
     } = pm_client_party:compute_routing_ruleset(?ruleset(1), DomainRevision, Varset, Client).
 
+-spec compute_payment_routing_ruleset_with_trust_level_ok(_) -> _.
+compute_payment_routing_ruleset_with_trust_level_ok(C) ->
+    Client = cfg(client, C),
+    DomainRevision = pm_domain:head(),
+    Varset = #payproc_Varset{
+        trust_level = well_known
+    },
+    #domain_RoutingRuleset{
+        name = <<"Rule#10">>,
+        decisions =
+            {candidates, [
+                #domain_RoutingCandidate{
+                    terminal = ?trm(1),
+                    allowed = {constant, true}
+                }
+            ]}
+    } = pm_client_party:compute_routing_ruleset(?ruleset(10), DomainRevision, Varset, Client).
+
 compute_payment_routing_ruleset_irreducible(C) ->
     Client = cfg(client, C),
     DomainRevision = pm_domain:head(),
@@ -938,6 +958,13 @@ construct_domain_fixture(PartyRef, PrevRev) ->
                 terminal = ?trm(3)
             }
         ]},
+    Decision10 =
+        {candidates, [
+            #domain_RoutingCandidate{
+                allowed = {condition, {trust_level_is, well_known}},
+                terminal = ?trm(1)
+            }
+        ]},
     [
         pm_ct_fixture:construct_currency(?cur(<<"RUB">>)),
         pm_ct_fixture:construct_currency(?cur(<<"USD">>)),
@@ -1001,6 +1028,7 @@ construct_domain_fixture(PartyRef, PrevRev) ->
         pm_ct_fixture:construct_payment_routing_ruleset(?ruleset(2), <<"Rule#2">>, Decision2),
         pm_ct_fixture:construct_payment_routing_ruleset(?ruleset(3), <<"Rule#3">>, Decision3),
         pm_ct_fixture:construct_payment_routing_ruleset(?ruleset(4), <<"Rule#4">>, Decision4),
+        pm_ct_fixture:construct_payment_routing_ruleset(?ruleset(10), <<"Rule#10">>, Decision10),
 
         {payment_institution, #domain_PaymentInstitutionObject{
             ref = ?pinst(1),

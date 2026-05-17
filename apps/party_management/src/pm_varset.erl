@@ -18,7 +18,8 @@
     shop_id => dmsl_domain_thrift:'ShopID'(),
     payment_tool => dmsl_domain_thrift:'PaymentTool'(),
     party_ref => dmsl_domain_thrift:'PartyConfigRef'(),
-    bin_data => dmsl_domain_thrift:'BinData'()
+    bin_data => dmsl_domain_thrift:'BinData'(),
+    trust_level => dmsl_domain_thrift:'ClientTrustLevel'()
 }.
 
 -type encoded_varset() :: dmsl_payproc_thrift:'Varset'().
@@ -34,7 +35,8 @@ encode_varset(Varset) ->
         shop_id = genlib_map:get(shop_id, Varset),
         payment_tool = genlib_map:get(payment_tool, Varset),
         party_ref = genlib_map:get(party_ref, Varset),
-        bin_data = genlib_map:get(bin_data, Varset)
+        bin_data = genlib_map:get(bin_data, Varset),
+        trust_level = genlib_map:get(trust_level, Varset)
     }.
 
 -spec decode_varset(encoded_varset()) -> varset().
@@ -54,7 +56,8 @@ decode_varset(#payproc_Varset{} = Varset, VS) ->
             Varset#payproc_Varset.payment_tool
         ),
         party_ref => Varset#payproc_Varset.party_ref,
-        bin_data => Varset#payproc_Varset.bin_data
+        bin_data => Varset#payproc_Varset.bin_data,
+        trust_level => Varset#payproc_Varset.trust_level
     }).
 
 prepare_payment_tool_var(_PaymentMethodRef, PaymentTool) when PaymentTool /= undefined ->
@@ -95,7 +98,8 @@ encode_decode_test() ->
         bin_data => #domain_BinData{
             payment_system = <<"payment_system">>,
             bank_name = <<"bank_name">>
-        }
+        },
+        trust_level => well_known
     },
     ?assertEqual(Varset, decode_varset(encode_varset(Varset))).
 
