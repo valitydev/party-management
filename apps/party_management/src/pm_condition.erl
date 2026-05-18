@@ -42,6 +42,8 @@ test({identification_level_is, V1}, #{identification_level := V2}, _) ->
     V1 =:= V2;
 test({bin_data, #domain_BinDataCondition{} = C}, #{bin_data := #domain_BinData{} = V}, Rev) ->
     test_bindata_tool(C, V, Rev);
+test({trust_level_is, V1}, #{trust_level := V2}, _) ->
+    V1 =:= V2;
 test(_, #{}, _) ->
     undefined.
 
