@@ -21,7 +21,7 @@ services:
     command: /sbin/init
 
   dmt:
-    image: ghcr.io/valitydev/dominant-v2:sha-72c1f5a-epic-TECH-6-add-trust-level-condition
+    image: ghcr.io/valitydev/dominant-v2:sha-c9430b5
     command: /opt/dmt/bin/dmt foreground
     healthcheck:
       test: "/opt/dmt/bin/dmt ping"
