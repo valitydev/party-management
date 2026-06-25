@@ -91,7 +91,9 @@ reduce_payment_terms(PaymentTerms, VS, DomainRevision) ->
         ),
         risk_coverage = reduce_if_defined(PaymentTerms#domain_PaymentsProvisionTerms.risk_coverage, VS, DomainRevision),
         turnover_limits =
-            reduce_if_defined(PaymentTerms#domain_PaymentsProvisionTerms.turnover_limits, VS, DomainRevision)
+            reduce_if_defined(PaymentTerms#domain_PaymentsProvisionTerms.turnover_limits, VS, DomainRevision),
+        allow_exchange =
+            reduce_predicate_if_defined(PaymentTerms#domain_PaymentsProvisionTerms.allow_exchange, VS, DomainRevision)
     }.
 
 reduce_payment_hold_terms(PaymentHoldTerms, VS, DomainRevision) ->
@@ -206,7 +208,8 @@ merge_payment_terms(
         refunds = PRefunds,
         chargebacks = PChargebacks,
         risk_coverage = PRiskCoverage,
-        turnover_limits = PTurnoverLimits
+        turnover_limits = PTurnoverLimits,
+        allow_exchange = PAllowExchange
     },
     #domain_PaymentsProvisionTerms{
         allow = TAllow,
@@ -220,7 +223,8 @@ merge_payment_terms(
         refunds = TRefunds,
         chargebacks = TChargebacks,
         risk_coverage = TRiskCoverage,
-        turnover_limits = TTurnoverLimits
+        turnover_limits = TTurnoverLimits,
+        allow_exchange = TAllowExchange
     }
 ) ->
     #domain_PaymentsProvisionTerms{
@@ -235,7 +239,8 @@ merge_payment_terms(
         refunds = pm_utils:select_defined(TRefunds, PRefunds),
         chargebacks = pm_utils:select_defined(TChargebacks, PChargebacks),
         risk_coverage = pm_utils:select_defined(TRiskCoverage, PRiskCoverage),
-        turnover_limits = pm_utils:select_defined(TTurnoverLimits, PTurnoverLimits)
+        turnover_limits = pm_utils:select_defined(TTurnoverLimits, PTurnoverLimits),
+        allow_exchange = pm_utils:select_defined(TAllowExchange, PAllowExchange)
     };
 merge_payment_terms(ProviderTerms, TerminalTerms) ->
     pm_utils:select_defined(TerminalTerms, ProviderTerms).
