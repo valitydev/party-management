@@ -409,7 +409,8 @@ compute_provider_terminal_terms_ok(C) ->
                         upper_boundary = 5000000,
                         domain_revision = _
                     }
-                ]}
+                ]},
+            allow_exchange = {constant, true}
         },
         recurrent_paytools = #domain_RecurrentPaytoolsProvisionTerms{
             cash_value = {value, ?cash(1000, <<"RUB">>)}
@@ -1402,7 +1403,8 @@ construct_domain_fixture(PartyRef, PrevRev) ->
                             {value,
                                 ?ordset([
                                     ?pmt(bank_card, ?bank_card(<<"visa">>))
-                                ])}
+                                ])},
+                        allow_exchange = {constant, true}
                     }
                 }
             }
