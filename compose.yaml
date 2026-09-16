@@ -21,7 +21,7 @@ services:
     command: /sbin/init
 
   dmt:
-    image: ghcr.io/valitydev/dominant-v2:sha-ab393d5
+    image: ghcr.io/valitydev/dominant-v2:sha-6a0a26c-epic-XYZ-467-provider-guarantee-account
     command: /opt/dmt/bin/dmt foreground
     healthcheck:
       test: "/opt/dmt/bin/dmt ping"

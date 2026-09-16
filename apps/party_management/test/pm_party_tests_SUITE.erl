@@ -354,7 +354,23 @@ compute_provider_ok(C) ->
                 skip_recurrent = true
             }
         }
-    } = pm_client_party:compute_provider(?prv(1), DomainRevision, Varset, Client).
+    } = pm_client_party:compute_provider(?prv(1), DomainRevision, Varset, Client),
+    Varset2 = #payproc_Varset{
+        currency = ?cur(<<"EUR">>)
+    },
+    CashFlow2 = ?cfpost(
+        {provider, guarantee},
+        {system, settlement},
+        ?fixed(1, <<"EUR">>)
+    ),
+    #domain_Provider{
+        terms = #domain_ProvisionTermSet{
+            payments = #domain_PaymentsProvisionTerms{
+                allow = {constant, true},
+                cash_flow = {value, [CashFlow2]}
+            }
+        }
+    } = pm_client_party:compute_provider(?prv(1), DomainRevision, Varset2, Client).
 
 compute_provider_not_found(C) ->
     Client = cfg(client, C),
@@ -970,6 +986,7 @@ construct_domain_fixture(PartyRef, PrevRev) ->
         pm_ct_fixture:construct_currency(?cur(<<"RUB">>)),
         pm_ct_fixture:construct_currency(?cur(<<"USD">>)),
         pm_ct_fixture:construct_currency(?cur(<<"KZT">>)),
+        pm_ct_fixture:construct_currency(?cur(<<"EUR">>)),
 
         pm_ct_fixture:construct_category(?cat(1), <<"Test category">>, test),
         pm_ct_fixture:construct_category(?cat(2), <<"Generic Store">>, live),
@@ -1184,11 +1201,11 @@ construct_domain_fixture(PartyRef, PrevRev) ->
                         <<"override_terminal">> => <<"provider">>
                     }
                 },
-                accounts = pm_ct_fixture:construct_provider_account_set([?cur(<<"RUB">>)]),
+                accounts = pm_ct_fixture:construct_provider_account_set([?cur(<<"RUB">>), ?cur(<<"EUR">>)]),
                 terms = #domain_ProvisionTermSet{
                     payments = #domain_PaymentsProvisionTerms{
                         allow = {constant, true},
-                        currencies = {value, ?ordset([?cur(<<"RUB">>)])},
+                        currencies = {value, ?ordset([?cur(<<"RUB">>), ?cur(<<"EUR">>)])},
                         categories = {value, ?ordset([?cat(1)])},
                         payment_methods =
                             {value,
@@ -1222,6 +1239,17 @@ construct_domain_fixture(PartyRef, PrevRev) ->
                                                                 round_half_towards_zero
                                                             )
                                                         ])}}
+                                            )
+                                        ]}
+                                },
+                                #domain_CashFlowDecision{
+                                    if_ = {condition, {currency_is, ?cur(<<"EUR">>)}},
+                                    then_ =
+                                        {value, [
+                                            ?cfpost(
+                                                {provider, guarantee},
+                                                {system, settlement},
+                                                ?fixed(1, <<"EUR">>)
                                             )
                                         ]}
                                 },

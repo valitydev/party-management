@@ -306,7 +306,7 @@ construct_provider_account_set(Currencies) ->
     ok = pm_context:save(pm_context:create()),
     AccountSet = lists:foldl(
         fun(Cur = ?cur(Code), Acc) ->
-            Acc#{Cur => ?prvacc(pm_accounting:create_account(Code))}
+            Acc#{Cur => ?prvacc(pm_accounting:create_account(Code), pm_accounting:create_account(Code))}
         end,
         #{},
         Currencies
