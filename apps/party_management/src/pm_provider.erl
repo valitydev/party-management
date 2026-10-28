@@ -39,7 +39,8 @@ reduce_withdrawal_terms(#domain_WithdrawalProvisionTerms{} = Terms, VS, Rev) ->
         currencies = reduce_if_defined(Terms#domain_WithdrawalProvisionTerms.currencies, VS, Rev),
         cash_limit = reduce_if_defined(Terms#domain_WithdrawalProvisionTerms.cash_limit, VS, Rev),
         cash_flow = reduce_if_defined(Terms#domain_WithdrawalProvisionTerms.cash_flow, VS, Rev),
-        turnover_limit = reduce_if_defined(Terms#domain_WithdrawalProvisionTerms.turnover_limit, VS, Rev)
+        turnover_limit = reduce_if_defined(Terms#domain_WithdrawalProvisionTerms.turnover_limit, VS, Rev),
+        risk_coverage = reduce_if_defined(Terms#domain_WithdrawalProvisionTerms.risk_coverage, VS, Rev)
     }.
 
 reduce_provision_term_set(undefined = ProvisionTermSet, _VS, _DomainRevision) ->
@@ -283,7 +284,8 @@ merge_withdrawal_terms(
         currencies = PCurrencies,
         cash_limit = PLimit,
         cash_flow = PCashflow,
-        turnover_limit = PTurnoverLimit
+        turnover_limit = PTurnoverLimit,
+        risk_coverage = PRiskCoverage
     },
     #domain_WithdrawalProvisionTerms{
         allow = TAllow,
@@ -291,7 +293,8 @@ merge_withdrawal_terms(
         currencies = TCurrencies,
         cash_limit = TLimit,
         cash_flow = TCashflow,
-        turnover_limit = TTurnoverLimit
+        turnover_limit = TTurnoverLimit,
+        risk_coverage = TRiskCoverage
     }
 ) ->
     #domain_WithdrawalProvisionTerms{
@@ -300,7 +303,8 @@ merge_withdrawal_terms(
         currencies = pm_utils:select_defined(TCurrencies, PCurrencies),
         cash_limit = pm_utils:select_defined(TLimit, PLimit),
         cash_flow = pm_utils:select_defined(TCashflow, PCashflow),
-        turnover_limit = pm_utils:select_defined(TTurnoverLimit, PTurnoverLimit)
+        turnover_limit = pm_utils:select_defined(TTurnoverLimit, PTurnoverLimit),
+        risk_coverage = pm_utils:select_defined(TRiskCoverage, PRiskCoverage)
     };
 merge_withdrawal_terms(ProviderTerms, TerminalTerms) ->
     pm_utils:select_defined(TerminalTerms, ProviderTerms).
