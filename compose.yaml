@@ -21,7 +21,7 @@ services:
     command: /sbin/init
 
   dmt:
-    image: ghcr.io/valitydev/dominant-v2:sha-0c6e0ba-epic-XYZ-657-ft-withdrawal-risk-coverage
+    image: ghcr.io/valitydev/dominant-v2:sha-69c62e4
     command: /opt/dmt/bin/dmt foreground
     healthcheck:
       test: "/opt/dmt/bin/dmt ping"
